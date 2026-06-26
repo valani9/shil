@@ -87,6 +87,14 @@ export class ChatSetupContribution extends Disposable implements IWorkbenchContr
 	) {
 		super();
 
+		// Shil: disable the default chat agent setup flow (sign-in modal,
+		// title-bar indicator, growth session, URL handler). The product.json
+		// key is kept so other chat infrastructure doesn't crash, but nothing
+		// from the setup contribution should activate.
+		if (product.nameShort !== 'Code - OSS') {
+			return;
+		}
+
 		const context = chatEntitlementService.context?.value;
 		const requests = chatEntitlementService.requests?.value;
 		if (!context || !requests) {
