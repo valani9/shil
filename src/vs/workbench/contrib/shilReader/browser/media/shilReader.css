@@ -61,6 +61,46 @@
 	font-size: 11px;
 }
 
+/* ── Header controls ────────────────────────────────────────────────────────── */
+
+.shil-reader-controls {
+	display: flex;
+	gap: 8px;
+	margin-top: 14px;
+}
+
+.shil-reader-control-btn {
+	font-family: 'Martian Mono', 'JetBrains Mono', monospace;
+	font-size: 10px;
+	font-weight: 500;
+	letter-spacing: 0.04em;
+	color: rgba(255, 255, 255, 0.4);
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: 4px;
+	padding: 4px 10px;
+	cursor: pointer;
+	transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.shil-reader-control-btn:hover {
+	color: rgba(255, 255, 255, 0.7);
+	background: rgba(255, 255, 255, 0.06);
+	border-color: rgba(255, 255, 255, 0.12);
+}
+
+.shil-reader-control-btn--active {
+	color: #C2F24D;
+	background: rgba(194, 242, 77, 0.08);
+	border-color: rgba(194, 242, 77, 0.25);
+}
+
+.shil-reader-control-btn--active:hover {
+	color: #C2F24D;
+	background: rgba(194, 242, 77, 0.12);
+	border-color: rgba(194, 242, 77, 0.35);
+}
+
 /* ── Spans ──────────────────────────────────────────────────────────────────── */
 
 .shil-reader-spans {

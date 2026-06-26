@@ -45,6 +45,10 @@ export class ShilReaderPane extends EditorPane {
 	private spanElements: HTMLElement[] = [];
 	/** Currently keyboard-focused span index (-1 = none). */
 	private focusedSpanIdx = -1;
+	/** Whether all spans are currently collapsed. */
+	private allCollapsed = false;
+	/** Whether focus mode is active (only focused span expanded). */
+	private focusModeActive = false;
 
 	constructor(
 		group: IEditorGroup,
@@ -122,17 +126,54 @@ export class ShilReaderPane extends EditorPane {
 		}
 
 		this.contentElement.textContent = '';
+		this.allCollapsed = false;
+		this.focusModeActive = false;
 
 		// Header
 		const header = document.createElement('header');
 		header.className = 'shil-reader-header';
-		header.innerHTML = `
-			<div class="shil-reader-kicker">READER</div>
-			<h1 class="shil-reader-title"></h1>
-			<div class="shil-reader-meta"></div>
-		`;
-		(header.querySelector('.shil-reader-title') as HTMLElement).textContent = doc.title;
-		(header.querySelector('.shil-reader-meta') as HTMLElement).textContent = `${doc.language} \u00B7 ${doc.spans.length} sections`;
+
+		const kicker = document.createElement('div');
+		kicker.className = 'shil-reader-kicker';
+		kicker.textContent = 'READER';
+		header.appendChild(kicker);
+
+		const title = document.createElement('h1');
+		title.className = 'shil-reader-title';
+		title.textContent = doc.title;
+		header.appendChild(title);
+
+		// Meta line: language + kind counts
+		const meta = document.createElement('div');
+		meta.className = 'shil-reader-meta';
+		meta.textContent = this.buildMetaText(doc);
+		header.appendChild(meta);
+
+		// Header controls row: collapse-all + focus-mode toggles
+		const controls = document.createElement('div');
+		controls.className = 'shil-reader-controls';
+
+		const collapseBtn = document.createElement('button');
+		collapseBtn.className = 'shil-reader-control-btn';
+		collapseBtn.textContent = 'Collapse All';
+		collapseBtn.title = 'Collapse or expand all spans';
+		collapseBtn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			this.toggleCollapseAll(collapseBtn);
+		});
+		controls.appendChild(collapseBtn);
+
+		const focusBtn = document.createElement('button');
+		focusBtn.className = 'shil-reader-control-btn';
+		focusBtn.textContent = 'Focus Mode';
+		focusBtn.title = 'Only the focused span stays expanded (shortcut: f)';
+		focusBtn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			this.toggleFocusMode(focusBtn);
+		});
+		controls.appendChild(focusBtn);
+
+		header.appendChild(controls);
 		this.contentElement.appendChild(header);
 
 		// Spans
@@ -197,15 +238,15 @@ export class ShilReaderPane extends EditorPane {
 		lineRef.title = 'Jump to this code';
 		detail.appendChild(lineRef);
 
-		// Code excerpt (first 3 lines)
+		// Full code excerpt
 		const sourceLines = doc.source.split('\n');
-		const excerptLines = sourceLines.slice(span.lineStart - 1, Math.min(span.lineEnd, span.lineStart + 2));
+		const excerptLines = sourceLines.slice(span.lineStart - 1, span.lineEnd);
 		if (excerptLines.length > 0) {
 			const code = document.createElement('pre');
 			code.className = 'shil-reader-span-code shil-reader-clickable';
 			code.title = 'Jump to this code';
 			const codeInner = document.createElement('code');
-			codeInner.textContent = excerptLines.join('\n') + (span.lineEnd - span.lineStart >= 3 ? '\n\u2026' : '');
+			codeInner.textContent = excerptLines.join('\n');
 			code.appendChild(codeInner);
 			detail.appendChild(code);
 		}
@@ -289,12 +330,11 @@ export class ShilReaderPane extends EditorPane {
 			this.navigateToCode(this.currentDoc.spans[this.focusedSpanIdx]);
 		} else if (e.key === 'c' && this.focusedSpanIdx >= 0) {
 			e.preventDefault();
-			const el = this.spanElements[this.focusedSpanIdx];
-			const collapsed = el.classList.toggle('shil-reader-span--collapsed');
-			const chevron = el.querySelector('.shil-reader-span-chevron');
-			if (chevron) {
-				chevron.textContent = collapsed ? '\u25B8' : '\u25BE';
-			}
+			this.toggleSpanCollapse(this.spanElements[this.focusedSpanIdx]);
+		} else if (e.key === 'f') {
+			e.preventDefault();
+			const btn = this.contentElement?.querySelector('.shil-reader-control-btn:nth-child(2)') as HTMLButtonElement | null;
+			this.toggleFocusMode(btn);
 		} else if (e.key === 'Escape') {
 			this.clearSpanFocus();
 		}
@@ -321,6 +361,11 @@ export class ShilReaderPane extends EditorPane {
 		const el = this.spanElements[this.focusedSpanIdx];
 		el.classList.add('shil-reader-span--focused');
 		el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+
+		// Focus mode: collapse all others, expand the focused span
+		if (this.focusModeActive) {
+			this.applyFocusModeToSpan(this.focusedSpanIdx);
+		}
 
 		// Also highlight connections for the focused span
 		if (this.currentDoc) {
@@ -390,6 +435,95 @@ export class ShilReaderPane extends EditorPane {
 			// If the path already has an extension, only try the bare path
 			if (/\.\w+$/.test(conn.path)) {
 				break;
+			}
+		}
+	}
+
+	/** Build the meta text with language, total sections, and per-kind counts. */
+	private buildMetaText(doc: ReaderDoc): string {
+		const counts = new Map<SpanKind, number>();
+		for (const span of doc.spans) {
+			counts.set(span.kind, (counts.get(span.kind) || 0) + 1);
+		}
+		// Only show kinds with counts, in a meaningful order
+		const order: SpanKind[] = ['import', 'guard', 'action', 'db', 'response', 'declaration', 'export', 'narration'];
+		const parts: string[] = [];
+		for (const k of order) {
+			const c = counts.get(k);
+			if (c) {
+				parts.push(`${c} ${kindLabel(k).toLowerCase()}`);
+			}
+		}
+		const kindSummary = parts.length > 0 ? ` \u00B7 ${parts.join(', ')}` : '';
+		return `${doc.language} \u00B7 ${doc.spans.length} sections${kindSummary}`;
+	}
+
+	/** Toggle collapse/expand for a single span element. */
+	private toggleSpanCollapse(el: HTMLElement): void {
+		const collapsed = el.classList.toggle('shil-reader-span--collapsed');
+		const chevron = el.querySelector('.shil-reader-span-chevron');
+		if (chevron) {
+			chevron.textContent = collapsed ? '\u25B8' : '\u25BE';
+		}
+	}
+
+	/** Collapse or expand all spans. */
+	private toggleCollapseAll(btn: HTMLButtonElement | null): void {
+		this.allCollapsed = !this.allCollapsed;
+		for (const el of this.spanElements) {
+			if (this.allCollapsed) {
+				el.classList.add('shil-reader-span--collapsed');
+			} else {
+				el.classList.remove('shil-reader-span--collapsed');
+			}
+			const chevron = el.querySelector('.shil-reader-span-chevron');
+			if (chevron) {
+				chevron.textContent = this.allCollapsed ? '\u25B8' : '\u25BE';
+			}
+		}
+		if (btn) {
+			btn.textContent = this.allCollapsed ? 'Expand All' : 'Collapse All';
+		}
+	}
+
+	/** Toggle focus mode: when active, only the focused span stays expanded. */
+	private toggleFocusMode(btn: HTMLButtonElement | null): void {
+		this.focusModeActive = !this.focusModeActive;
+		if (btn) {
+			btn.classList.toggle('shil-reader-control-btn--active', this.focusModeActive);
+		}
+		if (this.focusModeActive && this.focusedSpanIdx >= 0) {
+			this.applyFocusModeToSpan(this.focusedSpanIdx);
+		} else if (!this.focusModeActive) {
+			// Exiting focus mode: expand all spans
+			for (const el of this.spanElements) {
+				el.classList.remove('shil-reader-span--collapsed');
+				const chevron = el.querySelector('.shil-reader-span-chevron');
+				if (chevron) {
+					chevron.textContent = '\u25BE';
+				}
+			}
+			this.allCollapsed = false;
+			const collapseBtn = this.contentElement?.querySelector('.shil-reader-control-btn:first-child') as HTMLButtonElement | null;
+			if (collapseBtn) {
+				collapseBtn.textContent = 'Collapse All';
+			}
+		}
+	}
+
+	/** In focus mode, collapse all spans except the one at the given index. */
+	private applyFocusModeToSpan(activeIdx: number): void {
+		for (let i = 0; i < this.spanElements.length; i++) {
+			const el = this.spanElements[i];
+			const shouldCollapse = i !== activeIdx;
+			if (shouldCollapse) {
+				el.classList.add('shil-reader-span--collapsed');
+			} else {
+				el.classList.remove('shil-reader-span--collapsed');
+			}
+			const chevron = el.querySelector('.shil-reader-span-chevron');
+			if (chevron) {
+				chevron.textContent = shouldCollapse ? '\u25B8' : '\u25BE';
 			}
 		}
 	}
@@ -490,6 +624,8 @@ export class ShilReaderPane extends EditorPane {
 		this.highlightedConnIds.clear();
 		this.spanElements = [];
 		this.focusedSpanIdx = -1;
+		this.allCollapsed = false;
+		this.focusModeActive = false;
 		this.currentDoc = undefined;
 		this.currentResource = undefined;
 		if (this.contentElement) {
