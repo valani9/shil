@@ -119,20 +119,74 @@ body {
 }
 .monaco-workbench .part.titlebar .titlebar-right .action-label:hover { opacity: 0.9; }
 
-/* Activity bar: hidden by default. When re-enabled via View menu, it appears as
-   an ultra-slim icon rail in compact mode. */
+/* Activity bar: ultra-slim icon rail with lime pill indicator and hover glow. */
 .monaco-workbench .part.activitybar { width: 40px !important; }
+
+/* Icon base state: muted, with smooth transitions on opacity and color. */
 .monaco-workbench .activitybar .monaco-action-bar .action-item .action-label {
-	opacity: 0.5; transition: opacity 120ms ease;
+	opacity: 0.40;
+	transition: opacity 150ms ease, transform 150ms ease;
 }
-.monaco-workbench .activitybar .action-item.checked .action-label,
-.monaco-workbench .activitybar .action-item:hover .action-label { opacity: 1; }
+
+/* Hover: brighten icon + subtle background glow. */
+.monaco-workbench .activitybar .monaco-action-bar .action-item:hover .action-label {
+	opacity: 0.85;
+}
+.monaco-workbench .activitybar .monaco-action-bar .action-item:hover .active-item-indicator {
+	background-color: rgba(194, 242, 77, 0.06) !important;
+	border-radius: 8px;
+}
+
+/* Active/checked: full brightness + soft lime background. */
+.monaco-workbench .activitybar .action-item.checked .action-label {
+	opacity: 1;
+}
+.monaco-workbench .activitybar .action-item.checked .active-item-indicator {
+	background-color: rgba(194, 242, 77, 0.10) !important;
+	border-radius: 8px;
+}
+
+/* Replace the full-height 2px border-left with a centered lime pill dot.
+   The pill is 3px wide x 18px tall, centered vertically, with rounded ends. */
 .monaco-workbench .activitybar .active-item-indicator::before {
-	border-left-color: #C2F24D !important; border-left-width: 2px !important;
+	border-left: none !important;
+	width: 3px !important;
+	height: 18px !important;
+	top: 50% !important;
+	transform: translateY(-50%);
+	background: #C2F24D !important;
+	border-radius: 3px !important;
+	transition: height 180ms ease, opacity 180ms ease;
 }
+/* Hover (unchecked) — show a shorter, dimmer pill hint.
+   Must set content:"" since the base CSS only sets it for .checked/:focus. */
+.monaco-workbench .activitybar .action-item:not(.checked):hover .active-item-indicator::before {
+	content: "" !important;
+	position: absolute;
+	z-index: 1;
+	border-left: none !important;
+	width: 3px !important;
+	height: 10px !important;
+	top: 50% !important;
+	transform: translateY(-50%);
+	background: rgba(194, 242, 77, 0.40) !important;
+	border-radius: 3px !important;
+}
+
 /* Compact activity bar icons: slightly smaller for the narrow rail. */
 .monaco-workbench .activitybar .monaco-action-bar .action-item .codicon {
 	font-size: 18px !important;
+}
+
+/* Activity bar badge: lime pill with dark text, tight to the icon. */
+.monaco-workbench .activitybar .badge .badge-content {
+	font-size: 8px !important;
+	min-width: 7px !important;
+	height: 13px !important;
+	line-height: 13px !important;
+	padding: 0 3px !important;
+	border-radius: 7px !important;
+	font-weight: 700 !important;
 }
 
 /* Sidebar section headers: Martian Mono instrument labels, wide-tracked. */
