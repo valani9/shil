@@ -42,11 +42,11 @@ export function parseToReaderDoc(source: string, filePath: string, languageId: s
 			continue;
 		}
 
-		// Detect function/method declarations
-		const funcMatch = matchFunction(lines[i]);
+		// Detect function/method declarations (including multi-line signatures)
+		const funcMatch = matchFunction(lines, i);
 		if (funcMatch) {
 			const start = i;
-			const end = findBlockEnd(lines, i);
+			const end = findBlockEnd(lines, funcMatch.bodyLine);
 			const exported = lines[start].trimStart().startsWith('export');
 			const asyncLabel = funcMatch.async ? 'async ' : '';
 			const params = funcMatch.params;
@@ -228,19 +228,67 @@ interface FuncMatch {
 	name: string;
 	params: string;
 	async: boolean;
+	/** The line index where the function body (opening brace) starts */
+	bodyLine: number;
 }
 
-function matchFunction(line: string): FuncMatch | null {
+function matchFunction(lines: string[], idx: number): FuncMatch | null {
+	const line = lines[idx];
+	// Single-line function declaration
 	const m = line.match(/^(\s*)(export\s+)?(async\s+)?function\s+(\w+)\s*\(([^)]*)\)/);
 	if (m) {
-		return { name: m[4], params: m[5], async: !!m[3] };
+		return { name: m[4], params: m[5], async: !!m[3], bodyLine: idx };
 	}
+
+	// Multi-line function signature: `function foo(` without closing `)` on same line
+	const multiStart = line.match(/^(\s*)(export\s+)?(async\s+)?function\s+(\w+)\s*\(/);
+	if (multiStart && !line.includes(')')) {
+		const params = collectMultiLineParams(lines, idx);
+		const closeLine = findClosingParen(lines, idx);
+		return { name: multiStart[4], params, async: !!multiStart[3], bodyLine: closeLine };
+	}
+
 	// Arrow function assigned to const
-	const arrow = line.match(/^(\s*)(export\s+)?(const|let)\s+(\w+)\s*=\s*(async\s+)?\([^)]*\)\s*(=>|:\s*\w+\s*=>)/);
+	const arrow = line.match(/^(\s*)(export\s+)?(const|let)\s+(\w+)\s*=\s*(async\s+)?\(/);
 	if (arrow) {
-		return { name: arrow[4], params: '', async: !!arrow[5] };
+		// Check if the closing paren + arrow is on this line or a later line
+		if (line.includes(')')) {
+			return { name: arrow[4], params: '', async: !!arrow[5], bodyLine: idx };
+		}
+		const closeLine = findClosingParen(lines, idx);
+		return { name: arrow[4], params: '', async: !!arrow[5], bodyLine: closeLine };
 	}
 	return null;
+}
+
+function collectMultiLineParams(lines: string[], start: number): string {
+	const parts: string[] = [];
+	for (let i = start; i < lines.length; i++) {
+		parts.push(lines[i]);
+		if (lines[i].includes(')')) {
+			break;
+		}
+	}
+	const joined = parts.join(' ');
+	const inner = joined.match(/\(([^)]*)\)/);
+	return inner ? inner[1] : '';
+}
+
+function findClosingParen(lines: string[], start: number): number {
+	let depth = 0;
+	for (let i = start; i < lines.length; i++) {
+		for (const ch of lines[i]) {
+			if (ch === '(') {
+				depth++;
+			} else if (ch === ')') {
+				depth--;
+				if (depth <= 0) {
+					return i;
+				}
+			}
+		}
+	}
+	return start;
 }
 
 function describeParams(params: string): string {

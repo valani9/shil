@@ -17,7 +17,8 @@ import { IEditorOptions } from '../../../../platform/editor/common/editor.js';
 import { EditorInput } from '../../../common/editor/editorInput.js';
 import { ShilReaderInput, SHIL_READER_EDITOR_ID } from './shilReaderInput.js';
 import { parseToReaderDoc } from './shilReaderParser.js';
-import type { ReaderDoc, ReaderSpan, SpanKind } from './shilReaderTypes.js';
+import { scanConnections } from './shilReaderConnections.js';
+import type { ReaderDoc, ReaderSpan, SpanKind, Connection, ConnectionRole } from './shilReaderTypes.js';
 import { ILanguageService } from '../../../../editor/common/languages/language.js';
 import { DisposableStore } from '../../../../base/common/lifecycle.js';
 import { IEditorService } from '../../../services/editor/common/editorService.js';
@@ -28,7 +29,9 @@ export class ShilReaderPane extends EditorPane {
 	static readonly ID = SHIL_READER_EDITOR_ID;
 
 	private container: HTMLElement | undefined;
+	private mainColumn: HTMLElement | undefined;
 	private contentElement: HTMLElement | undefined;
+	private railElement: HTMLElement | undefined;
 	private currentDoc: ReaderDoc | undefined;
 	private currentResource: import('../../../../base/common/uri.js').URI | undefined;
 	private readonly paneDisposables = this._register(new DisposableStore());
@@ -49,9 +52,17 @@ export class ShilReaderPane extends EditorPane {
 		this.container = document.createElement('div');
 		this.container.className = 'shil-reader-container';
 
+		this.mainColumn = document.createElement('div');
+		this.mainColumn.className = 'shil-reader-main';
+
 		this.contentElement = document.createElement('div');
 		this.contentElement.className = 'shil-reader-content';
-		this.container.appendChild(this.contentElement);
+		this.mainColumn.appendChild(this.contentElement);
+		this.container.appendChild(this.mainColumn);
+
+		this.railElement = document.createElement('aside');
+		this.railElement.className = 'shil-reader-rail';
+		this.container.appendChild(this.railElement);
 
 		parent.appendChild(this.container);
 	}
@@ -77,6 +88,15 @@ export class ShilReaderPane extends EditorPane {
 			const languageId = this.languageService.guessLanguageIdByFilepathOrFirstLine(input.fileResource) ?? 'plaintext';
 			this.currentDoc = parseToReaderDoc(source, input.fileResource.path, languageId);
 			this.renderDoc(this.currentDoc);
+
+			// Scan connections in background (non-blocking)
+			scanConnections(input.fileResource.path, source, this.fileService).then(connections => {
+				if (token.isCancellationRequested) {
+					return;
+				}
+				this.currentDoc!.connections = connections;
+				this.renderRail(connections);
+			});
 		} catch {
 			this.renderError();
 		}
@@ -189,6 +209,73 @@ export class ShilReaderPane extends EditorPane {
 		this.contentElement.appendChild(msg);
 	}
 
+	private renderRail(connections: Connection[]): void {
+		if (!this.railElement) {
+			return;
+		}
+		this.railElement.textContent = '';
+
+		if (connections.length === 0) {
+			const empty = document.createElement('div');
+			empty.className = 'shil-rail-empty';
+			empty.textContent = 'No connections found.';
+			this.railElement.appendChild(empty);
+			return;
+		}
+
+		// Group by role, ordered: calledBy → reads → writes → imports
+		const roleOrder: ConnectionRole[] = ['calledBy', 'reads', 'writes', 'imports'];
+		const grouped = new Map<ConnectionRole, Connection[]>();
+		for (const conn of connections) {
+			const list = grouped.get(conn.role);
+			if (list) {
+				list.push(conn);
+			} else {
+				grouped.set(conn.role, [conn]);
+			}
+		}
+
+		// Rail header
+		const header = document.createElement('div');
+		header.className = 'shil-rail-header';
+		header.innerHTML = `<span class="shil-rail-kicker">WHAT BREAKS</span>`;
+		this.railElement.appendChild(header);
+
+		for (const role of roleOrder) {
+			const conns = grouped.get(role);
+			if (!conns || conns.length === 0) {
+				continue;
+			}
+
+			const section = document.createElement('div');
+			section.className = `shil-rail-section shil-rail-section--${role}`;
+
+			const heading = document.createElement('div');
+			heading.className = 'shil-rail-section-heading';
+			heading.textContent = roleHeading(role);
+			section.appendChild(heading);
+
+			for (const conn of conns) {
+				const item = document.createElement('div');
+				item.className = `shil-rail-item shil-rail-item--${roleTone(role)}`;
+
+				const title = document.createElement('div');
+				title.className = 'shil-rail-item-title';
+				title.textContent = conn.title;
+				item.appendChild(title);
+
+				const breaks = document.createElement('div');
+				breaks.className = 'shil-rail-item-breaks';
+				breaks.textContent = conn.breaks;
+				item.appendChild(breaks);
+
+				section.appendChild(item);
+			}
+
+			this.railElement.appendChild(section);
+		}
+	}
+
 	override clearInput(): void {
 		super.clearInput();
 		this.paneDisposables.clear();
@@ -196,6 +283,9 @@ export class ShilReaderPane extends EditorPane {
 		this.currentResource = undefined;
 		if (this.contentElement) {
 			this.contentElement.textContent = '';
+		}
+		if (this.railElement) {
+			this.railElement.textContent = '';
 		}
 	}
 
@@ -222,5 +312,23 @@ function kindLabel(kind: SpanKind): string {
 		case 'narration': return 'NARRATIVE';
 		case 'declaration': return 'DECLARATION';
 		case 'export': return 'EXPORT';
+	}
+}
+
+function roleHeading(role: ConnectionRole): string {
+	switch (role) {
+		case 'calledBy': return 'If you change this, these break';
+		case 'reads': return 'Other screens reading the same data';
+		case 'writes': return 'Writes to your database';
+		case 'imports': return 'This file relies on';
+	}
+}
+
+function roleTone(role: ConnectionRole): string {
+	switch (role) {
+		case 'calledBy': return 'breaks';
+		case 'reads': return 'breaks';
+		case 'writes': return 'data';
+		case 'imports': return 'safe';
 	}
 }
