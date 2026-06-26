@@ -172,10 +172,41 @@ body {
 }
 .monaco-workbench .quick-input-list .monaco-list-row { border-radius: 8px; }
 
-/* Status bar: hidden by default. When toggled on via View menu, it appears as a
-   slim instrument strip — 22px, tight font, near-invisible until needed. */
-.monaco-workbench .part.statusbar { height: 22px !important; font-size: 10px; }
-.monaco-workbench .part.statusbar .statusbar-item { font-size: 10px; line-height: 22px; }
+/* ---- STATUS BAR — slim instrument strip with Shil branding.
+   22px, Martian Mono, dimmed at rest, lime accents on hover. ---- */
+.monaco-workbench .part.statusbar {
+	height: 22px !important;
+	font-family: 'Martian Mono', 'JetBrains Mono', monospace !important;
+	font-size: 9.5px !important;
+	letter-spacing: 0.04em;
+	opacity: 0.55;
+	transition: opacity 200ms ease;
+}
+.monaco-workbench .part.statusbar:hover {
+	opacity: 0.85;
+}
+.monaco-workbench .part.statusbar .statusbar-item {
+	font-size: 9.5px;
+	line-height: 22px;
+	font-family: inherit !important;
+}
+/* Statusbar item labels: tighter padding, dimmed text. */
+.monaco-workbench .part.statusbar > .items-container > .statusbar-item > .statusbar-item-label {
+	padding: 0 4px;
+}
+/* Hover: lime tint on individual items. */
+.monaco-workbench .part.statusbar > .items-container > .statusbar-item > a:hover:not(.disabled) {
+	background-color: rgba(194, 242, 77, 0.08) !important;
+}
+/* Active click: deeper lime pulse. */
+.monaco-workbench .part.statusbar > .items-container > .statusbar-item > a:active:not(.disabled) {
+	background-color: rgba(194, 242, 77, 0.15) !important;
+}
+/* Codicons in status bar: slightly smaller to fit 22px height. */
+.monaco-workbench .part.statusbar > .items-container > .statusbar-item span.codicon {
+	font-size: 12px !important;
+	line-height: 22px;
+}
 
 /* ---- SCROLLBARS — thin, dimmed, rounded. Invisible at rest, appear on scroll/hover.
    Premium feel: narrow tracks, ghostly thumbs that brighten on interaction. ---- */
@@ -382,12 +413,23 @@ body {
 }
 
 /* ============================================================================
- *  SIDEBAR BRANDING — lime accent when sidebar is visible.
+ *  SIDEBAR BRANDING — drawer shadow, lime accent when sidebar is visible.
  * ========================================================================== */
 
 /* Sidebar composite title: lime hairline at top for brand signal when open. */
 .monaco-workbench .part.sidebar > .composite.title {
 	border-top: 1px solid rgba(194, 242, 77, 0.25);
+}
+
+/* Drawer shadow: dramatic right-edge shadow when sidebar is open for depth. */
+.monaco-workbench:not(.sidebar-hidden) .part.sidebar {
+	box-shadow: 8px 0 32px -4px rgba(0, 0, 0, 0.45),
+	            inset -1px 0 0 0 rgba(150, 158, 174, 0.08) !important;
+	z-index: 1;
+}
+/* Reset when hidden so the shadow doesn't flash during close transition. */
+.monaco-workbench.sidebar-hidden .part.sidebar {
+	box-shadow: none !important;
 }
 
 /* ============================================================================
@@ -974,7 +1016,9 @@ body {
  * ========================================================================== */
 
 .monaco-workbench .part.sidebar {
-	transition: width 180ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms ease;
+	transition: width 180ms cubic-bezier(0.22, 1, 0.36, 1),
+	            opacity 180ms ease,
+	            box-shadow 180ms ease;
 }
 /* When sidebar is hidden, the class is added. Fade out. */
 .monaco-workbench.sidebar-hidden .part.sidebar {
@@ -984,6 +1028,16 @@ body {
 /* The editor area also transitions smoothly when sidebar appears/disappears. */
 .monaco-workbench .part.editor {
 	transition: width 180ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+/* Editor dim: subtle darkening when sidebar drawer is open (cinematic focus). */
+.monaco-workbench:not(.sidebar-hidden) .part.editor > .content {
+	filter: brightness(0.92);
+	transition: filter 250ms ease;
+}
+.monaco-workbench.sidebar-hidden .part.editor > .content {
+	filter: brightness(1);
+	transition: filter 250ms ease;
 }
 
 /* ============================================================================
