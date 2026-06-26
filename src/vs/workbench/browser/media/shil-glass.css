@@ -2475,3 +2475,293 @@ body.shil-sidebar-resizing * {
 .monaco-workbench .part.titlebar .titlebar-right .action-item .action-label:active {
 	opacity: 1;
 }
+
+/* ============================================================================
+ *  INTEGRATED TERMINAL DEEP STYLING — beyond tabs, the terminal body itself.
+ *  Terminal cursor, selection, find widget, link decorations, and the inner
+ *  container get premium treatment matching the editor content area.
+ * ========================================================================== */
+
+/* Terminal container: tight padding, no extra chrome. */
+.monaco-workbench .part.panel .terminal-outer-container .xterm {
+	padding: 4px 0 0 4px;
+}
+/* Terminal find widget: glass treatment, rounded, matching editor find. */
+.monaco-workbench .terminal-find-widget {
+	border-radius: 0 0 8px 8px !important;
+	-webkit-backdrop-filter: blur(12px) saturate(1.4) !important;
+	backdrop-filter: blur(12px) saturate(1.4) !important;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), inset 0 0 0 0.5px rgba(140, 147, 168, 0.12) !important;
+	overflow: hidden;
+}
+/* Terminal find input: rounded, lime focus. */
+.monaco-workbench .terminal-find-widget .monaco-inputbox {
+	border-radius: 6px !important;
+	font-family: 'JetBrains Mono', monospace !important;
+	font-size: 12px !important;
+}
+/* Terminal find match count: instrument voice. */
+.monaco-workbench .terminal-find-widget .matchesCount {
+	font-family: 'Martian Mono', monospace;
+	font-size: 9px;
+	letter-spacing: 0.04em;
+	opacity: 0.55;
+}
+/* Terminal find buttons: ghost until hover. */
+.monaco-workbench .terminal-find-widget .button {
+	border-radius: 4px !important;
+	opacity: 0.55;
+	transition: opacity 150ms ease, background-color 150ms ease;
+}
+.monaco-workbench .terminal-find-widget .button:hover {
+	opacity: 0.85;
+}
+.monaco-workbench .terminal-find-widget .button.active {
+	opacity: 1;
+	background-color: rgba(194, 242, 77, 0.14) !important;
+}
+/* Terminal link decorations: lime underline on hover. */
+.monaco-workbench .xterm-link-decoration {
+	border-bottom-color: rgba(194, 242, 77, 0.50) !important;
+}
+/* Terminal command decorations (marks): subtle, not distracting. */
+.monaco-workbench .xterm-decoration-overview-ruler {
+	opacity: 0.50;
+}
+/* Terminal split pane divider: thin lime hairline. */
+.monaco-workbench .part.panel .split-view-view:not(:first-child)::before {
+	background-color: rgba(140, 147, 168, 0.12) !important;
+}
+
+/* ============================================================================
+ *  WELCOME PAGE DEEP POLISH — walkthrough cards, getting started content,
+ *  step buttons, and category descriptions get premium typography and
+ *  glass depth treatment.
+ * ========================================================================== */
+
+/* Welcome container: centered, breathing room. */
+.monaco-workbench .gettingStartedContainer {
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
+}
+/* Welcome title: Hanken Grotesk, large, slightly dimmed. */
+.monaco-workbench .gettingStartedContainer .gettingStartedSlide .getting-started-category-title {
+	font-family: 'Hanken Grotesk', system-ui, sans-serif !important;
+	font-weight: 600;
+}
+/* Welcome category description: readable prose. */
+.monaco-workbench .gettingStartedContainer .gettingStartedSlide .category-description-container .description {
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
+	font-size: 13px;
+	line-height: 1.5;
+	opacity: 0.78;
+}
+/* Getting started step: rounded card, tight spacing. */
+.monaco-workbench .gettingStartedContainer .gettingStartedSlide .getting-started-step {
+	border-radius: 8px;
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
+	padding: 8px 12px;
+}
+/* Step title: slightly brighter for hierarchy. */
+.monaco-workbench .gettingStartedContainer .gettingStartedSlide .getting-started-step .step-title {
+	font-weight: 500;
+}
+/* Step description body: readable. */
+.monaco-workbench .gettingStartedContainer .gettingStartedSlide .getting-started-step .step-description {
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
+	font-size: 12.5px;
+	line-height: 1.5;
+	opacity: 0.75;
+}
+/* Step action button: rounded, lime primary. */
+.monaco-workbench .gettingStartedContainer .gettingStartedSlide .getting-started-step .monaco-button {
+	border-radius: 6px !important;
+	font-family: 'Hanken Grotesk', system-ui, sans-serif !important;
+	font-size: 12px;
+	font-weight: 500;
+}
+/* Welcome recent list (Open Recent): tighter, calmer. */
+.monaco-workbench .gettingStartedContainer .recently-opened-list .recent-folder-item {
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
+	border-radius: 6px;
+}
+/* Welcome recent path: instrument voice. */
+.monaco-workbench .gettingStartedContainer .recently-opened-list .recent-folder-item .path {
+	font-family: 'Martian Mono', monospace;
+	font-size: 9px;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	opacity: 0.45;
+}
+/* Welcome top nav (category tabs): instrument voice labels. */
+.monaco-workbench .gettingStartedContainer .gettingStartedSlide .header .subtitle {
+	font-family: 'Martian Mono', monospace;
+	font-size: 10px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	opacity: 0.50;
+}
+
+/* ============================================================================
+ *  TAB BAR GRAIN TEXTURE — extend the editor grain to the tab strip area
+ *  for visual cohesion. Ultra-subtle (1.5% opacity) so it doesn't compete
+ *  with tab labels.
+ * ========================================================================== */
+
+.monaco-workbench .part.editor > .content .editor-group-container > .title::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	z-index: 0;
+	opacity: 0.015;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+	background-repeat: repeat;
+	background-size: 200px 200px;
+	mix-blend-mode: overlay;
+}
+
+/* ============================================================================
+ *  TESTING VIEW — test explorer icons, pass/fail states, and test results
+ *  get the Shil treatment with lime success, brand-consistent typography.
+ * ========================================================================== */
+
+/* Testing view labels: Hanken Grotesk for readability. */
+.monaco-workbench .test-explorer .test-item-label {
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
+	font-size: 12px;
+}
+/* Test result counts: instrument voice. */
+.monaco-workbench .testing-count-badge {
+	font-family: 'Martian Mono', monospace;
+	font-size: 9px;
+	letter-spacing: 0.04em;
+}
+/* Test output (peek view in editor): glass treatment. */
+.monaco-workbench .test-output-peek .zone-widget {
+	border-radius: 8px !important;
+	overflow: hidden;
+}
+/* Testing peek header: instrument voice. */
+.monaco-workbench .test-output-peek .peekview-title .filename {
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
+}
+/* Testing peek message: Hanken Grotesk for readability. */
+.monaco-workbench .test-output-peek .test-output-peek-message-container {
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
+	font-size: 12.5px;
+	line-height: 1.5;
+}
+
+/* ============================================================================
+ *  EDITOR INLINE EDIT / INLINE CHAT — the inline edit widget that appears
+ *  for AI-suggested edits in the editor. Glass treatment for the diff view,
+ *  accept/reject buttons, and status indicator.
+ * ========================================================================== */
+
+/* Inline edit widget: glass container. */
+.monaco-workbench .inline-edit-widget {
+	border-radius: 8px !important;
+	-webkit-backdrop-filter: blur(12px) saturate(1.4) !important;
+	backdrop-filter: blur(12px) saturate(1.4) !important;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), inset 0 0 0 0.5px rgba(140, 147, 168, 0.12) !important;
+}
+/* Inline edit toolbar: ghost buttons. */
+.monaco-workbench .inline-edit-widget .action-item .action-label {
+	opacity: 0.65;
+	transition: opacity 150ms ease;
+	border-radius: 4px;
+}
+.monaco-workbench .inline-edit-widget .action-item .action-label:hover {
+	opacity: 1;
+}
+
+/* ============================================================================
+ *  EDITOR DOCUMENT HIGHLIGHTS — when you click a symbol, all occurrences
+ *  get a subtle background tint. Lime-tinted for brand cohesion.
+ * ========================================================================== */
+
+/* Document highlights: the CSS classes come from the theme, but we ensure
+   the border radius on the overlapping decorations is tight. */
+.monaco-workbench .monaco-editor .wordHighlight,
+.monaco-workbench .monaco-editor .wordHighlightStrong,
+.monaco-workbench .monaco-editor .wordHighlightText {
+	border-radius: 2px;
+}
+
+/* ============================================================================
+ *  PANEL HEADER DROPDOWN — the output/terminal channel selector dropdown
+ *  in the panel header area. Instrument voice, tighter.
+ * ========================================================================== */
+
+/* Panel composite bar dropdown (Output channel, Terminal profile): instrument voice. */
+.monaco-workbench .part.panel .composite.title .action-item.select-container .monaco-select-box {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 10px !important;
+	letter-spacing: 0.03em;
+	border-radius: 4px !important;
+	padding: 0 6px !important;
+}
+
+/* ============================================================================
+ *  EDITOR STICKY WIDGET ENHANCED — better scroll-shadow transition and
+ *  font consistency for when sticky scroll is re-enabled.
+ * ========================================================================== */
+
+/* Sticky scroll lines: match editor JetBrains Mono. */
+.monaco-workbench .monaco-editor .sticky-widget .sticky-line-content {
+	font-family: 'JetBrains Mono', monospace;
+}
+/* Sticky scroll line numbers in gutter: dimmed, matching editor gutter. */
+.monaco-workbench .monaco-editor .sticky-widget .sticky-line-number {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 11px;
+	opacity: 0.40;
+}
+
+/* ============================================================================
+ *  STATUS BAR ENHANCED — item separator styling, hover micro-interactions,
+ *  and tighter spacing for the slim instrument strip.
+ * ========================================================================== */
+
+/* Status bar item separators: invisible hairlines for cleaner look. */
+.monaco-workbench .part.statusbar .statusbar-item::after {
+	width: 0 !important;
+}
+/* Status bar language mode indicator: instrument voice. */
+.monaco-workbench .part.statusbar .statusbar-item .editor-status-mode {
+	font-family: 'Martian Mono', monospace;
+	font-size: 10px;
+	letter-spacing: 0.03em;
+}
+/* Status bar encoding selector: instrument voice. */
+.monaco-workbench .part.statusbar .statusbar-item .editor-status-encoding {
+	font-family: 'Martian Mono', monospace;
+	font-size: 10px;
+	letter-spacing: 0.03em;
+}
+/* Status bar EOL indicator: instrument voice. */
+.monaco-workbench .part.statusbar .statusbar-item .editor-status-eol {
+	font-family: 'Martian Mono', monospace;
+	font-size: 10px;
+	letter-spacing: 0.03em;
+}
+/* Status bar indentation indicator: instrument voice. */
+.monaco-workbench .part.statusbar .statusbar-item .editor-status-indentation {
+	font-family: 'Martian Mono', monospace;
+	font-size: 10px;
+	letter-spacing: 0.03em;
+}
+/* Status bar cursor position: instrument voice, lime on active. */
+.monaco-workbench .part.statusbar .statusbar-item .editor-status-selection {
+	font-family: 'Martian Mono', monospace;
+	font-size: 10px;
+	letter-spacing: 0.03em;
+}
+/* Status bar feedback/notification icons: ghost until hover. */
+.monaco-workbench .part.statusbar .statusbar-item a.codicon {
+	opacity: 0.50;
+	transition: opacity 150ms ease;
+}
+.monaco-workbench .part.statusbar .statusbar-item a.codicon:hover {
+	opacity: 0.85;
+}
