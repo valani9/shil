@@ -202,6 +202,10 @@ export function defaultBrowserWindowOptions(accessor: ServicesAccessor, windowSt
 		options.vibrancy = 'under-window';
 		options.visualEffectState = 'active';
 		options.backgroundColor = '#00000000'; // let the native vibrancy material show; do NOT cover it with an opaque color
+
+		// Shil: position macOS traffic lights (close/min/zoom) vertically centered
+		// in the slim 30px title bar, inset slightly from the left edge.
+		options.trafficLightPosition = { x: 12, y: 9 };
 	}
 
 	if (overrides?.disableFullscreen) {

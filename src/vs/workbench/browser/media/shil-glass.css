@@ -156,25 +156,7 @@ body {
 }
 .monaco-workbench .monaco-list .monaco-list-row.selected { color: #F2F6FF; }
 
-/* Single-tab mode: the active file as a calm, minimal label — not a cluttered tab strip.
-   In multi-tab fallback, keep the refined cards. */
-.monaco-workbench .tabs-container { height: 32px !important; }
-.monaco-workbench .tab {
-	font-family: 'JetBrains Mono', monospace; font-size: 11px;
-	border: none !important; margin: 3px 1px 0; border-radius: 6px 6px 0 0;
-}
-.monaco-workbench .tab.active {
-	background-color: rgba(194, 242, 77, 0.06) !important;
-	box-shadow: inset 0 1px 0 0 #C2F24D, inset 0 0 0 1px rgba(194, 242, 77, 0.14);
-}
-/* Single-tab specific: the tab expands full width — style it as a quiet file label,
-   not a prominent tab card. Lime top edge only. */
-.monaco-workbench .editor-group-container .title.tabs.show-file-icons.single-tab .tab.active {
-	background-color: transparent !important;
-	box-shadow: inset 0 1px 0 0 rgba(194, 242, 77, 0.4);
-	border-radius: 0;
-	margin: 0;
-}
+/* Tab styling moved to TAB BAR REINVENTION section below. */
 
 /* Inputs: refined, lime focus ring. */
 .monaco-workbench .monaco-inputbox { border-radius: 7px; }
@@ -255,11 +237,7 @@ body {
 	border-left-color: rgba(194, 242, 77, 0.2) !important;
 }
 
-/* When sidebar is hidden, the editor breathes full width — the reader pane
-   becomes the centered hero. No visual artifact from missing sidebar. */
-.monaco-workbench .part.editor {
-	transition: none; /* no jarring slide when toggling sidebar */
-}
+/* Editor transition moved to SIDEBAR SLIDE TRANSITION section below. */
 
 /* ============================================================================
  *  PANEL (Terminal / Output / Problems) — hidden by default. When toggled on
@@ -908,4 +886,130 @@ body {
 .monaco-workbench .part.banner .action-label {
 	font-family: 'Hanken Grotesk', sans-serif !important;
 	border-radius: 6px;
+}
+
+/* ============================================================================
+ *  EDITOR INNER VIGNETTE — subtle recessed depth on the content area.
+ *  A soft inset shadow gives the opaque editor ground a premium "sunken
+ *  well" feel, separating content from chrome without a hard border.
+ * ========================================================================== */
+
+.monaco-workbench .part.editor > .content {
+	box-shadow:
+		inset 0 8px 24px -8px rgba(0, 0, 0, 0.35),
+		inset 0 -4px 16px -8px rgba(0, 0, 0, 0.15) !important;
+}
+/* The vignette sits on the content wrapper; individual editor containers
+   stay clean so minimap/scrollbar hit zones are unaffected. */
+
+/* ============================================================================
+ *  TAB BAR REINVENTION — pill-shaped tabs, slimmer, less VS Code.
+ *  Multi-tab strip feels calm and original. Inactive tabs are ghostly;
+ *  active tab is a subtle pill with lime top accent.
+ * ========================================================================== */
+
+/* Tabs container: even slimmer, tighter. */
+.monaco-workbench .tabs-container { height: 30px !important; }
+
+/* Base tab: pill shape, ghostly inactive state. */
+.monaco-workbench .tab {
+	font-family: 'JetBrains Mono', monospace; font-size: 10.5px;
+	border: none !important;
+	margin: 4px 2px 2px !important;
+	border-radius: 8px !important;
+	padding: 0 10px !important;
+	opacity: 0.5;
+	transition: opacity 150ms ease, background-color 150ms ease, box-shadow 150ms ease;
+}
+/* Tab hover: ghost in. */
+.monaco-workbench .tab:hover {
+	opacity: 0.8;
+	background-color: rgba(150, 158, 174, 0.06) !important;
+}
+/* Active tab: pill with lime accent, full opacity. */
+.monaco-workbench .tab.active {
+	opacity: 1;
+	background-color: rgba(194, 242, 77, 0.05) !important;
+	box-shadow: inset 0 1px 0 0 rgba(194, 242, 77, 0.5), 0 1px 4px -1px rgba(0, 0, 0, 0.2) !important;
+}
+/* Tab label text: tighter for the smaller size. */
+.monaco-workbench .tab .tab-label a {
+	line-height: 24px !important;
+}
+/* Tab description (path suffix): dimmer, smaller. */
+.monaco-workbench .tab .tab-description {
+	font-size: 9px !important;
+	opacity: 0.5;
+}
+
+/* Single-tab mode override: expand full, calmer lime top edge only. */
+.monaco-workbench .editor-group-container .title.tabs.show-file-icons.single-tab .tab.active {
+	background-color: transparent !important;
+	box-shadow: inset 0 1px 0 0 rgba(194, 242, 77, 0.35) !important;
+	border-radius: 0 !important;
+	margin: 0 !important;
+	opacity: 1;
+	padding: 0 12px !important;
+}
+
+/* Multi-tab separator: subtle vertical hairline between tabs. */
+.monaco-workbench .tab + .tab::before {
+	content: '';
+	position: absolute;
+	left: -1px;
+	top: 25%;
+	height: 50%;
+	width: 1px;
+	background-color: rgba(150, 158, 174, 0.08);
+}
+.monaco-workbench .tab.active + .tab::before,
+.monaco-workbench .tab + .tab.active::before {
+	background-color: transparent;
+}
+
+/* ============================================================================
+ *  SIDEBAR SLIDE TRANSITION — smooth reveal/hide animation.
+ *  When sidebar toggles, it slides in/out with a subtle eased motion
+ *  instead of an instant snap. Premium, calm, keyboard-driven.
+ * ========================================================================== */
+
+.monaco-workbench .part.sidebar {
+	transition: width 180ms cubic-bezier(0.22, 1, 0.36, 1), opacity 180ms ease;
+}
+/* When sidebar is hidden, the class is added. Fade out. */
+.monaco-workbench.sidebar-hidden .part.sidebar {
+	opacity: 0;
+}
+
+/* The editor area also transitions smoothly when sidebar appears/disappears. */
+.monaco-workbench .part.editor {
+	transition: width 180ms cubic-bezier(0.22, 1, 0.36, 1) !important;
+}
+
+/* ============================================================================
+ *  TITLE BAR — macOS traffic light integration.
+ *  With trafficLightPosition set in Electron config, the title bar needs
+ *  left padding so the window title doesn't overlap the traffic lights.
+ * ========================================================================== */
+
+.monaco-workbench .part.titlebar .titlebar-left {
+	padding-left: 68px;
+}
+/* Center the window title text in the remaining space. */
+.monaco-workbench .part.titlebar .window-title {
+	text-align: center;
+}
+
+/* ============================================================================
+ *  INACTIVE EDITOR GROUP — when multiple editor groups exist, dim the
+ *  inactive ones slightly to guide the eye to the active group.
+ * ========================================================================== */
+
+.monaco-workbench .editor-group-container:not(.active) {
+	opacity: 0.85;
+	transition: opacity 200ms ease;
+}
+.monaco-workbench .editor-group-container.active {
+	opacity: 1;
+	transition: opacity 200ms ease;
 }
