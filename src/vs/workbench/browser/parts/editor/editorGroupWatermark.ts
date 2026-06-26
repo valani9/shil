@@ -29,9 +29,7 @@ interface WatermarkEntry {
 	};
 }
 
-const showChatContextKey = ContextKeyExpr.and(ContextKeyExpr.equals('chatSetupHidden', false), ContextKeyExpr.equals('chatSetupDisabledInWorkspace', false));
-
-const openChat: WatermarkEntry = { text: localize('watermark.openChat', "Open Chat"), id: 'workbench.action.chat.open', when: { native: showChatContextKey, web: showChatContextKey } };
+const toggleReader: WatermarkEntry = { text: localize('watermark.toggleReader', "Toggle Reader"), id: 'shil.toggleReader' };
 const showCommands: WatermarkEntry = { text: localize('watermark.showCommands', "Show All Commands"), id: 'workbench.action.showCommands' };
 const gotoFile: WatermarkEntry = { text: localize('watermark.quickAccess', "Go to File"), id: 'workbench.action.quickOpen' };
 const openFile: WatermarkEntry = { text: localize('watermark.openFile', "Open File"), id: 'workbench.action.files.openFile' };
@@ -45,7 +43,7 @@ const startDebugging: WatermarkEntry = { text: localize('watermark.startDebuggin
 const openSettings: WatermarkEntry = { text: localize('watermark.openSettings', "Open Settings"), id: 'workbench.action.openSettings' };
 
 const baseEntries: WatermarkEntry[] = [
-	openChat,
+	toggleReader,
 	showCommands,
 ];
 
@@ -103,10 +101,20 @@ export class EditorGroupWatermark extends Disposable {
 			h('.editor-group-watermark', [
 				h('.watermark-container', [
 					h('.letterpress'),
+					h('.shil-watermark-brand@brand'),
 					h('.shortcuts@shortcuts'),
 				])
 			])
 		]);
+
+		// Shil: branded wordmark replacing the VS Code letterpress.
+		const brandEl = elements.brand;
+		const wordmark = $('span.shil-watermark-wordmark');
+		wordmark.textContent = 'shil';
+		brandEl.appendChild(wordmark);
+		const tagline = $('span.shil-watermark-tagline');
+		tagline.textContent = 'your code, explained';
+		brandEl.appendChild(tagline);
 
 		append(container, elements.root);
 		this.shortcuts = elements.shortcuts;

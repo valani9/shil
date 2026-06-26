@@ -18,7 +18,7 @@ import { IThemeService } from '../../../../platform/theme/common/themeService.js
 import { PANEL_BACKGROUND, PANEL_BORDER, PANEL_TITLE_BORDER, PANEL_ACTIVE_TITLE_FOREGROUND, PANEL_INACTIVE_TITLE_FOREGROUND, PANEL_ACTIVE_TITLE_BORDER, PANEL_DRAG_AND_DROP_BORDER, PANEL_TITLE_BADGE_BACKGROUND, PANEL_TITLE_BADGE_FOREGROUND } from '../../../common/theme.js';
 import { contrastBorder } from '../../../../platform/theme/common/colorRegistry.js';
 import { INotificationService } from '../../../../platform/notification/common/notification.js';
-import { Dimension } from '../../../../base/browser/dom.js';
+import { addDisposableListener, Dimension, EventType, isAncestorUsingFlowTo } from '../../../../base/browser/dom.js';
 import { IContextKeyService } from '../../../../platform/contextkey/common/contextkey.js';
 import { assertReturnsDefined } from '../../../../base/common/types.js';
 import { IExtensionService } from '../../../services/extensions/common/extensions.js';
@@ -114,6 +114,22 @@ export class PanelPart extends AbstractPaneCompositePart {
 		this._register(this.configurationService.onDidChangeConfiguration(e => {
 			if (e.affectsConfiguration('workbench.panel.showLabels')) {
 				this.updateCompositeBar(true);
+			}
+		}));
+	}
+
+	override create(parent: HTMLElement): void {
+		super.create(parent);
+
+		// Shil: Escape key dismisses panel when it has focus (keyboard complement to Cmd+J toggle).
+		this._register(addDisposableListener(parent, EventType.KEY_DOWN, (e: KeyboardEvent) => {
+			if (e.key === 'Escape' && this.layoutService.isVisible(Parts.PANEL_PART)) {
+				const active = parent.ownerDocument.activeElement;
+				if (active && isAncestorUsingFlowTo(active, parent)) {
+					e.preventDefault();
+					e.stopPropagation();
+					this.layoutService.setPartHidden(true, Parts.PANEL_PART);
+				}
 			}
 		}));
 	}

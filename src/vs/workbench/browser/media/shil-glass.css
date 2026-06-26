@@ -219,12 +219,27 @@ body {
 	outline: 1px solid rgba(194, 242, 77, 0.5) !important; outline-offset: -1px;
 }
 
-/* Command palette / quick input: a premium centered modal. */
+/* Command palette / quick input: a premium centered modal with glass depth. */
 .monaco-workbench .quick-input-widget {
 	border-radius: 14px !important; margin-top: 8vh !important;
 	box-shadow: 0 24px 64px -12px rgba(0, 0, 0, 0.72), inset 0 0 0 1px rgba(150, 158, 174, 0.14) !important;
+	-webkit-backdrop-filter: blur(20px) saturate(1.4);
+	backdrop-filter: blur(20px) saturate(1.4);
+}
+/* Search input inside command palette: calmer, rounded. */
+.monaco-workbench .quick-input-widget .quick-input-box .input {
+	border-radius: 8px !important;
+	font-family: 'Hanken Grotesk', -apple-system, sans-serif !important;
+	font-size: 13px !important;
 }
 .monaco-workbench .quick-input-list .monaco-list-row { border-radius: 8px; }
+/* Keybinding labels in quick input: Martian Mono instrument. */
+.monaco-workbench .quick-input-list .monaco-list-row .monaco-keybinding-key {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 9px !important;
+	letter-spacing: 0.03em;
+	border-radius: 4px;
+}
 
 /* ---- STATUS BAR — slim instrument strip with Shil branding.
    22px, Martian Mono, dimmed at rest, lime accents on hover. ---- */
@@ -834,13 +849,38 @@ body.shil-sidebar-resizing * {
  *  to feel like Shil, not VS Code.
  * ========================================================================== */
 
-/* Watermark container: centered, calmer. */
+/* Watermark container: centered, calmer. Opacity lifted to 0.7 for Shil brand presence. */
 .monaco-workbench .editor-group-watermark {
-	opacity: 0.5;
+	opacity: 0.7;
 }
 /* The VS Code letterpress logo: hide it — Shil has its own identity. */
 .monaco-workbench .editor-group-watermark .letterpress {
 	display: none !important;
+}
+/* Shil watermark brand: wordmark + tagline replacing the VS Code letterpress. */
+.monaco-workbench .editor-group-watermark .shil-watermark-brand {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: 6px;
+	margin-bottom: 24px;
+}
+.monaco-workbench .editor-group-watermark .shil-watermark-wordmark {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 32px;
+	font-weight: 600;
+	letter-spacing: 0.12em;
+	color: #C2F24D;
+	opacity: 0.35;
+	text-transform: lowercase;
+}
+.monaco-workbench .editor-group-watermark .shil-watermark-tagline {
+	font-family: 'Hanken Grotesk', sans-serif !important;
+	font-size: 13px;
+	font-weight: 400;
+	letter-spacing: 0.04em;
+	color: #8A8F98;
+	opacity: 0.5;
 }
 /* Shortcut labels in the watermark: Shil instrument voice. */
 .monaco-workbench .editor-group-watermark .shortcuts .watermark-box dl > dt {
@@ -1301,4 +1341,33 @@ body.shil-sidebar-resizing * {
 .monaco-workbench .editor-group-container.active {
 	opacity: 1;
 	transition: opacity 200ms ease;
+}
+
+/* ============================================================================
+ *  TAB DRAG VISUAL POLISH — when dragging tabs between groups, show a
+ *  premium lime drop indicator instead of the default blue.
+ * ========================================================================== */
+
+/* Drop overlay on editor groups during tab drag: lime tint. */
+.monaco-workbench .editor-group-container .editor-group-body .drop-target-overlay {
+	background-color: rgba(194, 242, 77, 0.06) !important;
+	border: 1px solid rgba(194, 242, 77, 0.25) !important;
+	border-radius: 8px;
+	transition: background-color 150ms ease, border-color 150ms ease;
+}
+/* Tab drag ghost: semi-transparent with glass feel. */
+.monaco-workbench .monaco-drag-image {
+	opacity: 0.85;
+	border-radius: 8px;
+	box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+/* ============================================================================
+ *  EDITOR WELCOME / EMPTY GROUP — when an editor group has no tabs, style
+ *  the drop-here prompt to match Shil's design language.
+ * ========================================================================== */
+
+/* Drop prompt text: Hanken Grotesk, dimmed. */
+.monaco-workbench .editor-group-container.empty .editor-group-watermark .watermark-container {
+	font-family: 'Hanken Grotesk', -apple-system, sans-serif !important;
 }
