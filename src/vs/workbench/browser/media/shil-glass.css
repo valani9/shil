@@ -669,8 +669,12 @@ body.shil-sidebar-resizing * {
 }
 .monaco-workbench .tab .tab-close:hover {
 	opacity: 1;
-	background-color: rgba(150, 158, 174, 0.12) !important;
+	background-color: rgba(220, 80, 80, 0.14) !important;
 	border-radius: 4px;
+}
+.monaco-workbench .tab .tab-close:active {
+	opacity: 1;
+	background-color: rgba(220, 80, 80, 0.25) !important;
 }
 
 /* ============================================================================
@@ -1155,15 +1159,53 @@ body.shil-sidebar-resizing * {
 }
 
 /* ============================================================================
+ *  BREADCRUMB BAR — compact, Shil-styled. JetBrains Mono for code paths,
+ *  slimmer height, dimmed separators. Feels like part of the tab bar, not
+ *  a separate visual band.
+ * ========================================================================== */
+
+/* Breadcrumb container: slim, no border clutter. */
+.monaco-workbench .part.editor .breadcrumbs-control {
+	font-family: 'JetBrains Mono', monospace !important;
+	font-size: 10px !important;
+	height: 22px !important;
+	line-height: 22px !important;
+	background-color: transparent !important;
+	border-bottom: none !important;
+}
+/* Breadcrumb items: dimmed, ghost in on hover. */
+.monaco-workbench .part.editor .breadcrumbs-control .monaco-breadcrumb-item {
+	opacity: 0.45;
+	transition: opacity 120ms ease;
+}
+.monaco-workbench .part.editor .breadcrumbs-control .monaco-breadcrumb-item:hover {
+	opacity: 0.85;
+}
+.monaco-workbench .part.editor .breadcrumbs-control .monaco-breadcrumb-item.focused,
+.monaco-workbench .part.editor .breadcrumbs-control .monaco-breadcrumb-item.selected {
+	opacity: 1;
+	color: #C2F24D !important;
+	text-decoration: none !important;
+}
+/* Breadcrumb separator: dim the slash/chevron. */
+.monaco-workbench .part.editor .breadcrumbs-control .monaco-breadcrumb-item::before {
+	opacity: 0.3 !important;
+}
+/* Breadcrumb dropdown: glass treatment. */
+.monaco-workbench .breadcrumbs-below-tabs .breadcrumbs-control {
+	padding-left: 12px !important;
+}
+
+/* ============================================================================
  *  SIDEBAR OVERLAY TRANSITIONS — cinematic dimming + no editor reflow.
  *  The sidebar is now a fixed overlay (see SIDEBAR OVERLAY section above).
  *  The editor no longer needs a width transition since it never resizes.
  * ========================================================================== */
 
-/* Sidebar backdrop scrim: soft blur + dim behind the drawer overlay.
-   Creates depth separation between the drawer and the editor content. */
-.monaco-workbench::after {
-	content: '';
+/* Sidebar backdrop scrim: real DOM element for click-to-dismiss.
+   Soft blur + dim behind the drawer overlay. Click anywhere on the
+   scrim to close the sidebar (handler in sidebarPart.ts). */
+.shil-sidebar-scrim {
 	position: fixed;
 	inset: 0;
 	z-index: 99; /* just below sidebar z-index:100 */
@@ -1174,11 +1216,13 @@ body.shil-sidebar-resizing * {
 	opacity: 0;
 	transition: opacity 250ms ease, backdrop-filter 250ms ease, -webkit-backdrop-filter 250ms ease;
 }
-.monaco-workbench:not(.sidebar-hidden)::after {
+.monaco-workbench:not(.sidebar-hidden) .shil-sidebar-scrim {
 	background: rgba(5, 7, 12, 0.18);
 	-webkit-backdrop-filter: blur(4px);
 	backdrop-filter: blur(4px);
 	opacity: 1;
+	pointer-events: auto;
+	cursor: default;
 }
 
 /* Editor dim: subtle darkening when sidebar drawer is open (cinematic focus). */

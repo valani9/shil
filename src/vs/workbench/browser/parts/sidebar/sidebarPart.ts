@@ -189,6 +189,18 @@ export class SidebarPart extends AbstractPaneCompositePart {
 	override create(parent: HTMLElement): void {
 		super.create(parent);
 
+		// Shil: real scrim element for click-to-dismiss (replaces CSS ::after pseudo).
+		const workbench = parent.closest('.monaco-workbench');
+		if (workbench) {
+			const scrim = $('.shil-sidebar-scrim');
+			workbench.appendChild(scrim);
+			this._register(addDisposableListener(scrim, EventType.MOUSE_DOWN, (e: MouseEvent) => {
+				e.preventDefault();
+				e.stopPropagation();
+				this.layoutService.setPartHidden(true, Parts.SIDEBAR_PART);
+			}));
+		}
+
 		// Restore persisted width
 		const stored = this.storageService.getNumber(
 			SidebarPart.SHIL_WIDTH_STORAGE_KEY,
