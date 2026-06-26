@@ -395,6 +395,9 @@ import './contrib/welcomeOnboarding/browser/welcomeOnboarding.contribution.js';
 // Shil Reader
 import './contrib/shilReader/browser/shilReader.contribution.js';
 
+// Shil Welcome
+import './contrib/shilWelcome/browser/shilWelcome.contribution.js';
+
 // Onboarding (scenario engine)
 import './contrib/onboarding/browser/onboarding.contribution.js';
 
