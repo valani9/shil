@@ -67,11 +67,15 @@
 	border-radius: 6px;
 	border-left: 3px solid transparent;
 	transition: background 0.15s ease, border-color 0.15s ease;
-	cursor: default;
+	cursor: pointer;
 }
 
 .shil-reader-span:hover {
-	background: rgba(255, 255, 255, 0.03);
+	background: rgba(255, 255, 255, 0.04);
+}
+
+.shil-reader-span:active {
+	background: rgba(194, 242, 77, 0.06);
 }
 
 /* Kind-specific left border colors */
@@ -115,6 +119,16 @@
 	font-family: 'Martian Mono', 'JetBrains Mono', monospace;
 	font-size: 10px;
 	color: rgba(255, 255, 255, 0.25);
+	transition: color 0.15s ease;
+}
+
+/* Clickable affordance */
+.shil-reader-clickable {
+	cursor: pointer;
+}
+
+.shil-reader-span:hover .shil-reader-span-lines {
+	color: rgba(194, 242, 77, 0.6);
 }
 
 /* Code excerpt */

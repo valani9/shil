@@ -57,17 +57,66 @@ export function parseToReaderDoc(source: string, filePath: string, languageId: s
 			continue;
 		}
 
-		// Detect class declarations
+		// Detect class declarations — parse methods inside
 		const classMatch = lines[i].match(/^(\s*)(export\s+)?(abstract\s+)?class\s+(\w+)/);
 		if (classMatch) {
-			const start = i;
-			const end = findBlockEnd(lines, i);
+			const classStart = i;
+			const classEnd = findBlockEnd(lines, i);
 			const exported = !!classMatch[2];
 			const abstract = !!classMatch[3];
-			const name = classMatch[4];
-			spans.push(makeSpan(spanIdx++, start + 1, end + 1, 'declaration',
-				`Defines ${exported ? 'an exported ' : ''}${abstract ? 'abstract ' : ''}class "${name}".`));
-			i = end + 1;
+			const className = classMatch[4];
+
+			// Find the opening brace of the class body
+			let bodyStart = classStart;
+			for (let b = classStart; b <= classEnd; b++) {
+				if (lines[b].includes('{')) {
+					bodyStart = b + 1;
+					break;
+				}
+			}
+
+			// Class header span (declaration line + extends/implements)
+			spans.push(makeSpan(spanIdx++, classStart + 1, bodyStart, 'declaration',
+				`Defines ${exported ? 'an exported ' : ''}${abstract ? 'abstract ' : ''}class "${className}".`));
+
+			// Parse methods/properties inside the class body
+			const classIndent = (classMatch[1] || '').length;
+			let j = bodyStart;
+			while (j < classEnd) {
+				if (lines[j].trim() === '' || isCommentLine(lines[j])) {
+					j++;
+					continue;
+				}
+
+				const methodMatch = matchMethod(lines[j], classIndent);
+				if (methodMatch) {
+					const mStart = j;
+					const mEnd = findBlockEnd(lines, j);
+					const asyncLabel = methodMatch.async ? 'async ' : '';
+					const visibility = methodMatch.visibility ? `${methodMatch.visibility} ` : '';
+					const staticLabel = methodMatch.static ? 'static ' : '';
+					spans.push(makeSpan(spanIdx++, mStart + 1, mEnd + 1, 'action',
+						`${visibility}${staticLabel}${asyncLabel}method "${methodMatch.name}" of class "${className}".`));
+					j = mEnd + 1;
+					continue;
+				}
+
+				// Property/field declarations inside class
+				const propMatch = lines[j].match(/^(\s+)(private|protected|public|readonly|static|abstract|override|\s)*(readonly\s+)?(\w+)\s*[=:;?]/);
+				if (propMatch && (propMatch[1] || '').length > classIndent) {
+					const pStart = j;
+					const pEnd = findStatementEnd(lines, j);
+					const propName = propMatch[4];
+					spans.push(makeSpan(spanIdx++, pStart + 1, pEnd + 1, 'narration',
+						`Property "${propName}" of class "${className}".`));
+					j = pEnd + 1;
+					continue;
+				}
+
+				j++;
+			}
+
+			i = classEnd + 1;
 			continue;
 		}
 
@@ -226,6 +275,37 @@ function findBlockEnd(lines: string[], start: number): number {
 		}
 	}
 	return lines.length - 1;
+}
+
+interface MethodMatch {
+	name: string;
+	async: boolean;
+	static: boolean;
+	visibility: string;
+}
+
+function matchMethod(line: string, classIndent: number): MethodMatch | null {
+	const t = line.trimStart();
+	const indent = line.length - line.trimStart().length;
+
+	// Must be indented deeper than the class
+	if (indent <= classIndent) {
+		return null;
+	}
+
+	// Match: [visibility] [static] [async] [override] methodName(...)
+	const m = t.match(/^(private|protected|public)?\s*(static)?\s*(override\s+)?(async\s+)?(get\s+|set\s+)?(\w+)\s*\(/);
+	if (m) {
+		// Skip 'constructor' label but still capture it
+		const name = m[6];
+		return {
+			name: m[5] ? `${m[5].trim()} ${name}` : name,
+			async: !!m[4],
+			static: !!m[2],
+			visibility: m[1] || '',
+		};
+	}
+	return null;
 }
 
 function findStatementEnd(lines: string[], start: number): number {

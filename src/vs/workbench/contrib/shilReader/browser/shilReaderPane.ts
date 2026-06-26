@@ -20,6 +20,8 @@ import { parseToReaderDoc } from './shilReaderParser.js';
 import type { ReaderDoc, ReaderSpan, SpanKind } from './shilReaderTypes.js';
 import { ILanguageService } from '../../../../editor/common/languages/language.js';
 import { DisposableStore } from '../../../../base/common/lifecycle.js';
+import { IEditorService } from '../../../services/editor/common/editorService.js';
+import { IRange } from '../../../../editor/common/core/range.js';
 
 export class ShilReaderPane extends EditorPane {
 
@@ -28,6 +30,7 @@ export class ShilReaderPane extends EditorPane {
 	private container: HTMLElement | undefined;
 	private contentElement: HTMLElement | undefined;
 	private currentDoc: ReaderDoc | undefined;
+	private currentResource: import('../../../../base/common/uri.js').URI | undefined;
 	private readonly paneDisposables = this._register(new DisposableStore());
 
 	constructor(
@@ -37,6 +40,7 @@ export class ShilReaderPane extends EditorPane {
 		@IStorageService storageService: IStorageService,
 		@IFileService private readonly fileService: IFileService,
 		@ILanguageService private readonly languageService: ILanguageService,
+		@IEditorService private readonly editorService: IEditorService,
 	) {
 		super(ShilReaderPane.ID, group, telemetryService, themeService, storageService);
 	}
@@ -60,6 +64,8 @@ export class ShilReaderPane extends EditorPane {
 		}
 
 		this.paneDisposables.clear();
+
+		this.currentResource = input.fileResource;
 
 		try {
 			const content = await this.fileService.readFile(input.fileResource);
@@ -124,12 +130,13 @@ export class ShilReaderPane extends EditorPane {
 		prose.textContent = span.english;
 		el.appendChild(prose);
 
-		// Line range reference
+		// Line range reference (clickable → jumps to code)
 		const lineRef = document.createElement('span');
-		lineRef.className = 'shil-reader-span-lines';
+		lineRef.className = 'shil-reader-span-lines shil-reader-clickable';
 		lineRef.textContent = span.lineStart === span.lineEnd
 			? `line ${span.lineStart}`
 			: `lines ${span.lineStart}\u2013${span.lineEnd}`;
+		lineRef.title = 'Jump to this code';
 		el.appendChild(lineRef);
 
 		// Code excerpt (collapsed, first 3 lines)
@@ -137,14 +144,38 @@ export class ShilReaderPane extends EditorPane {
 		const excerptLines = sourceLines.slice(span.lineStart - 1, Math.min(span.lineEnd, span.lineStart + 2));
 		if (excerptLines.length > 0) {
 			const code = document.createElement('pre');
-			code.className = 'shil-reader-span-code';
+			code.className = 'shil-reader-span-code shil-reader-clickable';
+			code.title = 'Jump to this code';
 			const codeInner = document.createElement('code');
 			codeInner.textContent = excerptLines.join('\n') + (span.lineEnd - span.lineStart >= 3 ? '\n\u2026' : '');
 			code.appendChild(codeInner);
 			el.appendChild(code);
 		}
 
+		// Click-through: clicking anywhere on the span navigates to code
+		el.addEventListener('click', () => this.navigateToCode(span));
+
 		return el;
+	}
+
+	private navigateToCode(span: ReaderSpan): void {
+		if (!this.currentResource) {
+			return;
+		}
+		const selection: IRange = {
+			startLineNumber: span.lineStart,
+			startColumn: 1,
+			endLineNumber: span.lineEnd,
+			endColumn: 1,
+		};
+		this.editorService.openEditor({
+			resource: this.currentResource,
+			options: {
+				pinned: true,
+				selection,
+				revealIfOpened: true,
+			}
+		});
 	}
 
 	private renderError(): void {
@@ -162,6 +193,7 @@ export class ShilReaderPane extends EditorPane {
 		super.clearInput();
 		this.paneDisposables.clear();
 		this.currentDoc = undefined;
+		this.currentResource = undefined;
 		if (this.contentElement) {
 			this.contentElement.textContent = '';
 		}
