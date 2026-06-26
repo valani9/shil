@@ -574,3 +574,133 @@ body {
 	background-color: rgba(5, 7, 12, 0.95) !important;
 	border-color: rgba(194, 242, 77, 0.18) !important;
 }
+
+/* ============================================================================
+ *  DIALOG / MODAL — glass treatment for confirmation dialogs ("Save changes?",
+ *  "Delete file?", etc.). Premium feel: frosted glass, rounded, lime accents.
+ * ========================================================================== */
+
+/* Modal overlay: darker, more cinematic dimming. */
+.monaco-workbench .monaco-dialog-modal-block.dimmed {
+	background: rgba(2, 3, 6, 0.65) !important;
+}
+/* Dialog box: glass treatment, rounded, dramatic shadow. */
+.monaco-workbench .monaco-dialog-box {
+	background-color: rgba(8, 11, 20, 0.82) !important;
+	-webkit-backdrop-filter: blur(18px) saturate(1.4);
+	backdrop-filter: blur(18px) saturate(1.4);
+	border-radius: 14px !important;
+	box-shadow: 0 24px 64px -12px rgba(0, 0, 0, 0.72), inset 0 0 0 1px rgba(150, 158, 174, 0.14) !important;
+}
+/* Dialog message text: Hanken Grotesk for readability. */
+.monaco-workbench .monaco-dialog-box .dialog-message {
+	font-family: 'Hanken Grotesk', -apple-system, BlinkMacSystemFont, sans-serif !important;
+	font-size: 13px !important;
+	line-height: 1.5;
+}
+.monaco-workbench .monaco-dialog-box .dialog-message-detail {
+	font-family: 'Hanken Grotesk', -apple-system, BlinkMacSystemFont, sans-serif !important;
+	font-size: 12px !important;
+	opacity: 0.7;
+}
+/* Dialog buttons: rounded, lime focus. */
+.monaco-workbench .monaco-dialog-box .dialog-buttons-row .monaco-text-button {
+	border-radius: 8px !important;
+	font-family: 'Hanken Grotesk', sans-serif !important;
+	font-size: 12px !important;
+	letter-spacing: 0.02em;
+}
+/* Primary dialog button: subtle lime tint. */
+.monaco-workbench .monaco-dialog-box .dialog-buttons-row .monaco-text-button:first-child {
+	box-shadow: inset 0 0 0 1px rgba(194, 242, 77, 0.25);
+}
+/* Dialog icon: dimmed, not screaming. */
+.monaco-workbench .monaco-dialog-box .dialog-icon.codicon {
+	opacity: 0.7;
+}
+
+/* ============================================================================
+ *  EMPTY EDITOR WATERMARK — branded empty state. When no file is open, the
+ *  empty editor shows the VS Code "letterpress" logo and shortcuts. Style it
+ *  to feel like Shil, not VS Code.
+ * ========================================================================== */
+
+/* Watermark container: centered, calmer. */
+.monaco-workbench .editor-group-watermark {
+	opacity: 0.5;
+}
+/* The VS Code letterpress logo: hide it — Shil has its own identity. */
+.monaco-workbench .editor-group-watermark .letterpress {
+	display: none !important;
+}
+/* Shortcut labels in the watermark: Shil instrument voice. */
+.monaco-workbench .editor-group-watermark .shortcuts .watermark-box dl > dt {
+	font-family: 'Hanken Grotesk', sans-serif !important;
+	font-size: 12px !important;
+	opacity: 0.8;
+}
+.monaco-workbench .editor-group-watermark .shortcuts .watermark-box dl > dd {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 10px !important;
+	letter-spacing: 0.04em;
+	opacity: 0.5;
+}
+
+/* ============================================================================
+ *  QUICK INPUT — further polish on the command palette.
+ * ========================================================================== */
+
+/* Quick input title: instrument voice. */
+.monaco-workbench .quick-input-widget .quick-input-titlebar {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 10px !important;
+	letter-spacing: 0.06em;
+}
+/* Quick input list labels: Hanken Grotesk for readability. */
+.monaco-workbench .quick-input-list .monaco-list-row .label-name {
+	font-family: 'Hanken Grotesk', -apple-system, sans-serif !important;
+	font-size: 12.5px !important;
+}
+/* Quick input description / detail: dimmed instrument voice. */
+.monaco-workbench .quick-input-list .monaco-list-row .label-description {
+	font-family: 'Hanken Grotesk', sans-serif !important;
+	font-size: 11px !important;
+	opacity: 0.6;
+}
+/* Quick input highlight match: lime instead of default blue. */
+.monaco-workbench .quick-input-list .monaco-list-row .highlight {
+	color: #C2F24D !important;
+}
+/* Quick input selected row: lime glow instead of default. */
+.monaco-workbench .quick-input-list .monaco-list-row.focused {
+	box-shadow: inset 0 0 0 1px rgba(194, 242, 77, 0.22);
+}
+/* Quick input separator: subtle, instrument label. */
+.monaco-workbench .quick-input-list .quick-input-list-separator .label-name {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 9.5px !important;
+	letter-spacing: 0.1em;
+	text-transform: uppercase;
+	color: #6E7689 !important;
+}
+
+/* ============================================================================
+ *  STICKY SCROLL (disabled by default, but styled for when re-enabled).
+ * ========================================================================== */
+
+.monaco-editor .sticky-widget {
+	background-color: rgba(5, 7, 12, 0.95) !important;
+	border-bottom: 1px solid rgba(150, 158, 174, 0.08);
+}
+
+/* ============================================================================
+ *  EDITOR PLACEHOLDER — branded placeholder for untitled/empty editors.
+ * ========================================================================== */
+
+.monaco-workbench .monaco-editor-pane-placeholder .editor-placeholder-label-container {
+	font-family: 'Hanken Grotesk', -apple-system, sans-serif !important;
+}
+.monaco-workbench .monaco-editor-pane-placeholder .editor-placeholder-buttons-container .monaco-text-button {
+	border-radius: 8px !important;
+	font-family: 'Hanken Grotesk', sans-serif !important;
+}

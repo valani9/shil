@@ -3147,7 +3147,7 @@ export type EditorStickyScrollOptions = Readonly<Required<IEditorStickyScrollOpt
 class EditorStickyScroll extends BaseEditorOption<EditorOption.stickyScroll, IEditorStickyScrollOptions, EditorStickyScrollOptions> {
 
 	constructor() {
-		const defaults: EditorStickyScrollOptions = { enabled: true, maxLineCount: 5, defaultModel: 'outlineModel', scrollWithEditor: true };
+		const defaults: EditorStickyScrollOptions = { enabled: false, maxLineCount: 5, defaultModel: 'outlineModel', scrollWithEditor: true };
 		super(
 			EditorOption.stickyScroll, 'stickyScroll', defaults,
 			{
@@ -3610,11 +3610,11 @@ class EditorPadding extends BaseEditorOption<EditorOption.padding, IEditorPaddin
 
 	constructor() {
 		super(
-			EditorOption.padding, 'padding', { top: 0, bottom: 0 },
+			EditorOption.padding, 'padding', { top: 8, bottom: 0 },
 			{
 				'editor.padding.top': {
 					type: 'number',
-					default: 0,
+					default: 8,
 					minimum: 0,
 					maximum: 1000,
 					description: nls.localize('padding.top', "Controls the amount of space between the top edge of the editor and the first line.")
@@ -3637,7 +3637,7 @@ class EditorPadding extends BaseEditorOption<EditorOption.padding, IEditorPaddin
 		const input = _input as Unknown<IEditorPaddingOptions>;
 
 		return {
-			top: EditorIntOption.clampedInt(input.top, 0, 0, 1000),
+			top: EditorIntOption.clampedInt(input.top, 8, 0, 1000),
 			bottom: EditorIntOption.clampedInt(input.bottom, 0, 0, 1000)
 		};
 	}
