@@ -250,3 +250,41 @@
 	line-height: 1.5;
 	color: rgba(255, 255, 255, 0.45);
 }
+
+/* ── Span-focus ↔ rail sync highlight ─────────────────────────────────────── */
+
+.shil-rail-item--highlighted {
+	background: rgba(194, 242, 77, 0.08);
+	border-left-color: rgba(194, 242, 77, 0.6) !important;
+	transition: background 0.2s ease, border-left-color 0.2s ease;
+}
+
+.shil-rail-item--highlighted .shil-rail-item-title {
+	color: #C2F24D;
+}
+
+.shil-rail-item--highlighted .shil-rail-item-breaks {
+	color: rgba(255, 255, 255, 0.65);
+}
+
+/* Pulse animation for highlighted "breaks" items (calledBy/reads) */
+.shil-rail-item--breaks.shil-rail-item--highlighted {
+	animation: shil-rail-pulse 1.2s ease-in-out 1;
+}
+
+@keyframes shil-rail-pulse {
+	0%   { background: rgba(194, 242, 77, 0.08); }
+	40%  { background: rgba(255, 100, 100, 0.12); }
+	100% { background: rgba(194, 242, 77, 0.08); }
+}
+
+/* Pulse for data (writes) items */
+.shil-rail-item--data.shil-rail-item--highlighted {
+	animation: shil-rail-pulse-data 1.2s ease-in-out 1;
+}
+
+@keyframes shil-rail-pulse-data {
+	0%   { background: rgba(194, 242, 77, 0.08); }
+	40%  { background: rgba(160, 140, 255, 0.12); }
+	100% { background: rgba(194, 242, 77, 0.08); }
+}

@@ -36,6 +36,11 @@ export class ShilReaderPane extends EditorPane {
 	private currentResource: import('../../../../base/common/uri.js').URI | undefined;
 	private readonly paneDisposables = this._register(new DisposableStore());
 
+	/** Map from connection ID to its DOM element in the rail, for fast highlight toggling. */
+	private readonly railItemElements = new Map<string, HTMLElement>();
+	/** Currently highlighted connection IDs (for clearing on span leave). */
+	private highlightedConnIds = new Set<string>();
+
 	constructor(
 		group: IEditorGroup,
 		@ITelemetryService telemetryService: ITelemetryService,
@@ -75,6 +80,8 @@ export class ShilReaderPane extends EditorPane {
 		}
 
 		this.paneDisposables.clear();
+		this.railItemElements.clear();
+		this.highlightedConnIds.clear();
 
 		this.currentResource = input.fileResource;
 
@@ -150,7 +157,7 @@ export class ShilReaderPane extends EditorPane {
 		prose.textContent = span.english;
 		el.appendChild(prose);
 
-		// Line range reference (clickable → jumps to code)
+		// Line range reference (clickable -> jumps to code)
 		const lineRef = document.createElement('span');
 		lineRef.className = 'shil-reader-span-lines shil-reader-clickable';
 		lineRef.textContent = span.lineStart === span.lineEnd
@@ -175,7 +182,72 @@ export class ShilReaderPane extends EditorPane {
 		// Click-through: clicking anywhere on the span navigates to code
 		el.addEventListener('click', () => this.navigateToCode(span));
 
+		// Hover: highlight related connections in the rail
+		el.addEventListener('mouseenter', () => this.highlightConnections(span, doc));
+		el.addEventListener('mouseleave', () => this.clearHighlights());
+
 		return el;
+	}
+
+	/**
+	 * When hovering a span, highlight connections in the rail that relate to it.
+	 * Matching logic:
+	 * - Import spans highlight all "imports" role connections
+	 * - Export/action/declaration spans highlight all "calledBy" connections
+	 * - Any span: if its source code contains a symbol from a connection, highlight it
+	 * - DB/action spans highlight reads/writes connections
+	 */
+	private highlightConnections(span: ReaderSpan, doc: ReaderDoc): void {
+		this.clearHighlights();
+
+		if (!this.currentDoc?.connections.length) {
+			return;
+		}
+
+		// Extract the source text for this span
+		const sourceLines = doc.source.split('\n');
+		const spanSource = sourceLines.slice(span.lineStart - 1, span.lineEnd).join('\n');
+
+		for (const conn of this.currentDoc.connections) {
+			let matches = false;
+
+			// Role-based matching
+			if (span.kind === 'import' && conn.role === 'imports') {
+				matches = true;
+			} else if ((span.kind === 'export' || span.kind === 'action' || span.kind === 'declaration') && conn.role === 'calledBy') {
+				matches = true;
+			} else if ((span.kind === 'db' || span.kind === 'action') && (conn.role === 'reads' || conn.role === 'writes')) {
+				matches = true;
+			}
+
+			// Symbol-based matching: check if any connection symbol appears in the span's code
+			if (!matches && conn.symbols.length > 0) {
+				for (const sym of conn.symbols) {
+					if (sym.length >= 2 && spanSource.includes(sym)) {
+						matches = true;
+						break;
+					}
+				}
+			}
+
+			if (matches) {
+				this.highlightedConnIds.add(conn.id);
+				const el = this.railItemElements.get(conn.id);
+				if (el) {
+					el.classList.add('shil-rail-item--highlighted');
+				}
+			}
+		}
+	}
+
+	private clearHighlights(): void {
+		for (const connId of this.highlightedConnIds) {
+			const el = this.railItemElements.get(connId);
+			if (el) {
+				el.classList.remove('shil-rail-item--highlighted');
+			}
+		}
+		this.highlightedConnIds.clear();
 	}
 
 	private navigateToCode(span: ReaderSpan): void {
@@ -214,6 +286,7 @@ export class ShilReaderPane extends EditorPane {
 			return;
 		}
 		this.railElement.textContent = '';
+		this.railItemElements.clear();
 
 		if (connections.length === 0) {
 			const empty = document.createElement('div');
@@ -223,7 +296,7 @@ export class ShilReaderPane extends EditorPane {
 			return;
 		}
 
-		// Group by role, ordered: calledBy → reads → writes → imports
+		// Group by role, ordered: calledBy -> reads -> writes -> imports
 		const roleOrder: ConnectionRole[] = ['calledBy', 'reads', 'writes', 'imports'];
 		const grouped = new Map<ConnectionRole, Connection[]>();
 		for (const conn of connections) {
@@ -258,6 +331,7 @@ export class ShilReaderPane extends EditorPane {
 			for (const conn of conns) {
 				const item = document.createElement('div');
 				item.className = `shil-rail-item shil-rail-item--${roleTone(role)}`;
+				item.dataset.connId = conn.id;
 
 				const title = document.createElement('div');
 				title.className = 'shil-rail-item-title';
@@ -270,6 +344,9 @@ export class ShilReaderPane extends EditorPane {
 				item.appendChild(breaks);
 
 				section.appendChild(item);
+
+				// Store reference for fast highlight toggling
+				this.railItemElements.set(conn.id, item);
 			}
 
 			this.railElement.appendChild(section);
@@ -279,6 +356,8 @@ export class ShilReaderPane extends EditorPane {
 	override clearInput(): void {
 		super.clearInput();
 		this.paneDisposables.clear();
+		this.railItemElements.clear();
+		this.highlightedConnIds.clear();
 		this.currentDoc = undefined;
 		this.currentResource = undefined;
 		if (this.contentElement) {

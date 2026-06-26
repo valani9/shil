@@ -130,8 +130,9 @@ function resolveRelativeImport(importerPath: string, specifier: string): string 
 
 /**
  * Build connections for a file by:
- * 1. Parsing its imports → "this file relies on" (role: imports)
- * 2. Scanning nearby files for reverse imports → "these break if you change this" (role: calledBy)
+ * 1. Parsing its imports -> "this file relies on" (role: imports)
+ * 2. Scanning nearby files for reverse imports -> "these break if you change this" (role: calledBy)
+ * 3. Detecting database patterns -> reads/writes connections
  */
 export async function scanConnections(
 	filePath: string,
@@ -156,6 +157,7 @@ export async function scanConnections(
 			path: resolvedPath,
 			role: 'imports',
 			breaks: `This file uses ${namesList} from ${imp.specifier}. If that module's API changes, this file breaks.`,
+			symbols: imp.names,
 		});
 	}
 
@@ -168,6 +170,13 @@ export async function scanConnections(
 		connections.push(rev);
 	}
 
+	// 3. Database pattern detection: reads/writes
+	const dbConnections = scanDatabasePatterns(source);
+	for (const db of dbConnections) {
+		db.id = `conn-${connIdx++}`;
+		connections.push(db);
+	}
+
 	return connections;
 }
 
@@ -178,7 +187,7 @@ export async function scanConnections(
 async function scanReverseImports(
 	targetPath: string,
 	targetDir: string,
-	targetBaseName: string,
+	_targetBaseName: string,
 	fileService: IFileService,
 ): Promise<Connection[]> {
 	const connections: Connection[] = [];
@@ -232,6 +241,7 @@ async function scanReverseImports(
 								path: childPath,
 								role: 'calledBy' as ConnectionRole,
 								breaks: `${basename(childPath)} imports ${namesList}. Changing the exported API here will break it.`,
+								symbols: imp.names,
 							});
 						}
 					}
@@ -241,6 +251,84 @@ async function scanReverseImports(
 			}
 		} catch {
 			// Directory not readable
+		}
+	}
+
+	return connections;
+}
+
+/**
+ * Detect database read/write patterns in source code.
+ * Recognizes Prisma, Drizzle, Sequelize, Mongoose, Knex, and raw SQL patterns.
+ */
+function scanDatabasePatterns(source: string): Connection[] {
+	const connections: Connection[] = [];
+	const seen = new Set<string>();
+
+	const readPatterns: Array<{ pattern: RegExp; lib: string; desc: string }> = [
+		// Prisma reads
+		{ pattern: /\bprisma\.(\w+)\.(findMany|findFirst|findUnique|findUniqueOrThrow|findFirstOrThrow|count|aggregate|groupBy)\b/g, lib: 'Prisma', desc: 'query' },
+		// Drizzle reads
+		{ pattern: /\bdb\.select\b/g, lib: 'Drizzle', desc: 'select query' },
+		{ pattern: /\bdb\.query\.\w+\.(findMany|findFirst)\b/g, lib: 'Drizzle', desc: 'query' },
+		// Mongoose reads
+		{ pattern: /\.(?:find|findOne|findById|countDocuments|distinct|aggregate)\s*\(/g, lib: 'Mongoose', desc: 'query' },
+		// Knex/raw SQL reads
+		{ pattern: /\.select\s*\(/g, lib: 'SQL', desc: 'select' },
+		{ pattern: /\bSELECT\b.*\bFROM\b/gi, lib: 'SQL', desc: 'SELECT query' },
+	];
+
+	const writePatterns: Array<{ pattern: RegExp; lib: string; desc: string }> = [
+		// Prisma writes
+		{ pattern: /\bprisma\.(\w+)\.(create|createMany|update|updateMany|upsert|delete|deleteMany)\b/g, lib: 'Prisma', desc: 'mutation' },
+		// Drizzle writes
+		{ pattern: /\bdb\.(insert|update|delete)\b/g, lib: 'Drizzle', desc: 'mutation' },
+		// Mongoose writes
+		{ pattern: /\.(?:save|create|insertMany|updateOne|updateMany|deleteOne|deleteMany|replaceOne|bulkWrite)\s*\(/g, lib: 'Mongoose', desc: 'mutation' },
+		// Knex/raw SQL writes
+		{ pattern: /\.(?:insert|update|del|truncate)\s*\(/g, lib: 'SQL', desc: 'mutation' },
+		{ pattern: /\b(?:INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM)\b/gi, lib: 'SQL', desc: 'write query' },
+	];
+
+	for (const { pattern, lib, desc } of readPatterns) {
+		let match;
+		while ((match = pattern.exec(source)) !== null) {
+			const key = `reads:${lib}:${match[0].substring(0, 40)}`;
+			if (!seen.has(key)) {
+				seen.add(key);
+				const model = match[1] || '';
+				const operation = match[2] || desc;
+				const title = model ? `${lib}: ${model}` : `${lib} ${desc}`;
+				connections.push({
+					id: '',
+					title,
+					path: '',
+					role: 'reads',
+					breaks: `This file reads data via ${lib} ${operation}${model ? ` on "${model}"` : ''}. Other screens showing the same data may display stale values.`,
+					symbols: model ? [model, operation] : [operation],
+				});
+			}
+		}
+	}
+
+	for (const { pattern, lib, desc } of writePatterns) {
+		let match;
+		while ((match = pattern.exec(source)) !== null) {
+			const key = `writes:${lib}:${match[0].substring(0, 40)}`;
+			if (!seen.has(key)) {
+				seen.add(key);
+				const model = match[1] || '';
+				const operation = match[2] || desc;
+				const title = model ? `${lib}: ${model}` : `${lib} ${desc}`;
+				connections.push({
+					id: '',
+					title,
+					path: '',
+					role: 'writes',
+					breaks: `This file writes to the database via ${lib} ${operation}${model ? ` on "${model}"` : ''}. Changes here can corrupt or lose data.`,
+					symbols: model ? [model, operation] : [operation],
+				});
+			}
 		}
 	}
 

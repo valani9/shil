@@ -39,6 +39,8 @@ export interface Connection {
 	path: string;
 	role: ConnectionRole;
 	breaks: string;
+	/** Symbol names referenced by this connection (for span↔rail matching). */
+	symbols: string[];
 }
 
 export interface ReaderDoc {
