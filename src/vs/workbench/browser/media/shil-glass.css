@@ -2058,3 +2058,187 @@ body.shil-sidebar-resizing * {
 	font-size: 10px;
 	opacity: 0.50;
 }
+
+/* ============================================================================
+ *  PROGRESS BAR — lime branding for all loading indicators.
+ *  Progress bars appear in the editor title area (file loading), panel header
+ *  (build/test running), notification toasts, and the explorer tree. All use
+ *  the same lime signal color for brand cohesion.
+ * ========================================================================== */
+
+/* Progress bit: lime sweep instead of default accent blue. */
+.monaco-workbench .monaco-progress-container .progress-bit {
+	background-color: #C2F24D !important;
+}
+/* Infinite progress: soft glow trail behind the sweep. */
+.monaco-workbench .monaco-progress-container.infinite .progress-bit {
+	box-shadow: 0 0 8px 2px rgba(194, 242, 77, 0.30);
+}
+/* Discrete progress (deterministic %): no glow, just solid lime. */
+.monaco-workbench .monaco-progress-container.discrete .progress-bit {
+	box-shadow: none;
+}
+/* Progress container: slightly taller (3px) for better visibility. */
+.monaco-workbench .monaco-progress-container {
+	height: 3px !important;
+}
+.monaco-workbench .monaco-progress-container .progress-bit {
+	height: 3px !important;
+}
+
+/* ============================================================================
+ *  SIDEBAR OVERLAY INNER POLISH — premium drawer details.
+ *  The sidebar is a fixed overlay (z-index: 100). These refinements add
+ *  inner depth and visual separation within the glass drawer.
+ * ========================================================================== */
+
+/* Inner glow: soft lime top-edge accent inside the drawer for premium depth. */
+.monaco-workbench:not(.sidebar-hidden) .part.sidebar::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	height: 1px;
+	background: linear-gradient(90deg,
+		rgba(194, 242, 77, 0) 0%,
+		rgba(194, 242, 77, 0.25) 30%,
+		rgba(194, 242, 77, 0.35) 50%,
+		rgba(194, 242, 77, 0.25) 70%,
+		rgba(194, 242, 77, 0) 100%);
+	z-index: 10;
+	pointer-events: none;
+	border-radius: 0 10px 0 0;
+}
+
+/* Sidebar bottom fade edge: content fades to transparent at the bottom so the
+   file tree doesn't abruptly clip against the drawer edge. */
+.monaco-workbench:not(.sidebar-hidden) .part.sidebar::after {
+	content: '';
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	height: 32px;
+	background: linear-gradient(to bottom, transparent, rgba(6, 9, 16, 0.80));
+	z-index: 10;
+	pointer-events: none;
+	border-radius: 0 0 10px 0;
+}
+
+/* ============================================================================
+ *  EDITOR VIGNETTE ENHANCEMENT — side vignettes for wide monitors.
+ *  The existing top/bottom inset shadow (round 31) gives vertical depth.
+ *  Add subtle left/right edge darkening for a cinematic framing effect on
+ *  ultra-wide displays. Composites with the existing vignette.
+ * ========================================================================== */
+
+/* Override the existing vignette with enhanced four-edge version. */
+.monaco-workbench .part.editor > .content {
+	box-shadow:
+		inset 0 8px 28px -8px rgba(0, 0, 0, 0.38),
+		inset 0 -4px 18px -8px rgba(0, 0, 0, 0.18),
+		inset 12px 0 20px -12px rgba(0, 0, 0, 0.12),
+		inset -12px 0 20px -12px rgba(0, 0, 0, 0.12) !important;
+}
+
+/* ============================================================================
+ *  GLOBAL INPUT FOCUS — lime focus rings everywhere.
+ *  Replace the default blue focus outlines/borders with subtle lime glow.
+ *  Consistent brand signal when interacting with any input surface.
+ * ========================================================================== */
+
+/* Monaco input boxes: lime focus glow. */
+.monaco-workbench .monaco-inputbox.synthetic-focus,
+.monaco-workbench .monaco-inputbox:focus-within {
+	outline-color: rgba(194, 242, 77, 0.40) !important;
+}
+/* Action bar items, buttons: lime focus-visible ring. */
+.monaco-workbench .monaco-action-bar .action-item:focus-visible .action-label,
+.monaco-workbench .monaco-button:focus-visible {
+	outline: 1px solid rgba(194, 242, 77, 0.45) !important;
+	outline-offset: -1px;
+}
+
+/* ============================================================================
+ *  BADGE STYLING — lime notification/count badges.
+ *  Activity bar badges, tree view badges, tab badges all get lime treatment
+ *  instead of the default blue accent.
+ * ========================================================================== */
+
+/* Badge base: lime bg, near-black text, rounded pill. */
+.monaco-workbench .badge .badge-content {
+	background-color: rgba(194, 242, 77, 0.85) !important;
+	color: #05070C !important;
+	font-family: 'Martian Mono', monospace;
+	font-size: 9px;
+	font-weight: 600;
+	border-radius: 8px;
+	min-width: 16px;
+	padding: 1px 4px;
+	letter-spacing: -0.02em;
+}
+/* Activity bar badge: slightly smaller, positioned tight. */
+.monaco-workbench .part.activitybar .badge .badge-content {
+	font-size: 8px;
+	min-width: 14px;
+	padding: 1px 3px;
+}
+/* Progress badge (pulsing count): dimmer lime so it's not overwhelming. */
+.monaco-workbench .badge .badge-content[title*="running"],
+.monaco-workbench .badge .badge-content[title*="loading"] {
+	background-color: rgba(194, 242, 77, 0.55) !important;
+}
+
+/* ============================================================================
+ *  SCROLLBAR CORNER — hide the dead square at scrollbar intersection.
+ * ========================================================================== */
+
+.monaco-workbench .monaco-scrollable-element > .corner {
+	display: none !important;
+}
+
+/* ============================================================================
+ *  PANEL COMPOSITE TITLE — lime active indicator for panel tabs.
+ *  Consistent with the activity bar lime pill treatment.
+ * ========================================================================== */
+
+/* Panel tab active indicator: lime bottom border instead of default focus. */
+.monaco-workbench .part.panel > .composite.title .action-item.checked::after {
+	border-bottom-color: #C2F24D !important;
+}
+/* Panel tab labels: dimmed at rest, brighten on hover/active. */
+.monaco-workbench .part.panel > .composite.title .action-item .action-label {
+	opacity: 0.50;
+	transition: opacity 150ms ease;
+}
+.monaco-workbench .part.panel > .composite.title .action-item:hover .action-label {
+	opacity: 0.85;
+}
+.monaco-workbench .part.panel > .composite.title .action-item.checked .action-label {
+	opacity: 1;
+}
+
+/* ============================================================================
+ *  EDITOR RULER — dimmer vertical rulers that don't compete with content.
+ * ========================================================================== */
+
+.monaco-workbench .view-ruler {
+	opacity: 0.04 !important;
+}
+
+/* ============================================================================
+ *  TREE VIEW FILTER — search input in tree views (explorer filter, outline).
+ * ========================================================================== */
+
+.monaco-workbench .monaco-list-type-filter {
+	border-radius: 6px !important;
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
+	font-size: 12px;
+}
+.monaco-workbench .monaco-list-type-filter .controls .filter-toggle {
+	border-radius: 4px;
+}
+.monaco-workbench .monaco-list-type-filter .controls .filter-toggle.checked {
+	color: #C2F24D !important;
+}
