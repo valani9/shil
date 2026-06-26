@@ -542,3 +542,12 @@
 .shil-hl-regex {
 	color: #E08A6F;
 }
+
+.shil-hl-optchain {
+	color: #C2F24D;
+	font-weight: 500;
+}
+
+.shil-hl-destr {
+	color: #D4E8A0;
+}

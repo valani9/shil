@@ -966,6 +966,96 @@ function highlightSyntax(line: string): string {
 			const cls = tokenClass(word);
 			if (cls) {
 				result.push(`<span class="${cls}">${esc(word)}</span>`);
+				// 6a. Destructuring: const/let/var followed by { or [
+				if ((word === 'const' || word === 'let' || word === 'var')) {
+					const afterKw = line.slice(pos + word.length);
+					const dsMatch = afterKw.match(/^(\s*)([{[])/);
+					if (dsMatch) {
+						// Emit whitespace before the bracket
+						result.push(dsMatch[1]);
+						pos += word.length + dsMatch[0].length;
+						const closeBracket = dsMatch[2] === '{' ? '}' : ']';
+						result.push(`<span class="shil-hl-punct">${esc(dsMatch[2])}</span>`);
+						// Tokenize inside the destructuring pattern
+						while (pos < line.length && line[pos] !== closeBracket) {
+							// Skip whitespace
+							if (/\s/.test(line[pos])) {
+								result.push(line[pos]);
+								pos++;
+								continue;
+							}
+							// Nested destructuring
+							if (line[pos] === '{' || line[pos] === '[') {
+								result.push(`<span class="shil-hl-punct">${esc(line[pos])}</span>`);
+								pos++;
+								continue;
+							}
+							if (line[pos] === '}' || line[pos] === ']') {
+								result.push(`<span class="shil-hl-punct">${esc(line[pos])}</span>`);
+								pos++;
+								continue;
+							}
+							// Commas, colons (rename), spread, rest
+							if (line[pos] === ',' || line[pos] === ':' || line[pos] === '=') {
+								result.push(`<span class="shil-hl-punct">${esc(line[pos])}</span>`);
+								pos++;
+								continue;
+							}
+							// Spread/rest operator
+							if (line[pos] === '.' && line[pos + 1] === '.' && line[pos + 2] === '.') {
+								result.push(`<span class="shil-hl-punct">...</span>`);
+								pos += 3;
+								continue;
+							}
+							// Variable names in destructuring
+							const varMatch = line.slice(pos).match(/^[a-zA-Z_$][\w$]*/);
+							if (varMatch) {
+								const varName = varMatch[0];
+								// After the name, check if followed by : (rename) — if so, this is the source key
+								const afterVar = line.slice(pos + varName.length);
+								const isKey = /^\s*:/.test(afterVar);
+								if (isKey) {
+									// Source key: use prop color
+									result.push(`<span class="shil-hl-prop">${esc(varName)}</span>`);
+								} else {
+									// Destructured binding: use a distinct color (lime for emphasis)
+									result.push(`<span class="shil-hl-destr">${esc(varName)}</span>`);
+								}
+								pos += varName.length;
+								continue;
+							}
+							// Numbers (array destructuring with defaults)
+							const numM = line.slice(pos).match(/^[\d]+/);
+							if (numM) {
+								result.push(`<span class="shil-hl-number">${esc(numM[0])}</span>`);
+								pos += numM[0].length;
+								continue;
+							}
+							// Strings in defaults
+							if (line[pos] === "'" || line[pos] === '"') {
+								const q = line[pos];
+								let end = pos + 1;
+								while (end < line.length && line[end] !== q) {
+									if (line[end] === '\\') { end++; }
+									end++;
+								}
+								if (end < line.length) { end++; }
+								result.push(`<span class="shil-hl-string">${esc(line.slice(pos, end))}</span>`);
+								pos = end;
+								continue;
+							}
+							// Anything else
+							result.push(esc(line[pos]));
+							pos++;
+						}
+						// Closing bracket
+						if (pos < line.length && line[pos] === closeBracket) {
+							result.push(`<span class="shil-hl-punct">${esc(closeBracket)}</span>`);
+							pos++;
+						}
+						continue;
+					}
+				}
 			} else {
 				// Check if this is a function call: word followed by (
 				const afterWord = pos + word.length;
@@ -1084,6 +1174,36 @@ function highlightSyntax(line: string): string {
 			result.push(`<span class="shil-hl-keyword">=&gt;</span>`);
 			pos += 2;
 			continue;
+		}
+
+		// 8b. Optional chaining ?. (distinct from regular . access)
+		if (line[pos] === '?' && line[pos + 1] === '.') {
+			// Ensure it's not ?. followed by a digit (which would be a conditional with a number literal)
+			if (pos + 2 >= line.length || !/\d/.test(line[pos + 2])) {
+				result.push(`<span class="shil-hl-optchain">?.</span>`);
+				pos += 2;
+				continue;
+			}
+		}
+
+		// 8c. Generic type parameters <T extends Base> after type-like identifiers
+		if (line[pos] === '<') {
+			// Look back to see if preceded by a type name (PascalCase, builtin type, or after : / as / extends)
+			const before = line.slice(0, pos);
+			const typeBeforeMatch = before.match(/(?:^|[\s,;:=(])\s*([A-Z][\w$]*)\s*$/);
+			const contextMatch = before.match(/(?::\s*|as\s+|extends\s+|implements\s+|&\s*|\|\s*)([A-Za-z_$][\w$]*)\s*$/);
+			if (typeBeforeMatch || contextMatch) {
+				// Try to match balanced angle brackets with type content
+				const rest = line.slice(pos);
+				const genericMatch = rest.match(/^<([A-Za-z_$\s,\[\]|&?:.=\w$()'"]+)>/);
+				if (genericMatch) {
+					result.push(`<span class="shil-hl-punct">&lt;</span>`);
+					result.push(`<span class="shil-hl-type">${esc(genericMatch[1])}</span>`);
+					result.push(`<span class="shil-hl-punct">&gt;</span>`);
+					pos += genericMatch[0].length;
+					continue;
+				}
+			}
 		}
 
 		// 9. Punctuation
