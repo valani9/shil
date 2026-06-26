@@ -3,7 +3,7 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-import { Disposable, DisposableMap, DisposableStore, IDisposable, toDisposable } from '../../base/common/lifecycle.js';
+import { Disposable, DisposableMap, DisposableStore, IDisposable, MutableDisposable, toDisposable } from '../../base/common/lifecycle.js';
 import { Event, Emitter } from '../../base/common/event.js';
 import { EventType, addDisposableListener, getClientArea, size, IDimension, isAncestorUsingFlowTo, computeScreenAwareSize, getActiveDocument, getWindows, getActiveWindow, isActiveDocument, getWindow, getWindowId, getActiveElement, Dimension } from '../../base/browser/dom.js';
 import { onDidChangeFullscreen, isFullscreen, isWCOEnabled } from '../../base/browser/browser.js';
@@ -299,6 +299,10 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 	private stateModel!: LayoutStateModel;
 
 	private disposed = false;
+
+	// Shil: auto-hide sidebar — overlay drawer that hides when focus leaves
+	private readonly _shilAutoHideDisposable = this._register(new MutableDisposable());
+	private _shilAutoHideTimer: ReturnType<typeof setTimeout> | undefined;
 
 	constructor(
 		protected readonly parent: HTMLElement,
@@ -1941,6 +1945,86 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 		}
 	}
 
+	/**
+	 * Shil: set up auto-hide behavior for the sidebar.
+	 * After the sidebar is revealed via Cmd+B, a focusout listener watches
+	 * for focus leaving the sidebar+activitybar area. After a short delay
+	 * (to ignore transient focus changes), the sidebar auto-hides with the
+	 * existing smooth slide transition.
+	 */
+	private shilSetupSidebarAutoHide(): void {
+		this._shilAutoHideDisposable.clear();
+		if (this._shilAutoHideTimer !== undefined) {
+			clearTimeout(this._shilAutoHideTimer);
+			this._shilAutoHideTimer = undefined;
+		}
+
+		const sidebarContainer = this.getContainer(mainWindow, Parts.SIDEBAR_PART);
+		const activityBarContainer = this.getContainer(mainWindow, Parts.ACTIVITYBAR_PART);
+		if (!sidebarContainer) {
+			return;
+		}
+
+		const store = new DisposableStore();
+
+		const scheduleHide = () => {
+			if (this._shilAutoHideTimer !== undefined) {
+				clearTimeout(this._shilAutoHideTimer);
+			}
+			this._shilAutoHideTimer = setTimeout(() => {
+				this._shilAutoHideTimer = undefined;
+				// Verify focus is still outside sidebar+activitybar before hiding
+				const active = getActiveElement();
+				const inSidebar = active && isAncestorUsingFlowTo(active, sidebarContainer);
+				const inActivityBar = active && activityBarContainer && isAncestorUsingFlowTo(active, activityBarContainer);
+				if (!inSidebar && !inActivityBar) {
+					this.setSideBarHidden(true);
+					this._shilAutoHideDisposable.clear();
+				}
+			}, 400);
+		};
+
+		// Listen for focusout on the sidebar part
+		store.add(addDisposableListener(sidebarContainer, 'focusout', (e: FocusEvent) => {
+			const relatedTarget = e.relatedTarget as HTMLElement | null;
+			const staysInSidebar = relatedTarget && isAncestorUsingFlowTo(relatedTarget, sidebarContainer);
+			const staysInActivityBar = relatedTarget && activityBarContainer && isAncestorUsingFlowTo(relatedTarget, activityBarContainer);
+			if (!staysInSidebar && !staysInActivityBar) {
+				scheduleHide();
+			}
+		}));
+
+		// Also listen on activity bar
+		if (activityBarContainer) {
+			store.add(addDisposableListener(activityBarContainer, 'focusout', (e: FocusEvent) => {
+				const relatedTarget = e.relatedTarget as HTMLElement | null;
+				const staysInSidebar = relatedTarget && isAncestorUsingFlowTo(relatedTarget, sidebarContainer);
+				const staysInActivityBar = relatedTarget && isAncestorUsingFlowTo(relatedTarget, activityBarContainer);
+				if (!staysInSidebar && !staysInActivityBar) {
+					scheduleHide();
+				}
+			}));
+		}
+
+		// Cancel auto-hide if focus returns to sidebar
+		store.add(addDisposableListener(sidebarContainer, 'focusin', () => {
+			if (this._shilAutoHideTimer !== undefined) {
+				clearTimeout(this._shilAutoHideTimer);
+				this._shilAutoHideTimer = undefined;
+			}
+		}));
+
+		// Clean up timer when disposed
+		store.add(toDisposable(() => {
+			if (this._shilAutoHideTimer !== undefined) {
+				clearTimeout(this._shilAutoHideTimer);
+				this._shilAutoHideTimer = undefined;
+			}
+		}));
+
+		this._shilAutoHideDisposable.value = store;
+	}
+
 	private hasViews(id: string): boolean {
 		const viewContainer = this.viewDescriptorService.getViewContainerById(id);
 		if (!viewContainer) {
@@ -2290,7 +2374,14 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 			case Parts.ACTIVITYBAR_PART:
 				return this.setActivityBarHidden(hidden);
 			case Parts.SIDEBAR_PART:
-				return this.setSideBarHidden(hidden);
+				this.setSideBarHidden(hidden);
+				// Shil: set up auto-hide when sidebar is revealed via explicit user action
+				if (!hidden) {
+					this.shilSetupSidebarAutoHide();
+				} else {
+					this._shilAutoHideDisposable.clear();
+				}
+				return;
 			case Parts.EDITOR_PART:
 				return this.setEditorHidden(hidden);
 			case Parts.BANNER_PART:

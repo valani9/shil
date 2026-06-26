@@ -327,6 +327,11 @@ export class ToggleSidebarVisibilityAction extends Action2 {
 
 		layoutService.setPartHidden(isCurrentlyVisible, Parts.SIDEBAR_PART);
 
+		// Shil: focus sidebar when revealing so auto-hide focus tracking works
+		if (!isCurrentlyVisible && layoutService.isVisible(Parts.SIDEBAR_PART)) {
+			layoutService.focusPart(Parts.SIDEBAR_PART);
+		}
+
 		// Announce visibility change to screen readers
 		const alertMessage = isCurrentlyVisible
 			? localize('sidebarHidden', "Primary Side Bar hidden")
