@@ -92,41 +92,47 @@ registerSingleton(IExtensionsWorkbenchService, ExtensionsWorkbenchService, Insta
 registerSingleton(IExtensionRecommendationNotificationService, ExtensionRecommendationNotificationService, InstantiationType.Delayed);
 registerSingleton(IExtensionRecommendationsService, ExtensionRecommendationsService, InstantiationType.Eager /* Prompts recommendations in the background */);
 
-// Quick Access
-Registry.as<IQuickAccessRegistry>(Extensions.Quickaccess).registerQuickAccessProvider({
-	ctor: ManageExtensionsQuickAccessProvider,
-	prefix: ManageExtensionsQuickAccessProvider.PREFIX,
-	placeholder: localize('manageExtensionsQuickAccessPlaceholder', "Press Enter to manage extensions."),
-	helpEntries: [{ description: localize('manageExtensionsHelp', "Manage Extensions") }]
-});
+// Quick Access — skip for Shil (no marketplace UI)
+if (product.nameShort === 'Code - OSS') {
+	Registry.as<IQuickAccessRegistry>(Extensions.Quickaccess).registerQuickAccessProvider({
+		ctor: ManageExtensionsQuickAccessProvider,
+		prefix: ManageExtensionsQuickAccessProvider.PREFIX,
+		placeholder: localize('manageExtensionsQuickAccessPlaceholder', "Press Enter to manage extensions."),
+		helpEntries: [{ description: localize('manageExtensionsHelp', "Manage Extensions") }]
+	});
+}
 
-// Editor
-Registry.as<IEditorPaneRegistry>(EditorExtensions.EditorPane).registerEditorPane(
-	EditorPaneDescriptor.create(
-		ExtensionEditor,
-		ExtensionEditor.ID,
-		localize('extension', "Extension")
-	),
-	[
-		new SyncDescriptor(ExtensionsInput)
-	]);
+// Editor — skip for Shil (no marketplace UI)
+if (product.nameShort === 'Code - OSS') {
+	Registry.as<IEditorPaneRegistry>(EditorExtensions.EditorPane).registerEditorPane(
+		EditorPaneDescriptor.create(
+			ExtensionEditor,
+			ExtensionEditor.ID,
+			localize('extension', "Extension")
+		),
+		[
+			new SyncDescriptor(ExtensionsInput)
+		]);
+}
 
-export const VIEW_CONTAINER = Registry.as<IViewContainersRegistry>(ViewContainerExtensions.ViewContainersRegistry).registerViewContainer(
-	{
-		id: VIEWLET_ID,
-		title: localize2('extensions', "Extensions"),
-		openCommandActionDescriptor: {
+export const VIEW_CONTAINER = product.nameShort === 'Code - OSS'
+	? Registry.as<IViewContainersRegistry>(ViewContainerExtensions.ViewContainersRegistry).registerViewContainer(
+		{
 			id: VIEWLET_ID,
-			mnemonicTitle: localize({ key: 'miViewExtensions', comment: ['&& denotes a mnemonic'] }, "E&&xtensions"),
-			keybindings: { primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyX },
+			title: localize2('extensions', "Extensions"),
+			openCommandActionDescriptor: {
+				id: VIEWLET_ID,
+				mnemonicTitle: localize({ key: 'miViewExtensions', comment: ['&& denotes a mnemonic'] }, "E&&xtensions"),
+				keybindings: { primary: KeyMod.CtrlCmd | KeyMod.Shift | KeyCode.KeyX },
+				order: 4,
+			},
+			ctorDescriptor: new SyncDescriptor(ExtensionsViewPaneContainer),
+			icon: extensionsViewIcon,
 			order: 4,
-		},
-		ctorDescriptor: new SyncDescriptor(ExtensionsViewPaneContainer),
-		icon: extensionsViewIcon,
-		order: 4,
-		rejectAddedViews: true,
-		alwaysUseContainerInfo: true,
-	}, ViewContainerLocation.Sidebar);
+			rejectAddedViews: true,
+			alwaysUseContainerInfo: true,
+		}, ViewContainerLocation.Sidebar)
+	: undefined!;
 
 Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Configuration)
 	.registerConfiguration({
@@ -2091,39 +2097,45 @@ class ExtensionToolsContribution extends Disposable implements IWorkbenchContrib
 }
 
 const workbenchRegistry = Registry.as<IWorkbenchContributionsRegistry>(WorkbenchExtensions.Workbench);
-workbenchRegistry.registerWorkbenchContribution(ExtensionsContributions, LifecyclePhase.Restored);
+// Core extension management — keep for built-in extensions
 workbenchRegistry.registerWorkbenchContribution(StatusUpdater, LifecyclePhase.Eventually);
 workbenchRegistry.registerWorkbenchContribution(MaliciousExtensionChecker, LifecyclePhase.Eventually);
 workbenchRegistry.registerWorkbenchContribution(KeymapExtensions, LifecyclePhase.Restored);
-workbenchRegistry.registerWorkbenchContribution(ExtensionsViewletViewsContribution, LifecyclePhase.Restored);
 workbenchRegistry.registerWorkbenchContribution(ExtensionActivationProgress, LifecyclePhase.Eventually);
 workbenchRegistry.registerWorkbenchContribution(ExtensionDependencyChecker, LifecyclePhase.Eventually);
 workbenchRegistry.registerWorkbenchContribution(ExtensionEnablementWorkspaceTrustTransitionParticipant, LifecyclePhase.Restored);
-workbenchRegistry.registerWorkbenchContribution(ExtensionsCompletionItemsProvider, LifecyclePhase.Restored);
-workbenchRegistry.registerWorkbenchContribution(UnsupportedExtensionsMigrationContrib, LifecyclePhase.Eventually);
-workbenchRegistry.registerWorkbenchContribution(TrustedPublishersInitializer, LifecyclePhase.Eventually);
-workbenchRegistry.registerWorkbenchContribution(ExtensionMarketplaceStatusUpdater, LifecyclePhase.Eventually);
-if (isWeb) {
-	workbenchRegistry.registerWorkbenchContribution(ExtensionStorageCleaner, LifecyclePhase.Eventually);
+// Marketplace-facing contributions — skip for Shil
+if (product.nameShort === 'Code - OSS') {
+	workbenchRegistry.registerWorkbenchContribution(ExtensionsContributions, LifecyclePhase.Restored);
+	workbenchRegistry.registerWorkbenchContribution(ExtensionsViewletViewsContribution, LifecyclePhase.Restored);
+	workbenchRegistry.registerWorkbenchContribution(ExtensionsCompletionItemsProvider, LifecyclePhase.Restored);
+	workbenchRegistry.registerWorkbenchContribution(UnsupportedExtensionsMigrationContrib, LifecyclePhase.Eventually);
+	workbenchRegistry.registerWorkbenchContribution(TrustedPublishersInitializer, LifecyclePhase.Eventually);
+	workbenchRegistry.registerWorkbenchContribution(ExtensionMarketplaceStatusUpdater, LifecyclePhase.Eventually);
+	if (isWeb) {
+		workbenchRegistry.registerWorkbenchContribution(ExtensionStorageCleaner, LifecyclePhase.Eventually);
+	}
+	registerWorkbenchContribution2(ExtensionToolsContribution.ID, ExtensionToolsContribution, WorkbenchPhase.AfterRestored);
 }
 
-registerWorkbenchContribution2(ExtensionToolsContribution.ID, ExtensionToolsContribution, WorkbenchPhase.AfterRestored);
-
-registerAction2(class ExtensionsGallerySignInAction extends Action2 {
-	constructor() {
-		super({
-			id: 'workbench.extensions.actions.gallery.signIn',
-			title: localize2('signInToMarketplace', 'Sign in to access Extensions Marketplace'),
-			menu: {
-				id: MenuId.AccountsContext,
-				when: CONTEXT_EXTENSIONS_GALLERY_STATUS.isEqualTo(ExtensionGalleryManifestStatus.RequiresSignIn)
-			},
-		});
-	}
-	run(accessor: ServicesAccessor): Promise<void> {
-		return accessor.get(ICommandService).executeCommand(DEFAULT_ACCOUNT_SIGN_IN_COMMAND);
-	}
-});
+// Gallery sign-in action — skip for Shil (no marketplace)
+if (product.nameShort === 'Code - OSS') {
+	registerAction2(class ExtensionsGallerySignInAction extends Action2 {
+		constructor() {
+			super({
+				id: 'workbench.extensions.actions.gallery.signIn',
+				title: localize2('signInToMarketplace', 'Sign in to access Extensions Marketplace'),
+				menu: {
+					id: MenuId.AccountsContext,
+					when: CONTEXT_EXTENSIONS_GALLERY_STATUS.isEqualTo(ExtensionGalleryManifestStatus.RequiresSignIn)
+				},
+			});
+		}
+		run(accessor: ServicesAccessor): Promise<void> {
+			return accessor.get(ICommandService).executeCommand(DEFAULT_ACCOUNT_SIGN_IN_COMMAND);
+		}
+	});
+}
 
 Registry.as<IConfigurationMigrationRegistry>(ConfigurationMigrationExtensions.ConfigurationMigration)
 	.registerConfigurationMigrations([{
