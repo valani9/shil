@@ -9,6 +9,7 @@ import { createDecorator } from '../../../../platform/instantiation/common/insta
 import { IRequestService } from '../../../../platform/request/common/request.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
 import { ILogService } from '../../../../platform/log/common/log.js';
+import { stringHash } from '../../../../base/common/hash.js';
 import type { ReaderSpan, SpanKind } from './shilReaderTypes.js';
 
 export const IShilModelService = createDecorator<IShilModelService>('shilModelService');
@@ -26,6 +27,11 @@ export interface IShilModelService {
 	 * Returns `undefined` if not configured — caller falls back to regex parser.
 	 */
 	generateReaderSpans(source: string, filePath: string, languageId: string, token: CancellationToken): Promise<ReaderSpan[] | undefined>;
+
+	/**
+	 * Return cached spans for this file+content, or `undefined` if not cached.
+	 */
+	getCached(filePath: string, source: string): ReaderSpan[] | undefined;
 }
 
 const SYSTEM_PROMPT = `You are a code reader that explains source code in plain English. Given a source file, produce a JSON array of "spans" where each span explains a contiguous block of code.
@@ -60,11 +66,23 @@ Produce the JSON array of reader spans for this file.`;
 export class ShilModelService implements IShilModelService {
 	declare readonly _serviceBrand: undefined;
 
+	/** LRU-ish cache: key = `filePath:contentHash`, value = generated spans. Max 64 entries. */
+	private readonly cache = new Map<string, ReaderSpan[]>();
+	private static readonly MAX_CACHE = 64;
+
 	constructor(
 		@IRequestService private readonly requestService: IRequestService,
 		@IConfigurationService private readonly configService: IConfigurationService,
 		@ILogService private readonly logService: ILogService,
 	) {}
+
+	private cacheKey(filePath: string, source: string): string {
+		return `${filePath}:${stringHash(source, 0)}`;
+	}
+
+	getCached(filePath: string, source: string): ReaderSpan[] | undefined {
+		return this.cache.get(this.cacheKey(filePath, source));
+	}
 
 	isConfigured(): boolean {
 		const apiKey = this.configService.getValue<string>('shil.model.apiKey');
@@ -74,6 +92,13 @@ export class ShilModelService implements IShilModelService {
 	async generateReaderSpans(source: string, filePath: string, languageId: string, token: CancellationToken): Promise<ReaderSpan[] | undefined> {
 		if (!this.isConfigured()) {
 			return undefined;
+		}
+
+		// Return cached result if available
+		const key = this.cacheKey(filePath, source);
+		const cached = this.cache.get(key);
+		if (cached) {
+			return cached;
 		}
 
 		const apiKey = this.configService.getValue<string>('shil.model.apiKey') ?? '';
@@ -102,7 +127,18 @@ export class ShilModelService implements IShilModelService {
 
 			const buf = await streamToBuffer(response.stream);
 			const responseText = buf.toString();
-			return this.parseResponse(provider, responseText);
+			const spans = this.parseResponse(provider, responseText);
+			if (spans) {
+				// Evict oldest entries if cache is full
+				if (this.cache.size >= ShilModelService.MAX_CACHE) {
+					const first = this.cache.keys().next().value;
+					if (first !== undefined) {
+						this.cache.delete(first);
+					}
+				}
+				this.cache.set(key, spans);
+			}
+			return spans;
 		} catch (err) {
 			this.logService.warn(`[ShilModel] Request failed: ${err instanceof Error ? err.message : String(err)}`);
 			return undefined;

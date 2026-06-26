@@ -114,26 +114,47 @@ export class ShilReaderPane extends EditorPane {
 			}
 
 			const source = content.value.toString();
+			const filePath = input.fileResource.path;
 			const languageId = this.languageService.guessLanguageIdByFilepathOrFirstLine(input.fileResource) ?? 'plaintext';
 
-			// Try LLM-generated spans first, fall back to regex parser
-			let doc = parseToReaderDoc(source, input.fileResource.path, languageId);
+			// Parse with regex immediately (always available)
+			const doc = parseToReaderDoc(source, filePath, languageId);
 
 			if (this.modelService.isConfigured()) {
-				const llmSpans = await this.modelService.generateReaderSpans(source, input.fileResource.path, languageId, token);
-				if (token.isCancellationRequested) {
-					return;
+				// Check cache first — instant if available
+				const cached = this.modelService.getCached(filePath, source);
+				if (cached && cached.length > 0) {
+					doc.spans = cached;
+					this.currentDoc = doc;
+					this.renderDoc(doc);
+				} else {
+					// Show regex-parsed doc immediately with loading indicator
+					this.currentDoc = doc;
+					this.renderDoc(doc);
+					this.showLoadingOverlay();
+
+					// Fetch LLM spans in background
+					const llmSpans = await this.modelService.generateReaderSpans(source, filePath, languageId, token);
+					if (token.isCancellationRequested) {
+						return;
+					}
+					if (llmSpans && llmSpans.length > 0) {
+						doc.spans = llmSpans;
+						this.currentDoc = doc;
+						this.renderDoc(doc);
+					} else {
+						// LLM failed — just remove the loading overlay, keep regex doc
+						this.hideLoadingOverlay();
+					}
 				}
-				if (llmSpans && llmSpans.length > 0) {
-					doc.spans = llmSpans;
-				}
+			} else {
+				// No model configured — use regex parser only
+				this.currentDoc = doc;
+				this.renderDoc(doc);
 			}
 
-			this.currentDoc = doc;
-			this.renderDoc(this.currentDoc);
-
 			// Scan connections in background (non-blocking)
-			scanConnections(input.fileResource.path, source, this.fileService).then(connections => {
+			scanConnections(filePath, source, this.fileService).then(connections => {
 				if (token.isCancellationRequested) {
 					return;
 				}
@@ -671,6 +692,28 @@ export class ShilReaderPane extends EditorPane {
 
 			el.style.display = visible ? '' : 'none';
 		}
+	}
+
+	private showLoadingOverlay(): void {
+		if (!this.contentElement) {
+			return;
+		}
+		// Remove existing overlay if any
+		this.hideLoadingOverlay();
+		const overlay = document.createElement('div');
+		overlay.className = 'shil-reader-loading';
+		const bar = document.createElement('div');
+		bar.className = 'shil-reader-loading-bar';
+		overlay.appendChild(bar);
+		const label = document.createElement('div');
+		label.className = 'shil-reader-loading-label';
+		label.textContent = 'Generating English\u2026';
+		overlay.appendChild(label);
+		this.contentElement.prepend(overlay);
+	}
+
+	private hideLoadingOverlay(): void {
+		this.contentElement?.querySelector('.shil-reader-loading')?.remove();
 	}
 
 	private renderError(detail?: string): void {

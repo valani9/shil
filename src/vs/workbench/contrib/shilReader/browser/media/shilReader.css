@@ -327,6 +327,49 @@
 	color: rgba(255, 255, 255, 0.28);
 }
 
+/* ── Loading state ──────────────────────────────────────────────────────────── */
+
+.shil-reader-loading {
+	padding: 16px 24px;
+	display: flex;
+	align-items: center;
+	gap: 12px;
+	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.shil-reader-loading-bar {
+	width: 48px;
+	height: 3px;
+	border-radius: 2px;
+	background: rgba(194, 242, 77, 0.25);
+	overflow: hidden;
+	position: relative;
+}
+
+.shil-reader-loading-bar::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	width: 50%;
+	border-radius: 2px;
+	background: #C2F24D;
+	animation: shil-loading-sweep 1.6s ease-in-out infinite;
+}
+
+@keyframes shil-loading-sweep {
+	0% { transform: translateX(-100%); }
+	50% { transform: translateX(200%); }
+	100% { transform: translateX(-100%); }
+}
+
+.shil-reader-loading-label {
+	font-family: 'Martian Mono', monospace;
+	font-size: 9px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	color: rgba(194, 242, 77, 0.6);
+}
+
 /* ── Error state ────────────────────────────────────────────────────────────── */
 
 .shil-reader-error {
