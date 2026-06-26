@@ -24,6 +24,11 @@ import { DisposableStore } from '../../../../base/common/lifecycle.js';
 import { IEditorService } from '../../../services/editor/common/editorService.js';
 import { IRange } from '../../../../editor/common/core/range.js';
 import { URI } from '../../../../base/common/uri.js';
+import { createTrustedTypesPolicy } from '../../../../base/browser/trustedTypes.js';
+
+const readerTrustedTypes = createTrustedTypesPolicy('shilReader', {
+	createHTML: (value: string) => value,
+});
 
 export class ShilReaderPane extends EditorPane {
 
@@ -119,8 +124,9 @@ export class ShilReaderPane extends EditorPane {
 				this.currentDoc!.connections = connections;
 				this.renderRail(connections);
 			});
-		} catch {
-			this.renderError();
+		} catch (err) {
+			const errMsg = err instanceof Error ? err.message : String(err);
+			this.renderError(errMsg);
 		}
 	}
 
@@ -327,7 +333,12 @@ export class ShilReaderPane extends EditorPane {
 
 				const lineTd = document.createElement('td');
 				lineTd.className = 'shil-reader-code-line';
-				lineTd.innerHTML = highlightSyntax(excerptLines[i]);
+				const highlighted = highlightSyntax(excerptLines[i]);
+				if (readerTrustedTypes) {
+					lineTd.innerHTML = readerTrustedTypes.createHTML(highlighted) as unknown as string;
+				} else {
+					lineTd.textContent = excerptLines[i];
+				}
 				tr.appendChild(lineTd);
 
 				tbody.appendChild(tr);
@@ -646,14 +657,14 @@ export class ShilReaderPane extends EditorPane {
 		}
 	}
 
-	private renderError(): void {
+	private renderError(detail?: string): void {
 		if (!this.contentElement) {
 			return;
 		}
 		this.contentElement.textContent = '';
 		const msg = document.createElement('div');
 		msg.className = 'shil-reader-error';
-		msg.textContent = 'Could not read this file.';
+		msg.textContent = detail ? `Could not read this file: ${detail}` : 'Could not read this file.';
 		this.contentElement.appendChild(msg);
 	}
 
@@ -687,7 +698,10 @@ export class ShilReaderPane extends EditorPane {
 		// Rail header
 		const header = document.createElement('div');
 		header.className = 'shil-rail-header';
-		header.innerHTML = `<span class="shil-rail-kicker">WHAT BREAKS</span>`;
+		const kickerSpan = document.createElement('span');
+		kickerSpan.className = 'shil-rail-kicker';
+		kickerSpan.textContent = 'WHAT BREAKS';
+		header.appendChild(kickerSpan);
 		this.railElement.appendChild(header);
 
 		for (const role of roleOrder) {
