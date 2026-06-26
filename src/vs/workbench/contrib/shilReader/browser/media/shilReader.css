@@ -1,0 +1,147 @@
+/*---------------------------------------------------------------------------------------------
+ *  Copyright (c) Microsoft Corporation. All rights reserved.
+ *  Licensed under the MIT License. See License.txt in the project root for license information.
+ *--------------------------------------------------------------------------------------------*/
+
+/* ── Shil Reader pane ───────────────────────────────────────────────────────── */
+
+.shil-reader-container {
+	overflow-y: auto;
+	overflow-x: hidden;
+	background: var(--vscode-editor-background, #05070C);
+	color: var(--vscode-editor-foreground, #d4d4d4);
+	font-family: 'Hanken Grotesk', 'Segoe UI', system-ui, sans-serif;
+	padding: 0;
+}
+
+.shil-reader-content {
+	max-width: 680px;
+	margin: 0 auto;
+	padding: 48px 32px 80px;
+	outline: none;
+}
+
+/* ── Header ─────────────────────────────────────────────────────────────────── */
+
+.shil-reader-header {
+	margin-bottom: 40px;
+	padding-bottom: 24px;
+	border-bottom: 1px solid rgba(194, 242, 77, 0.15);
+}
+
+.shil-reader-kicker {
+	font-family: 'Martian Mono', 'JetBrains Mono', monospace;
+	font-size: 10px;
+	font-weight: 600;
+	letter-spacing: 0.12em;
+	color: #C2F24D;
+	margin-bottom: 12px;
+	text-transform: uppercase;
+}
+
+.shil-reader-title {
+	font-size: 28px;
+	font-weight: 700;
+	color: #ffffff;
+	margin: 0 0 8px;
+	line-height: 1.2;
+}
+
+.shil-reader-meta {
+	font-size: 13px;
+	color: rgba(255, 255, 255, 0.45);
+	font-family: 'Martian Mono', 'JetBrains Mono', monospace;
+	font-size: 11px;
+}
+
+/* ── Spans ──────────────────────────────────────────────────────────────────── */
+
+.shil-reader-spans {
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+}
+
+.shil-reader-span {
+	padding: 16px 20px;
+	border-radius: 6px;
+	border-left: 3px solid transparent;
+	transition: background 0.15s ease, border-color 0.15s ease;
+	cursor: default;
+}
+
+.shil-reader-span:hover {
+	background: rgba(255, 255, 255, 0.03);
+}
+
+/* Kind-specific left border colors */
+.shil-reader-span--import   { border-left-color: rgba(194, 242, 77, 0.35); }
+.shil-reader-span--guard    { border-left-color: rgba(255, 180, 70, 0.45); }
+.shil-reader-span--action   { border-left-color: rgba(100, 200, 255, 0.45); }
+.shil-reader-span--db       { border-left-color: rgba(255, 100, 100, 0.5); }
+.shil-reader-span--response { border-left-color: rgba(160, 140, 255, 0.4); }
+.shil-reader-span--narration { border-left-color: rgba(255, 255, 255, 0.1); }
+.shil-reader-span--declaration { border-left-color: rgba(194, 242, 77, 0.25); }
+.shil-reader-span--export   { border-left-color: rgba(194, 242, 77, 0.5); }
+
+/* Kind badge */
+.shil-reader-span-kind {
+	display: inline-block;
+	font-family: 'Martian Mono', 'JetBrains Mono', monospace;
+	font-size: 9px;
+	font-weight: 600;
+	letter-spacing: 0.1em;
+	color: rgba(255, 255, 255, 0.35);
+	margin-bottom: 6px;
+}
+
+.shil-reader-span--import .shil-reader-span-kind   { color: rgba(194, 242, 77, 0.6); }
+.shil-reader-span--guard .shil-reader-span-kind     { color: rgba(255, 180, 70, 0.7); }
+.shil-reader-span--action .shil-reader-span-kind    { color: rgba(100, 200, 255, 0.7); }
+.shil-reader-span--db .shil-reader-span-kind        { color: rgba(255, 100, 100, 0.7); }
+.shil-reader-span--response .shil-reader-span-kind  { color: rgba(160, 140, 255, 0.65); }
+.shil-reader-span--export .shil-reader-span-kind    { color: rgba(194, 242, 77, 0.7); }
+
+/* English prose */
+.shil-reader-span-english {
+	font-size: 15px;
+	line-height: 1.65;
+	color: rgba(255, 255, 255, 0.88);
+	margin: 0 0 8px;
+}
+
+/* Line reference */
+.shil-reader-span-lines {
+	font-family: 'Martian Mono', 'JetBrains Mono', monospace;
+	font-size: 10px;
+	color: rgba(255, 255, 255, 0.25);
+}
+
+/* Code excerpt */
+.shil-reader-span-code {
+	margin: 10px 0 0;
+	padding: 10px 14px;
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: 4px;
+	overflow-x: auto;
+	font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
+	font-size: 12px;
+	line-height: 1.5;
+	color: rgba(255, 255, 255, 0.55);
+	white-space: pre;
+	tab-size: 4;
+}
+
+.shil-reader-span-code code {
+	font-family: inherit;
+}
+
+/* ── Error state ────────────────────────────────────────────────────────────── */
+
+.shil-reader-error {
+	padding: 40px;
+	text-align: center;
+	color: rgba(255, 255, 255, 0.4);
+	font-size: 14px;
+}
