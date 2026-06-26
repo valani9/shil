@@ -1193,6 +1193,17 @@ function highlightSyntax(line: string): string {
 						continue;
 					}
 				}
+				// 6a-infer. Infer type variable: infer R (in conditional types)
+				if (word === 'infer') {
+					const afterInfer = line.slice(pos + word.length);
+					const inferMatch = afterInfer.match(/^(\s+)([a-zA-Z_$][\w$]*)/);
+					if (inferMatch) {
+						result.push(inferMatch[1]);
+						result.push(`<span class="shil-hl-type">${esc(inferMatch[2])}</span>`);
+						pos += word.length + inferMatch[0].length;
+						continue;
+					}
+				}
 				// 6a-new. Constructor call: new ClassName(...)
 				if (word === 'new') {
 					const afterNew = line.slice(pos + word.length);
@@ -1278,14 +1289,15 @@ function highlightSyntax(line: string): string {
 				}
 			}
 
-			// 6c. Type assertion: `as TypeName` after any expression
-			const asTypeMatch = line.slice(pos).match(/^(\s+)(as)(\s+)([a-zA-Z_$][\w$]*(?:\s*\.\s*[a-zA-Z_$][\w$]*)*(?:\s*<[^>]*>)?(?:\s*\[\s*\])*)/);
+			// 6c. Type assertion: `as TypeName` or `satisfies TypeName` after any expression
+			const asTypeMatch = line.slice(pos).match(/^(\s+)(as|satisfies)(\s+)([a-zA-Z_$][\w$]*(?:\s*\.\s*[a-zA-Z_$][\w$]*)*(?:\s*<[^>]*>)?(?:\s*\[\s*\])*)/);
 			if (asTypeMatch) {
 				const assertType = asTypeMatch[4];
 				const firstType = assertType.match(/^[a-zA-Z_$][\w$]*/)?.[0] ?? '';
 				if (isTypeName(firstType)) {
 					result.push(asTypeMatch[1]);
-					result.push('<span class="shil-hl-keyword">as</span>');
+					const asCls = asTypeMatch[2] === 'satisfies' ? 'shil-hl-opkw' : 'shil-hl-keyword';
+					result.push(`<span class="${asCls}">${esc(asTypeMatch[2])}</span>`);
 					result.push(asTypeMatch[3]);
 					result.push(`<span class="shil-hl-type">${esc(assertType)}</span>`);
 					pos += asTypeMatch[0].length;
@@ -1352,7 +1364,32 @@ function highlightSyntax(line: string): string {
 					}
 					// { expression } — just emit the brace and let the main loop handle the rest
 					if (line[pos] === '{') {
-						break; // exit JSX attribute scanning, main loop handles {
+						// Find the matching closing brace, respecting nested braces and strings
+						let depth = 1;
+						let exprEnd = pos + 1;
+						while (exprEnd < line.length && depth > 0) {
+							if (line[exprEnd] === '{') { depth++; }
+							else if (line[exprEnd] === '}') { depth--; }
+							else if (line[exprEnd] === '\'' || line[exprEnd] === '"' || line[exprEnd] === '`') {
+								const q = line[exprEnd];
+								exprEnd++;
+								while (exprEnd < line.length && line[exprEnd] !== q) {
+									if (line[exprEnd] === '\\') { exprEnd++; }
+									exprEnd++;
+								}
+							}
+							if (depth > 0) { exprEnd++; }
+						}
+						if (depth === 0) {
+							const innerExpr = line.slice(pos + 1, exprEnd);
+							result.push('<span class="shil-hl-interp">{</span>');
+							result.push(highlightSyntax(innerExpr));
+							result.push('<span class="shil-hl-interp">}</span>');
+							pos = exprEnd + 1; // skip past closing }
+						} else {
+							break; // unmatched brace — fall out to main loop
+						}
+						continue;
 					}
 					// Anything else
 					result.push(esc(line[pos]));
@@ -1476,7 +1513,7 @@ const KEYWORDS = new Set([
 	'abstract', 'as', 'async', 'await', 'break', 'case', 'catch', 'class',
 	'const', 'continue', 'debugger', 'declare', 'default', 'delete', 'do',
 	'else', 'enum', 'export', 'extends', 'finally', 'for', 'from', 'function',
-	'get', 'if', 'implements', 'import', 'in', 'instanceof', 'interface',
+	'get', 'if', 'implements', 'import', 'in', 'infer', 'instanceof', 'interface',
 	'is', 'keyof', 'let', 'module', 'namespace', 'new', 'of', 'override',
 	'private', 'protected', 'public', 'readonly', 'return', 'satisfies',
 	'set', 'static', 'super', 'switch', 'this', 'throw', 'try', 'type',
