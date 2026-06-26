@@ -1182,7 +1182,7 @@ function highlightSyntax(line: string): string {
 						}
 					}
 				}
-				// 6a-enum. Enum declaration name: enum Direction { ... }
+				// 6a-enum. Enum declaration name + member highlighting: enum Direction { Up, Down = 1 }
 				if (word === 'enum') {
 					const afterEnum = line.slice(pos + word.length);
 					const enumNameMatch = afterEnum.match(/^(\s+)([a-zA-Z_$][\w$]*)/);
@@ -1190,6 +1190,65 @@ function highlightSyntax(line: string): string {
 						result.push(enumNameMatch[1]);
 						result.push(`<span class="shil-hl-enumdef">${esc(enumNameMatch[2])}</span>`);
 						pos += word.length + enumNameMatch[0].length;
+						// If enum body opens on same line: enum Foo { A, B = 1 }
+						const afterName = line.slice(pos);
+						const braceStart = afterName.match(/^(\s*)\{/);
+						if (braceStart) {
+							result.push(braceStart[1]);
+							result.push('<span class="shil-hl-punct">{</span>');
+							pos += braceStart[0].length;
+							// Tokenize enum members until }
+							while (pos < line.length && line[pos] !== '}') {
+								if (/\s/.test(line[pos])) {
+									result.push(line[pos]);
+									pos++;
+									continue;
+								}
+								if (line[pos] === ',') {
+									result.push('<span class="shil-hl-punct">,</span>');
+									pos++;
+									continue;
+								}
+								if (line[pos] === '=') {
+									result.push('<span class="shil-hl-punct">=</span>');
+									pos++;
+									// After =, collect the value until , or } or end of line
+									let valStart = pos;
+									let depth = 0;
+									while (pos < line.length) {
+										if (line[pos] === '(' || line[pos] === '[') { depth++; }
+										else if (line[pos] === ')' || line[pos] === ']') { depth--; }
+										else if (depth === 0 && (line[pos] === ',' || line[pos] === '}')) { break; }
+										pos++;
+									}
+									const valExpr = line.slice(valStart, pos).trim();
+									if (valExpr) {
+										result.push(' ');
+										result.push(highlightSyntax(valExpr));
+									}
+									continue;
+								}
+								// Line comment inside enum
+								if (line[pos] === '/' && line[pos + 1] === '/') {
+									result.push(`<span class="shil-hl-comment">${esc(line.slice(pos))}</span>`);
+									pos = line.length;
+									break;
+								}
+								// Member name
+								const memberMatch = line.slice(pos).match(/^[a-zA-Z_$][\w$]*/);
+								if (memberMatch) {
+									result.push(`<span class="shil-hl-enummember">${esc(memberMatch[0])}</span>`);
+									pos += memberMatch[0].length;
+									continue;
+								}
+								result.push(esc(line[pos]));
+								pos++;
+							}
+							if (pos < line.length && line[pos] === '}') {
+								result.push('<span class="shil-hl-punct">}</span>');
+								pos++;
+							}
+						}
 						continue;
 					}
 				}
@@ -1201,6 +1260,35 @@ function highlightSyntax(line: string): string {
 						result.push(inferMatch[1]);
 						result.push(`<span class="shil-hl-type">${esc(inferMatch[2])}</span>`);
 						pos += word.length + inferMatch[0].length;
+						continue;
+					}
+				}
+				// 6a-asserts. Type predicate: asserts x / asserts x is Type
+				if (word === 'asserts') {
+					const afterAsserts = line.slice(pos + word.length);
+					const assertsMatch = afterAsserts.match(/^(\s+)([a-zA-Z_$][\w$]*)(?:(\s+)(is)(\s+)([a-zA-Z_$][\w$]*))?/);
+					if (assertsMatch) {
+						result.push(assertsMatch[1]);
+						result.push(esc(assertsMatch[2])); // parameter name
+						pos += word.length + assertsMatch[1].length + assertsMatch[2].length;
+						if (assertsMatch[4]) {
+							result.push(assertsMatch[3]);
+							result.push(`<span class="shil-hl-opkw">${esc(assertsMatch[4])}</span>`);
+							result.push(assertsMatch[5]);
+							result.push(`<span class="shil-hl-type">${esc(assertsMatch[6])}</span>`);
+							pos += assertsMatch[3].length + assertsMatch[4].length + assertsMatch[5].length + assertsMatch[6].length;
+						}
+						continue;
+					}
+				}
+				// 6a-using. Resource management: using x = ... / await using x = ...
+				if (word === 'using') {
+					const afterUsing = line.slice(pos + word.length);
+					const usingMatch = afterUsing.match(/^(\s+)([a-zA-Z_$][\w$]*)/);
+					if (usingMatch) {
+						result.push(usingMatch[1]);
+						result.push(`<span class="shil-hl-destr">${esc(usingMatch[2])}</span>`);
+						pos += word.length + usingMatch[0].length;
 						continue;
 					}
 				}
@@ -1510,14 +1598,14 @@ function highlightSyntax(line: string): string {
 }
 
 const KEYWORDS = new Set([
-	'abstract', 'as', 'async', 'await', 'break', 'case', 'catch', 'class',
+	'abstract', 'as', 'asserts', 'async', 'await', 'break', 'case', 'catch', 'class',
 	'const', 'continue', 'debugger', 'declare', 'default', 'delete', 'do',
 	'else', 'enum', 'export', 'extends', 'finally', 'for', 'from', 'function',
 	'get', 'if', 'implements', 'import', 'in', 'infer', 'instanceof', 'interface',
 	'is', 'keyof', 'let', 'module', 'namespace', 'new', 'of', 'override',
 	'private', 'protected', 'public', 'readonly', 'return', 'satisfies',
 	'set', 'static', 'super', 'switch', 'this', 'throw', 'try', 'type',
-	'typeof', 'var', 'void', 'while', 'with', 'yield',
+	'typeof', 'using', 'var', 'void', 'while', 'with', 'yield',
 ]);
 
 const CONSTANTS = new Set([
@@ -1540,7 +1628,7 @@ const TS_PRIMITIVE_TYPES = new Set([
 
 /** Operator-like keywords that get emphasis styling to distinguish from regular keywords. */
 const OPERATOR_KEYWORDS = new Set([
-	'typeof', 'keyof', 'instanceof', 'in', 'of', 'is', 'satisfies',
+	'typeof', 'keyof', 'instanceof', 'in', 'of', 'is', 'asserts', 'satisfies',
 ]);
 
 function tokenClass(word: string): string | undefined {
