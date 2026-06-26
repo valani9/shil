@@ -966,6 +966,62 @@ function highlightSyntax(line: string): string {
 			const cls = tokenClass(word);
 			if (cls) {
 				result.push(`<span class="${cls}">${esc(word)}</span>`);
+				// 6a-import. Import statement: import { names } from 'module'
+				if (word === 'import') {
+					const afterImport = line.slice(pos + word.length);
+					// Named imports: import { a, b as c } from 'module'
+					const namedMatch = afterImport.match(/^(\s*)\{/);
+					if (namedMatch) {
+						result.push(namedMatch[1]);
+						pos += word.length + namedMatch[0].length;
+						result.push('<span class="shil-hl-punct">{</span>');
+						// Tokenize imported names until }
+						while (pos < line.length && line[pos] !== '}') {
+							if (/\s/.test(line[pos])) {
+								result.push(line[pos]);
+								pos++;
+								continue;
+							}
+							if (line[pos] === ',') {
+								result.push('<span class="shil-hl-punct">,</span>');
+								pos++;
+								continue;
+							}
+							const impName = line.slice(pos).match(/^[a-zA-Z_$][\w$]*/);
+							if (impName) {
+								const iName = impName[0];
+								if (iName === 'as') {
+									// 'as' keyword in import rename
+									result.push(`<span class="shil-hl-keyword">${esc(iName)}</span>`);
+								} else if (iName === 'type') {
+									// 'type' keyword in import type { ... }
+									result.push(`<span class="shil-hl-keyword">${esc(iName)}</span>`);
+								} else {
+									// Check if this is source name (followed by ' as ') or binding
+									const afterName = line.slice(pos + iName.length);
+									const isSource = /^\s+as\b/.test(afterName);
+									if (isSource) {
+										result.push(`<span class="shil-hl-prop">${esc(iName)}</span>`);
+									} else {
+										result.push(`<span class="shil-hl-destr">${esc(iName)}</span>`);
+									}
+								}
+								pos += iName.length;
+								continue;
+							}
+							result.push(esc(line[pos]));
+							pos++;
+						}
+						if (pos < line.length && line[pos] === '}') {
+							result.push('<span class="shil-hl-punct">}</span>');
+							pos++;
+						}
+						// Continue to parse `from 'module'` via the main loop
+						continue;
+					}
+					// Default import or * as: import foo from 'module', import * as foo from 'module'
+					// Let the main loop handle these naturally
+				}
 				// 6a. Destructuring: const/let/var followed by { or [
 				if ((word === 'const' || word === 'let' || word === 'var')) {
 					const afterKw = line.slice(pos + word.length);
@@ -1089,6 +1145,20 @@ function highlightSyntax(line: string): string {
 				}
 			}
 
+			// 6c. Type assertion: `as TypeName` after any expression
+			const asTypeMatch = line.slice(pos).match(/^(\s+)(as)(\s+)([a-zA-Z_$][\w$]*(?:\s*\.\s*[a-zA-Z_$][\w$]*)*(?:\s*<[^>]*>)?(?:\s*\[\s*\])*)/);
+			if (asTypeMatch) {
+				const assertType = asTypeMatch[4];
+				const firstType = assertType.match(/^[a-zA-Z_$][\w$]*/)?.[0] ?? '';
+				if (isTypeName(firstType)) {
+					result.push(asTypeMatch[1]);
+					result.push('<span class="shil-hl-keyword">as</span>');
+					result.push(asTypeMatch[3]);
+					result.push(`<span class="shil-hl-type">${esc(assertType)}</span>`);
+					pos += asTypeMatch[0].length;
+				}
+			}
+
 			continue;
 		}
 
@@ -1184,6 +1254,25 @@ function highlightSyntax(line: string): string {
 				pos += 2;
 				continue;
 			}
+		}
+
+		// 8d. Nullish coalescing ?? and ??= operators
+		if (line[pos] === '?' && line[pos + 1] === '?') {
+			if (line[pos + 2] === '=') {
+				result.push('<span class="shil-hl-nullish">??=</span>');
+				pos += 3;
+			} else {
+				result.push('<span class="shil-hl-nullish">??</span>');
+				pos += 2;
+			}
+			continue;
+		}
+
+		// 8e. Ternary ? and : operators — ? when not ?. or ?? is ternary conditional
+		if (line[pos] === '?') {
+			result.push('<span class="shil-hl-ternary">?</span>');
+			pos++;
+			continue;
 		}
 
 		// 8c. Generic type parameters <T extends Base> after type-like identifiers
