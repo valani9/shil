@@ -98,3 +98,79 @@ body {
 .monaco-workbench .part.editor .editor-group-container.empty {
 	background-color: #05070c !important;
 }
+
+/* ============================================================================
+ *  LINEAR-CRISP CHROME — tight, precise, sharp. One electric-lime signal,
+ *  nothing loose, unmistakably not VS Code.
+ * ========================================================================== */
+
+/* Base density: smaller + tighter than VS Code's defaults. */
+.monaco-workbench { font-size: 12px; }
+
+/* Title bar: slim + quiet. */
+.monaco-workbench .part.titlebar { height: 34px !important; }
+.monaco-workbench .part.titlebar .window-title {
+	font-family: 'Martian Mono', monospace; font-size: 10px; letter-spacing: 0.08em; color: #7E8699;
+}
+
+/* Activity bar: minimal, lime active rail. */
+.monaco-workbench .part.activitybar { width: 48px !important; }
+.monaco-workbench .activitybar .monaco-action-bar .action-item .action-label { opacity: 0.6; }
+.monaco-workbench .activitybar .action-item.checked .action-label,
+.monaco-workbench .activitybar .action-item:hover .action-label { opacity: 1; }
+.monaco-workbench .activitybar .active-item-indicator::before {
+	border-left-color: #C2F24D !important; border-left-width: 2px !important;
+}
+
+/* Sidebar section headers: Martian Mono instrument labels, wide-tracked. */
+.monaco-workbench .pane-header { height: 30px !important; }
+.monaco-workbench .pane-header .title {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 9.5px !important; font-weight: 600 !important;
+	letter-spacing: 0.16em !important; text-transform: uppercase;
+	color: #6E7689 !important;
+}
+.monaco-workbench .sidebar .title-label > h2 {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 10px !important; letter-spacing: 0.14em !important; text-transform: uppercase;
+}
+
+/* Lists / tree: tight rows, soft radius, lime active outline. */
+.monaco-workbench .monaco-list .monaco-list-row { border-radius: 6px; }
+.monaco-workbench .monaco-list:focus .monaco-list-row.selected,
+.monaco-workbench .monaco-list .monaco-list-row.focused {
+	box-shadow: inset 0 0 0 1px rgba(194, 242, 77, 0.28);
+}
+.monaco-workbench .monaco-list .monaco-list-row.selected { color: #F2F6FF; }
+
+/* Tabs: minimal cards, thin lime active edge, no chunky borders. */
+.monaco-workbench .tabs-container { height: 36px !important; }
+.monaco-workbench .tab {
+	font-family: 'JetBrains Mono', monospace; font-size: 11.5px;
+	border: none !important; margin: 4px 1px 0; border-radius: 7px 7px 0 0;
+}
+.monaco-workbench .tab.active {
+	background-color: rgba(194, 242, 77, 0.06) !important;
+	box-shadow: inset 0 1px 0 0 #C2F24D, inset 0 0 0 1px rgba(194, 242, 77, 0.14);
+}
+
+/* Inputs: refined, lime focus ring. */
+.monaco-workbench .monaco-inputbox { border-radius: 7px; }
+.monaco-workbench .monaco-inputbox.synthetic-focus,
+.monaco-workbench .monaco-inputbox:focus-within {
+	outline: 1px solid rgba(194, 242, 77, 0.5) !important; outline-offset: -1px;
+}
+
+/* Command palette / quick input: a premium centered modal. */
+.monaco-workbench .quick-input-widget {
+	border-radius: 14px !important; margin-top: 8vh !important;
+	box-shadow: 0 24px 64px -12px rgba(0, 0, 0, 0.72), inset 0 0 0 1px rgba(150, 158, 174, 0.14) !important;
+}
+.monaco-workbench .quick-input-list .monaco-list-row { border-radius: 8px; }
+
+/* Status bar: a slim instrument strip. */
+.monaco-workbench .part.statusbar { height: 24px !important; font-size: 10.5px; }
+.monaco-workbench .part.statusbar .statusbar-item { font-size: 10.5px; line-height: 24px; }
+
+/* Thin scrollbars. */
+.monaco-workbench .monaco-scrollable-element > .scrollbar > .slider { border-radius: 6px; }
