@@ -111,7 +111,13 @@ export class PartsSplash {
 		// eslint-disable-next-line no-restricted-syntax
 		const element = mainWindow.document.getElementById(PartsSplash._splashElementId);
 		if (element) {
-			element.style.display = 'none';
+			// Shil: smooth crossfade from splash to workbench instead of abrupt removal
+			element.style.transition = 'opacity 400ms ease-out';
+			element.style.opacity = '0';
+			element.style.pointerEvents = 'none';
+			setTimeout(() => {
+				element.style.display = 'none';
+			}, 420);
 		}
 
 		// remove initial colors
