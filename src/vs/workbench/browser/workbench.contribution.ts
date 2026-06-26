@@ -578,7 +578,7 @@ const registry = Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Con
 			'workbench.panel.defaultLocation': {
 				'type': 'string',
 				'enum': ['left', 'bottom', 'top', 'right'],
-				'default': 'bottom',
+				'default': 'right',
 				'description': localize('panelDefaultLocation', "Controls the default location of the panel (Terminal, Debug Console, Output, Problems) in a new workspace. It can either show at the bottom, top, right, or left of the editor area."),
 				agentsWindow: { default: 'bottom', readOnly: true },
 			},
