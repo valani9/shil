@@ -860,7 +860,7 @@ function highlightSyntax(line: string): string {
 			continue;
 		}
 
-		// 5. Words: keywords, types, or plain identifiers
+		// 5. Words: keywords, types, function calls, or plain identifiers
 		const wordMatch = line.slice(pos).match(/^[a-zA-Z_$][\w$]*/);
 		if (wordMatch) {
 			const word = wordMatch[0];
@@ -868,13 +868,89 @@ function highlightSyntax(line: string): string {
 			if (cls) {
 				result.push(`<span class="${cls}">${esc(word)}</span>`);
 			} else {
-				result.push(esc(word));
+				// Check if this is a function call: word followed by (
+				const afterWord = pos + word.length;
+				const restAfter = line.slice(afterWord);
+				const isFnCall = /^\s*\(/.test(restAfter);
+				// Check if preceded by . — that makes it a method call (still a function call)
+				if (isFnCall) {
+					result.push(`<span class="shil-hl-fn">${esc(word)}</span>`);
+				} else {
+					result.push(esc(word));
+				}
 			}
 			pos += word.length;
 			continue;
 		}
 
-		// 6. Decorators / @
+		// 6. JSX/TSX tags: <Component, </div>, or self-closing <br />
+		if (line[pos] === '<') {
+			const jsxMatch = line.slice(pos).match(/^<(\/?)([a-zA-Z_$][\w$.]*)/);
+			if (jsxMatch) {
+				const [full, slash, tagName] = jsxMatch;
+				// Emit < and optional /
+				result.push(`<span class="shil-hl-punct">&lt;${esc(slash)}</span>`);
+				result.push(`<span class="shil-hl-tag">${esc(tagName)}</span>`);
+				pos += full.length;
+
+				// Scan JSX attributes until > or />
+				while (pos < line.length) {
+					// Whitespace
+					if (/\s/.test(line[pos])) {
+						result.push(line[pos]);
+						pos++;
+						continue;
+					}
+					// Closing > or />
+					if (line[pos] === '>' || (line[pos] === '/' && line[pos + 1] === '>')) {
+						if (line[pos] === '/') {
+							result.push(`<span class="shil-hl-punct">/&gt;</span>`);
+							pos += 2;
+						} else {
+							result.push(`<span class="shil-hl-punct">&gt;</span>`);
+							pos++;
+						}
+						break;
+					}
+					// Attribute name
+					const attrMatch = line.slice(pos).match(/^[a-zA-Z_$][\w$-]*/);
+					if (attrMatch) {
+						result.push(`<span class="shil-hl-attr">${esc(attrMatch[0])}</span>`);
+						pos += attrMatch[0].length;
+						continue;
+					}
+					// = sign
+					if (line[pos] === '=') {
+						result.push(`<span class="shil-hl-punct">=</span>`);
+						pos++;
+						continue;
+					}
+					// String values
+					if (line[pos] === '"' || line[pos] === "'") {
+						const q = line[pos];
+						let end = pos + 1;
+						while (end < line.length && line[end] !== q) {
+							if (line[end] === '\\') { end++; }
+							end++;
+						}
+						if (end < line.length) { end++; }
+						result.push(`<span class="shil-hl-string">${esc(line.slice(pos, end))}</span>`);
+						pos = end;
+						continue;
+					}
+					// { expression } — just emit the brace and let the main loop handle the rest
+					if (line[pos] === '{') {
+						break; // exit JSX attribute scanning, main loop handles {
+					}
+					// Anything else
+					result.push(esc(line[pos]));
+					pos++;
+				}
+				continue;
+			}
+		}
+
+		// 7. Decorators (@)
 		if (line[pos] === '@') {
 			const decMatch = line.slice(pos).match(/^@[\w$]+/);
 			if (decMatch) {
@@ -884,14 +960,14 @@ function highlightSyntax(line: string): string {
 			}
 		}
 
-		// 7. Punctuation
+		// 8. Punctuation
 		if (/[{}()[\];:.,<>!=+\-*/%&|^~?]/.test(line[pos])) {
 			result.push(`<span class="shil-hl-punct">${esc(line[pos])}</span>`);
 			pos++;
 			continue;
 		}
 
-		// 8. Anything else (whitespace, etc.)
+		// 9. Anything else (whitespace, etc.)
 		result.push(esc(line[pos]));
 		pos++;
 	}

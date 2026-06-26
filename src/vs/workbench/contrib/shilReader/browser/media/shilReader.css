@@ -517,3 +517,15 @@
 .shil-hl-punct {
 	color: #6B7488;
 }
+
+.shil-hl-fn {
+	color: #C2F24D;
+}
+
+.shil-hl-tag {
+	color: #9FD17A;
+}
+
+.shil-hl-attr {
+	color: #C2D98A;
+}
