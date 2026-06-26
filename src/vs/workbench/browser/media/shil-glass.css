@@ -205,8 +205,38 @@ body {
 /* Editor title area (single-tab or no-tab): compact, quiet. */
 .monaco-workbench .editor-group-container > .title { min-height: 0 !important; }
 
-/* Sidebar: slightly tighter. */
+/* Sidebar: hidden by default. When toggled open (Cmd+B), it appears as a
+   calm, premium file rail — tight min-width, Martian Mono header, no clutter. */
 .monaco-workbench .part.sidebar { min-width: 160px; }
+/* Sidebar composite title bar: slim, quiet, Shil instrument voice. */
+.monaco-workbench .part.sidebar > .composite.title {
+	height: 30px !important; min-height: 30px !important;
+}
+.monaco-workbench .part.sidebar > .composite.title .title-label {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 10px !important; letter-spacing: 0.12em !important;
+	text-transform: uppercase; color: #6E7689 !important;
+}
+/* Sidebar action buttons: faded until hover, like the title bar. */
+.monaco-workbench .part.sidebar > .composite.title .actions-container .action-label {
+	opacity: 0.4; transition: opacity 120ms ease;
+}
+.monaco-workbench .part.sidebar > .composite.title .actions-container .action-label:hover {
+	opacity: 0.9;
+}
+
+/* File tree: tighter rows, smaller font, calmer feel. */
+.monaco-workbench .part.sidebar .monaco-list .monaco-list-row {
+	height: 24px !important; line-height: 24px !important;
+	font-size: 12px;
+}
+/* File tree indent guides: subtle, thin. */
+.monaco-workbench .part.sidebar .monaco-list .monaco-tl-indent > .indent-guide {
+	border-left-color: rgba(150, 158, 174, 0.08) !important;
+}
+.monaco-workbench .part.sidebar .monaco-list .monaco-tl-indent > .indent-guide.active {
+	border-left-color: rgba(194, 242, 77, 0.2) !important;
+}
 
 /* When sidebar is hidden, the editor breathes full width — the reader pane
    becomes the centered hero. No visual artifact from missing sidebar. */
