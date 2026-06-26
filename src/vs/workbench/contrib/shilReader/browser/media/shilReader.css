@@ -571,3 +571,13 @@
 	color: #9FD17A;
 	font-style: italic;
 }
+
+.shil-hl-async {
+	color: #9FD17A;
+	font-style: italic;
+}
+
+.shil-hl-methoddef {
+	color: #C2F24D;
+	font-weight: 600;
+}

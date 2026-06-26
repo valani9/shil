@@ -1132,6 +1132,47 @@ function highlightSyntax(line: string): string {
 						continue;
 					}
 				}
+				// 6a-new. Constructor call: new ClassName(...)
+				if (word === 'new') {
+					const afterNew = line.slice(pos + word.length);
+					const ctorMatch = afterNew.match(/^(\s+)([a-zA-Z_$][\w$.]*)/);
+					if (ctorMatch) {
+						result.push(ctorMatch[1]);
+						result.push(`<span class="shil-hl-type">${esc(ctorMatch[2])}</span>`);
+						pos += word.length + ctorMatch[0].length;
+						continue;
+					}
+				}
+				// 6a-fn. Function declaration name: function foo() / function* foo()
+				if (word === 'function') {
+					const afterFn = line.slice(pos + word.length);
+					const fnNameMatch = afterFn.match(/^(\s*\*?\s*)([a-zA-Z_$][\w$]*)/);
+					if (fnNameMatch && fnNameMatch[2]) {
+						const prefix = fnNameMatch[1];
+						const starIdx = prefix.indexOf('*');
+						if (starIdx >= 0) {
+							result.push(prefix.slice(0, starIdx));
+							result.push('<span class="shil-hl-punct">*</span>');
+							result.push(prefix.slice(starIdx + 1));
+						} else {
+							result.push(prefix);
+						}
+						result.push(`<span class="shil-hl-methoddef">${esc(fnNameMatch[2])}</span>`);
+						pos += word.length + fnNameMatch[0].length;
+						continue;
+					}
+				}
+				// 6a-export. Export default: consume `default` eagerly as combined token
+				if (word === 'export') {
+					const afterExport = line.slice(pos + word.length);
+					const defMatch = afterExport.match(/^(\s+)(default)\b/);
+					if (defMatch) {
+						result.push(defMatch[1]);
+						result.push(`<span class="shil-hl-keyword">${esc(defMatch[2])}</span>`);
+						pos += word.length + defMatch[0].length;
+						continue;
+					}
+				}
 			} else {
 				// Check if this is a function call: word followed by (
 				const afterWord = pos + word.length;
@@ -1140,7 +1181,18 @@ function highlightSyntax(line: string): string {
 				// Check if preceded by . — property access or method call
 				const isProp = pos > 0 && line[pos - 1] === '.';
 				if (isFnCall) {
-					result.push(`<span class="shil-hl-fn">${esc(word)}</span>`);
+					if (!isProp) {
+						// Heuristic: method/function definition if preceded only by modifier keywords
+						const beforeWord = line.slice(0, pos).trimStart();
+						const isMethodDef = /^(?:(?:public|private|protected|static|async|get|set|override|abstract|readonly)\s+)*$/.test(beforeWord);
+						if (isMethodDef) {
+							result.push(`<span class="shil-hl-methoddef">${esc(word)}</span>`);
+						} else {
+							result.push(`<span class="shil-hl-fn">${esc(word)}</span>`);
+						}
+					} else {
+						result.push(`<span class="shil-hl-fn">${esc(word)}</span>`);
+					}
 				} else if (isProp) {
 					result.push(`<span class="shil-hl-prop">${esc(word)}</span>`);
 				} else {
@@ -1372,6 +1424,9 @@ const OPERATOR_KEYWORDS = new Set([
 ]);
 
 function tokenClass(word: string): string | undefined {
+	if (word === 'async' || word === 'await') {
+		return 'shil-hl-async';
+	}
 	if (OPERATOR_KEYWORDS.has(word)) {
 		return 'shil-hl-opkw';
 	}
