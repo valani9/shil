@@ -832,8 +832,8 @@ function highlightSyntax(line: string): string {
 			continue;
 		}
 
-		// 3. Strings: single-quote, double-quote, template literal
-		if (line[pos] === "'" || line[pos] === '"' || line[pos] === '`') {
+		// 3. Strings: single-quote, double-quote
+		if (line[pos] === "'" || line[pos] === '"') {
 			const quote = line[pos];
 			let end = pos + 1;
 			while (end < line.length) {
@@ -849,6 +849,70 @@ function highlightSyntax(line: string): string {
 			}
 			result.push(`<span class="shil-hl-string">${esc(line.slice(pos, end))}</span>`);
 			pos = end;
+			continue;
+		}
+
+		// 3b. Template literals with interpolation ${...} support
+		if (line[pos] === '`') {
+			result.push(`<span class="shil-hl-string">${esc('`')}</span>`);
+			pos++;
+			while (pos < line.length) {
+				if (line[pos] === '\\') {
+					result.push(`<span class="shil-hl-string">${esc(line.slice(pos, pos + 2))}</span>`);
+					pos += 2;
+					continue;
+				}
+				if (line[pos] === '`') {
+					result.push(`<span class="shil-hl-string">${esc('`')}</span>`);
+					pos++;
+					break;
+				}
+				if (line[pos] === '$' && pos + 1 < line.length && line[pos + 1] === '{') {
+					// Interpolation delimiter ${
+					result.push('<span class="shil-hl-interp">${</span>');
+					pos += 2;
+					// Find matching } accounting for nested braces and strings
+					let braceDepth = 1;
+					const exprStart = pos;
+					while (pos < line.length && braceDepth > 0) {
+						if (line[pos] === "'" || line[pos] === '"' || line[pos] === '`') {
+							const q = line[pos];
+							pos++;
+							while (pos < line.length && line[pos] !== q) {
+								if (line[pos] === '\\') {
+									pos++;
+								}
+								pos++;
+							}
+							if (pos < line.length) {
+								pos++; // skip closing quote
+							}
+							continue;
+						}
+						if (line[pos] === '{') {
+							braceDepth++;
+						} else if (line[pos] === '}') {
+							braceDepth--;
+							if (braceDepth === 0) {
+								break;
+							}
+						}
+						pos++;
+					}
+					// Tokenize the expression between ${ and }
+					const expr = line.slice(exprStart, pos);
+					result.push(highlightSyntax(expr));
+					// Closing } delimiter
+					if (pos < line.length && line[pos] === '}') {
+						result.push('<span class="shil-hl-interp">}</span>');
+						pos++;
+					}
+					continue;
+				}
+				// Regular template literal content
+				result.push(`<span class="shil-hl-string">${esc(line[pos])}</span>`);
+				pos++;
+			}
 			continue;
 		}
 
@@ -872,9 +936,12 @@ function highlightSyntax(line: string): string {
 				const afterWord = pos + word.length;
 				const restAfter = line.slice(afterWord);
 				const isFnCall = /^\s*\(/.test(restAfter);
-				// Check if preceded by . — that makes it a method call (still a function call)
+				// Check if preceded by . — property access or method call
+				const isProp = pos > 0 && line[pos - 1] === '.';
 				if (isFnCall) {
 					result.push(`<span class="shil-hl-fn">${esc(word)}</span>`);
+				} else if (isProp) {
+					result.push(`<span class="shil-hl-prop">${esc(word)}</span>`);
 				} else {
 					result.push(esc(word));
 				}

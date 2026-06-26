@@ -529,3 +529,12 @@
 .shil-hl-attr {
 	color: #C2D98A;
 }
+
+.shil-hl-prop {
+	color: #A8B2C1;
+}
+
+.shil-hl-interp {
+	color: #C2F24D;
+	font-weight: 500;
+}
