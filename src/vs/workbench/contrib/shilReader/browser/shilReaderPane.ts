@@ -25,6 +25,7 @@ import { IEditorService } from '../../../services/editor/common/editorService.js
 import { IRange } from '../../../../editor/common/core/range.js';
 import { URI } from '../../../../base/common/uri.js';
 import { createTrustedTypesPolicy } from '../../../../base/browser/trustedTypes.js';
+import { IShilModelService } from './shilModelService.js';
 
 const readerTrustedTypes = createTrustedTypesPolicy('shilReader', {
 	createHTML: (value: string) => value,
@@ -67,6 +68,7 @@ export class ShilReaderPane extends EditorPane {
 		@IFileService private readonly fileService: IFileService,
 		@ILanguageService private readonly languageService: ILanguageService,
 		@IEditorService private readonly editorService: IEditorService,
+		@IShilModelService private readonly modelService: IShilModelService,
 	) {
 		super(ShilReaderPane.ID, group, telemetryService, themeService, storageService);
 	}
@@ -113,7 +115,21 @@ export class ShilReaderPane extends EditorPane {
 
 			const source = content.value.toString();
 			const languageId = this.languageService.guessLanguageIdByFilepathOrFirstLine(input.fileResource) ?? 'plaintext';
-			this.currentDoc = parseToReaderDoc(source, input.fileResource.path, languageId);
+
+			// Try LLM-generated spans first, fall back to regex parser
+			let doc = parseToReaderDoc(source, input.fileResource.path, languageId);
+
+			if (this.modelService.isConfigured()) {
+				const llmSpans = await this.modelService.generateReaderSpans(source, input.fileResource.path, languageId, token);
+				if (token.isCancellationRequested) {
+					return;
+				}
+				if (llmSpans && llmSpans.length > 0) {
+					doc.spans = llmSpans;
+				}
+			}
+
+			this.currentDoc = doc;
 			this.renderDoc(this.currentDoc);
 
 			// Scan connections in background (non-blocking)

@@ -18,6 +18,9 @@ import { KeybindingWeight } from '../../../../platform/keybinding/common/keybind
 import { KeyCode, KeyMod } from '../../../../base/common/keyCodes.js';
 import { EditorResourceAccessor } from '../../../common/editor.js';
 import { Categories } from '../../../../platform/action/common/actionCommonCategories.js';
+import { InstantiationType, registerSingleton } from '../../../../platform/instantiation/common/extensions.js';
+import { IShilModelService, ShilModelService } from './shilModelService.js';
+import { Extensions as ConfigExtensions, IConfigurationRegistry } from '../../../../platform/configuration/common/configurationRegistry.js';
 
 // Register the editor pane → input binding
 Registry.as<IEditorPaneRegistry>(EditorExtensions.EditorPane).registerEditorPane(
@@ -73,4 +76,42 @@ registerAction2(class extends Action2 {
 		const readerInput = new ShilReaderInput(resource);
 		editorService.openEditor(readerInput, { pinned: true });
 	}
+});
+
+// ── Model service registration ──
+registerSingleton(IShilModelService, ShilModelService, InstantiationType.Delayed);
+
+// ── Model configuration ──
+Registry.as<IConfigurationRegistry>(ConfigExtensions.Configuration).registerConfiguration({
+	id: 'shil',
+	title: localize('shil', "Shil"),
+	type: 'object',
+	properties: {
+		'shil.model.provider': {
+			type: 'string',
+			default: 'openai',
+			enum: ['openai', 'anthropic', 'ollama'],
+			enumDescriptions: [
+				localize('shil.model.provider.openai', "OpenAI or OpenAI-compatible API"),
+				localize('shil.model.provider.anthropic', "Anthropic Messages API"),
+				localize('shil.model.provider.ollama', "Local Ollama server"),
+			],
+			description: localize('shil.model.provider.desc', "AI provider for the Reader's plain-English generation."),
+		},
+		'shil.model.apiKey': {
+			type: 'string',
+			default: '',
+			description: localize('shil.model.apiKey.desc', "API key for the selected provider. Leave empty to use the regex-based parser."),
+		},
+		'shil.model.endpoint': {
+			type: 'string',
+			default: '',
+			description: localize('shil.model.endpoint.desc', "API endpoint URL. Defaults: OpenAI=https://api.openai.com/v1/chat/completions, Anthropic=https://api.anthropic.com/v1/messages, Ollama=http://localhost:11434/v1/chat/completions"),
+		},
+		'shil.model.model': {
+			type: 'string',
+			default: '',
+			description: localize('shil.model.model.desc', "Model ID to use (e.g. gpt-4o-mini, llama3.2, or your provider's model name)."),
+		},
+	},
 });
