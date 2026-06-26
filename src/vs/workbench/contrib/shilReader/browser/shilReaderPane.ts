@@ -41,6 +41,10 @@ export class ShilReaderPane extends EditorPane {
 	private readonly railItemElements = new Map<string, HTMLElement>();
 	/** Currently highlighted connection IDs (for clearing on span leave). */
 	private highlightedConnIds = new Set<string>();
+	/** Ordered span elements for keyboard navigation. */
+	private spanElements: HTMLElement[] = [];
+	/** Currently keyboard-focused span index (-1 = none). */
+	private focusedSpanIdx = -1;
 
 	constructor(
 		group: IEditorGroup,
@@ -63,6 +67,8 @@ export class ShilReaderPane extends EditorPane {
 
 		this.contentElement = document.createElement('div');
 		this.contentElement.className = 'shil-reader-content';
+		this.contentElement.tabIndex = 0;
+		this.contentElement.addEventListener('keydown', (e) => this.handleKeydown(e));
 		this.mainColumn.appendChild(this.contentElement);
 		this.container.appendChild(this.mainColumn);
 
@@ -132,10 +138,13 @@ export class ShilReaderPane extends EditorPane {
 		// Spans
 		const spansContainer = document.createElement('div');
 		spansContainer.className = 'shil-reader-spans';
+		this.spanElements = [];
+		this.focusedSpanIdx = -1;
 
 		for (const span of doc.spans) {
 			const spanEl = this.createSpanElement(span, doc);
 			spansContainer.appendChild(spanEl);
+			this.spanElements.push(spanEl);
 		}
 
 		this.contentElement.appendChild(spansContainer);
@@ -146,11 +155,28 @@ export class ShilReaderPane extends EditorPane {
 		el.className = `shil-reader-span shil-reader-span--${span.kind}`;
 		el.dataset.spanId = span.id;
 
-		// Kind badge
+		// Top row: badge + chevron toggle
+		const topRow = document.createElement('div');
+		topRow.className = 'shil-reader-span-top';
+
 		const badge = document.createElement('span');
 		badge.className = 'shil-reader-span-kind';
 		badge.textContent = kindLabel(span.kind);
-		el.appendChild(badge);
+		topRow.appendChild(badge);
+
+		// Collapse/expand chevron
+		const chevron = document.createElement('span');
+		chevron.className = 'shil-reader-span-chevron';
+		chevron.textContent = '\u25BE'; // ▾ down = expanded
+		chevron.title = 'Collapse/expand';
+		chevron.addEventListener('click', (e) => {
+			e.stopPropagation();
+			const collapsed = el.classList.toggle('shil-reader-span--collapsed');
+			chevron.textContent = collapsed ? '\u25B8' : '\u25BE'; // ▸ right / ▾ down
+		});
+		topRow.appendChild(chevron);
+
+		el.appendChild(topRow);
 
 		// English prose
 		const prose = document.createElement('p');
@@ -158,16 +184,20 @@ export class ShilReaderPane extends EditorPane {
 		prose.textContent = span.english;
 		el.appendChild(prose);
 
-		// Line range reference (clickable -> jumps to code)
+		// Collapsible detail container (line ref + code excerpt)
+		const detail = document.createElement('div');
+		detail.className = 'shil-reader-span-detail';
+
+		// Line range reference
 		const lineRef = document.createElement('span');
 		lineRef.className = 'shil-reader-span-lines shil-reader-clickable';
 		lineRef.textContent = span.lineStart === span.lineEnd
 			? `line ${span.lineStart}`
 			: `lines ${span.lineStart}\u2013${span.lineEnd}`;
 		lineRef.title = 'Jump to this code';
-		el.appendChild(lineRef);
+		detail.appendChild(lineRef);
 
-		// Code excerpt (collapsed, first 3 lines)
+		// Code excerpt (first 3 lines)
 		const sourceLines = doc.source.split('\n');
 		const excerptLines = sourceLines.slice(span.lineStart - 1, Math.min(span.lineEnd, span.lineStart + 2));
 		if (excerptLines.length > 0) {
@@ -177,10 +207,12 @@ export class ShilReaderPane extends EditorPane {
 			const codeInner = document.createElement('code');
 			codeInner.textContent = excerptLines.join('\n') + (span.lineEnd - span.lineStart >= 3 ? '\n\u2026' : '');
 			code.appendChild(codeInner);
-			el.appendChild(code);
+			detail.appendChild(code);
 		}
 
-		// Click-through: clicking anywhere on the span navigates to code
+		el.appendChild(detail);
+
+		// Click-through: clicking anywhere on the span (except chevron) navigates to code
 		el.addEventListener('click', () => this.navigateToCode(span));
 
 		// Hover: highlight related connections in the rail
@@ -239,6 +271,69 @@ export class ShilReaderPane extends EditorPane {
 				}
 			}
 		}
+	}
+
+	/**
+	 * Keyboard navigation: j/k to move between spans, Enter to jump to code,
+	 * c to collapse/expand the focused span, Escape to clear focus.
+	 */
+	private handleKeydown(e: KeyboardEvent): void {
+		if (e.key === 'j' || e.key === 'ArrowDown') {
+			e.preventDefault();
+			this.moveFocus(1);
+		} else if (e.key === 'k' || e.key === 'ArrowUp') {
+			e.preventDefault();
+			this.moveFocus(-1);
+		} else if (e.key === 'Enter' && this.focusedSpanIdx >= 0 && this.currentDoc) {
+			e.preventDefault();
+			this.navigateToCode(this.currentDoc.spans[this.focusedSpanIdx]);
+		} else if (e.key === 'c' && this.focusedSpanIdx >= 0) {
+			e.preventDefault();
+			const el = this.spanElements[this.focusedSpanIdx];
+			const collapsed = el.classList.toggle('shil-reader-span--collapsed');
+			const chevron = el.querySelector('.shil-reader-span-chevron');
+			if (chevron) {
+				chevron.textContent = collapsed ? '\u25B8' : '\u25BE';
+			}
+		} else if (e.key === 'Escape') {
+			this.clearSpanFocus();
+		}
+	}
+
+	private moveFocus(delta: number): void {
+		if (this.spanElements.length === 0) {
+			return;
+		}
+
+		// Clear previous focus
+		if (this.focusedSpanIdx >= 0 && this.focusedSpanIdx < this.spanElements.length) {
+			this.spanElements[this.focusedSpanIdx].classList.remove('shil-reader-span--focused');
+		}
+
+		// Compute new index
+		if (this.focusedSpanIdx < 0) {
+			this.focusedSpanIdx = delta > 0 ? 0 : this.spanElements.length - 1;
+		} else {
+			this.focusedSpanIdx = Math.max(0, Math.min(this.spanElements.length - 1, this.focusedSpanIdx + delta));
+		}
+
+		// Apply focus
+		const el = this.spanElements[this.focusedSpanIdx];
+		el.classList.add('shil-reader-span--focused');
+		el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+
+		// Also highlight connections for the focused span
+		if (this.currentDoc) {
+			this.highlightConnections(this.currentDoc.spans[this.focusedSpanIdx], this.currentDoc);
+		}
+	}
+
+	private clearSpanFocus(): void {
+		if (this.focusedSpanIdx >= 0 && this.focusedSpanIdx < this.spanElements.length) {
+			this.spanElements[this.focusedSpanIdx].classList.remove('shil-reader-span--focused');
+		}
+		this.focusedSpanIdx = -1;
+		this.clearHighlights();
 	}
 
 	private clearHighlights(): void {
@@ -393,6 +488,8 @@ export class ShilReaderPane extends EditorPane {
 		this.paneDisposables.clear();
 		this.railItemElements.clear();
 		this.highlightedConnIds.clear();
+		this.spanElements = [];
+		this.focusedSpanIdx = -1;
 		this.currentDoc = undefined;
 		this.currentResource = undefined;
 		if (this.contentElement) {

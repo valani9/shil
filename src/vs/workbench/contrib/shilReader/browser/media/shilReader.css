@@ -95,6 +95,14 @@
 .shil-reader-span--declaration { border-left-color: rgba(194, 242, 77, 0.25); }
 .shil-reader-span--export   { border-left-color: rgba(194, 242, 77, 0.5); }
 
+/* Top row: badge + chevron */
+.shil-reader-span-top {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	margin-bottom: 6px;
+}
+
 /* Kind badge */
 .shil-reader-span-kind {
 	display: inline-block;
@@ -103,7 +111,39 @@
 	font-weight: 600;
 	letter-spacing: 0.1em;
 	color: rgba(255, 255, 255, 0.35);
-	margin-bottom: 6px;
+}
+
+/* Chevron toggle */
+.shil-reader-span-chevron {
+	font-size: 12px;
+	color: rgba(255, 255, 255, 0.2);
+	cursor: pointer;
+	padding: 2px 6px;
+	border-radius: 3px;
+	transition: color 0.15s ease, background 0.15s ease;
+	user-select: none;
+}
+
+.shil-reader-span-chevron:hover {
+	color: rgba(194, 242, 77, 0.7);
+	background: rgba(255, 255, 255, 0.04);
+}
+
+/* Collapsible detail */
+.shil-reader-span-detail {
+	overflow: hidden;
+	max-height: 500px;
+	transition: max-height 0.2s ease, opacity 0.15s ease;
+	opacity: 1;
+}
+
+.shil-reader-span--collapsed .shil-reader-span-detail {
+	max-height: 0;
+	opacity: 0;
+}
+
+.shil-reader-span--collapsed .shil-reader-span-english {
+	margin-bottom: 0;
 }
 
 .shil-reader-span--import .shil-reader-span-kind   { color: rgba(194, 242, 77, 0.6); }
@@ -304,4 +344,20 @@
 
 .shil-rail-item--clickable:active {
 	background: rgba(194, 242, 77, 0.06);
+}
+
+/* ── Keyboard navigation focus ring ──────────────────────────────────────── */
+
+.shil-reader-span--focused {
+	outline: 1px solid rgba(194, 242, 77, 0.35);
+	outline-offset: -1px;
+	background: rgba(194, 242, 77, 0.04);
+}
+
+.shil-reader-span--focused .shil-reader-span-kind {
+	color: #C2F24D;
+}
+
+.shil-reader-content:focus {
+	outline: none;
 }

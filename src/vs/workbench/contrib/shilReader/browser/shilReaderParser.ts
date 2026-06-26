@@ -48,14 +48,12 @@ export function parseToReaderDoc(source: string, filePath: string, languageId: s
 			const start = i;
 			const end = findBlockEnd(lines, funcMatch.bodyLine);
 			const exported = lines[start].trimStart().startsWith('export');
-			const asyncLabel = funcMatch.async ? 'async ' : '';
 			const params = funcMatch.params;
-			const paramDesc = params ? ` taking ${describeParams(params)}` : '';
 			const bodyText = lines.slice(funcMatch.bodyLine, end + 1).join('\n');
 			const bodyKind = classifyBodyKind(bodyText, funcMatch.name);
 			const kindForSpan = exported && bodyKind === 'action' ? 'export' : bodyKind;
-			spans.push(makeSpan(spanIdx++, start + 1, end + 1, kindForSpan,
-				`Defines ${exported ? 'an exported ' : ''}${asyncLabel}function "${funcMatch.name}"${paramDesc}.`));
+			const english = enrichedEnglish(kindForSpan, funcMatch.name, params, exported, funcMatch.async, bodyText, false);
+			spans.push(makeSpan(spanIdx++, start + 1, end + 1, kindForSpan, english));
 			i = end + 1;
 			continue;
 		}
@@ -95,13 +93,10 @@ export function parseToReaderDoc(source: string, filePath: string, languageId: s
 				if (methodMatch) {
 					const mStart = j;
 					const mEnd = findBlockEnd(lines, j);
-					const asyncLabel = methodMatch.async ? 'async ' : '';
-					const visibility = methodMatch.visibility ? `${methodMatch.visibility} ` : '';
-					const staticLabel = methodMatch.static ? 'static ' : '';
 					const methodBody = lines.slice(j, mEnd + 1).join('\n');
 					const methodKind = classifyBodyKind(methodBody, methodMatch.name);
-					spans.push(makeSpan(spanIdx++, mStart + 1, mEnd + 1, methodKind,
-						`${visibility}${staticLabel}${asyncLabel}method "${methodMatch.name}" of class "${className}".`));
+					const methodEnglish = enrichedEnglish(methodKind, methodMatch.name, '', false, methodMatch.async, methodBody, true, className);
+					spans.push(makeSpan(spanIdx++, mStart + 1, mEnd + 1, methodKind, methodEnglish));
 					j = mEnd + 1;
 					continue;
 				}
@@ -202,6 +197,57 @@ export function parseToReaderDoc(source: string, filePath: string, languageId: s
 
 function makeSpan(idx: number, lineStart: number, lineEnd: number, kind: SpanKind, english: string): ReaderSpan {
 	return { id: `s-${idx}`, english, lineStart, lineEnd, kind };
+}
+
+/**
+ * Generate enriched English prose based on the classified span kind.
+ * Guards get "Guards against..." phrasing, db spans get "Reads/Writes from..."
+ * phrasing, response spans get "Returns..." phrasing.
+ */
+function enrichedEnglish(kind: SpanKind, name: string, params: string, exported: boolean, isAsync: boolean, body: string, isMethod: boolean, className?: string): string {
+	const location = isMethod && className ? `method "${name}" of class "${className}"` : `function "${name}"`;
+	const paramDesc = params ? ` taking ${describeParams(params)}` : '';
+
+	if (kind === 'guard') {
+		// Detect guard subtype from body content
+		if (/\b(?:getSession|getServerSession|getToken|requireAuth|checkAuth|verifyToken|jwt\.verify)\b/.test(body) ||
+			/\b(?:unauthorized|forbidden|unauthenticated)\b/i.test(body) || /\b(?:401|403)\b/.test(body)) {
+			return `Guards against unauthorized access in ${location}. Checks credentials before proceeding.`;
+		}
+		if (/\b(?:z\.object|z\.string|z\.number|yup\.|joi\.|zod\b)/.test(body) || /\.parse\s*\(/.test(body)) {
+			return `Validates input${paramDesc} in ${location}. Rejects malformed data before proceeding.`;
+		}
+		return `Guards: checks preconditions in ${location}${paramDesc}. Returns early if validation fails.`;
+	}
+
+	if (kind === 'db') {
+		// Detect read vs write
+		const hasRead = /\b(?:findMany|findFirst|findUnique|findFirstOrThrow|findUniqueOrThrow|find|findOne|findById|count|aggregate|groupBy)\b/.test(body) ||
+			/\bdb\.(?:select|query)\b/.test(body) || /\bSELECT\b/.test(body);
+		const hasWrite = /\b(?:create|createMany|update|updateMany|upsert|delete|deleteMany|save|insertMany|updateOne|deleteOne)\b/.test(body) ||
+			/\bdb\.(?:insert|update|delete)\b/.test(body) || /\b(?:INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM)\b/.test(body);
+		if (hasRead && hasWrite) {
+			return `Reads from and writes to the database in ${location}.`;
+		}
+		if (hasWrite) {
+			return `Writes to the database in ${location}.`;
+		}
+		return `Reads from the database in ${location}.`;
+	}
+
+	if (kind === 'response') {
+		if (/\bredirect\b/i.test(body)) {
+			return `Redirects the client from ${location}.`;
+		}
+		if (/\b(?:json|NextResponse\.json|res\.json|Response\.json)\b/.test(body)) {
+			return `Returns a JSON response from ${location}.`;
+		}
+		return `Returns a response from ${location}.`;
+	}
+
+	// Default: action / export — keep the existing generic phrasing
+	const asyncLabel = isAsync ? 'async ' : '';
+	return `Defines ${exported ? 'an exported ' : ''}${asyncLabel}${isMethod && className ? `method "${name}" of class "${className}"` : `function "${name}"`}${paramDesc}.`;
 }
 
 /**
