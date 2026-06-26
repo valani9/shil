@@ -303,10 +303,17 @@ body {
 /* Panel seams: hairline for glass edge depending on position. */
 .monaco-workbench .part.panel.bottom {
 	box-shadow: inset 0 1px 0 0 rgba(150, 158, 174, 0.10);
+	border-radius: 10px 10px 0 0;
 }
-/* Right-side panel (default): vertical hairline on left edge. */
+/* Right-side panel: glass drawer with rounded left edge, depth shadow, and
+   a subtle top-left lime accent to echo the sidebar's brand hairline. */
 .monaco-workbench .part.panel.right {
-	box-shadow: inset 1px 0 0 0 rgba(150, 158, 174, 0.10);
+	border-radius: 10px 0 0 10px;
+	box-shadow: -4px 0 24px -4px rgba(0, 0, 0, 0.35),
+	            inset 1px 0 0 0 rgba(150, 158, 174, 0.10);
+}
+.monaco-workbench .part.panel.right > .composite.title {
+	border-top: 1px solid rgba(194, 242, 77, 0.15);
 }
 /* Panel section headers (inside views like Problems/Output): instrument labels. */
 .monaco-workbench .part.panel .pane-header {
@@ -424,13 +431,16 @@ body {
 	border-top: 1px solid rgba(194, 242, 77, 0.25);
 }
 
-/* Base overlay positioning: always fixed, full height between title + status. */
+/* Base overlay positioning: always fixed, full height between title + status.
+   Width is driven by the --shil-sidebar-width custom property set from TS;
+   defaults to 280px if not yet set (first paint before create()). */
 .monaco-workbench .part.sidebar {
+	--shil-sidebar-width: 280px;
 	position: fixed !important;
 	left: 40px;  /* activity bar width */
 	top: 30px;   /* title bar height */
 	bottom: 22px; /* status bar height */
-	width: 280px !important;
+	width: var(--shil-sidebar-width) !important;
 	height: auto !important;
 	z-index: 100;
 	border-radius: 0 10px 10px 0;
@@ -465,6 +475,38 @@ body {
 }
 .split-view-view:has(> .part.sidebar):not(.visible) {
 	display: block !important;
+}
+
+/* ---- Sidebar resize handle: thin drag strip at the right edge of the overlay.
+   Visible as a subtle lime accent line on hover; wider hit area for easy grab. ---- */
+.shil-sidebar-resize-handle {
+	position: absolute;
+	top: 0;
+	right: -3px;
+	width: 6px;
+	height: 100%;
+	cursor: col-resize;
+	z-index: 101;
+	border-radius: 0 3px 3px 0;
+	transition: background-color 160ms ease, box-shadow 160ms ease;
+}
+.shil-sidebar-resize-handle:hover {
+	background-color: rgba(194, 242, 77, 0.18);
+	box-shadow: 0 0 6px 0 rgba(194, 242, 77, 0.12);
+}
+.shil-sidebar-resize-handle:active,
+body.shil-sidebar-resizing .shil-sidebar-resize-handle {
+	background-color: rgba(194, 242, 77, 0.35);
+	box-shadow: 0 0 8px 0 rgba(194, 242, 77, 0.20);
+}
+/* During drag: prevent text selection and pointer interference. */
+body.shil-sidebar-resizing {
+	cursor: col-resize !important;
+	user-select: none !important;
+	-webkit-user-select: none !important;
+}
+body.shil-sidebar-resizing * {
+	cursor: col-resize !important;
 }
 
 /* ============================================================================

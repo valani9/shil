@@ -34,6 +34,7 @@ import { localize2 } from '../../../../nls.js';
 import { IHoverService } from '../../../../platform/hover/browser/hover.js';
 import { VisibleViewContainersTracker } from '../visibleViewContainersTracker.js';
 import { Extensions } from '../../panecomposite.js';
+import { $, addDisposableListener, EventType, getWindow } from '../../../../base/browser/dom.js';
 
 export class SidebarPart extends AbstractPaneCompositePart {
 
@@ -178,7 +179,95 @@ export class SidebarPart extends AbstractPaneCompositePart {
 		container.style.outlineColor = this.getColor(SIDE_BAR_DRAG_AND_DROP_BACKGROUND) ?? '';
 	}
 
-	private static readonly SHIL_OVERLAY_WIDTH = 280;
+	private static readonly SHIL_OVERLAY_DEFAULT_WIDTH = 280;
+	private static readonly SHIL_OVERLAY_MIN_WIDTH = 200;
+	private static readonly SHIL_OVERLAY_MAX_WIDTH = 600;
+	private static readonly SHIL_WIDTH_STORAGE_KEY = 'shil.sidebar.overlayWidth';
+
+	private _shilOverlayWidth = SidebarPart.SHIL_OVERLAY_DEFAULT_WIDTH;
+
+	override create(parent: HTMLElement): void {
+		super.create(parent);
+
+		// Restore persisted width
+		const stored = this.storageService.getNumber(
+			SidebarPart.SHIL_WIDTH_STORAGE_KEY,
+			StorageScope.PROFILE,
+			SidebarPart.SHIL_OVERLAY_DEFAULT_WIDTH
+		);
+		this._shilOverlayWidth = Math.max(
+			SidebarPart.SHIL_OVERLAY_MIN_WIDTH,
+			Math.min(SidebarPart.SHIL_OVERLAY_MAX_WIDTH, stored)
+		);
+		this.applyOverlayWidth();
+
+		// Create the drag resize handle at the right edge
+		const handle = $('.shil-sidebar-resize-handle');
+		parent.appendChild(handle);
+
+		let startX = 0;
+		let startWidth = 0;
+
+		const onMouseMove = (e: MouseEvent) => {
+			const delta = e.clientX - startX;
+			const newWidth = Math.max(
+				SidebarPart.SHIL_OVERLAY_MIN_WIDTH,
+				Math.min(SidebarPart.SHIL_OVERLAY_MAX_WIDTH, startWidth + delta)
+			);
+			this._shilOverlayWidth = newWidth;
+			this.applyOverlayWidth();
+			// Re-layout internal content at the new width using the container's
+			// current client height (the overlay is position:fixed, so this is
+			// the actual rendered height).
+			const container = this.getContainer();
+			const h = container ? container.clientHeight : 0;
+			super.layout(newWidth, h, 0, 0);
+		};
+
+		const onMouseUp = () => {
+			const win = getWindow(parent);
+			win.document.body.classList.remove('shil-sidebar-resizing');
+			win.removeEventListener('mousemove', onMouseMove);
+			win.removeEventListener('mouseup', onMouseUp);
+			// Persist the width
+			this.storageService.store(
+				SidebarPart.SHIL_WIDTH_STORAGE_KEY,
+				this._shilOverlayWidth,
+				StorageScope.PROFILE,
+				StorageTarget.USER
+			);
+		};
+
+		this._register(addDisposableListener(handle, EventType.MOUSE_DOWN, (e: MouseEvent) => {
+			e.preventDefault();
+			startX = e.clientX;
+			startWidth = this._shilOverlayWidth;
+			const win = getWindow(parent);
+			win.document.body.classList.add('shil-sidebar-resizing');
+			win.addEventListener('mousemove', onMouseMove);
+			win.addEventListener('mouseup', onMouseUp);
+		}));
+
+		// Double-click to reset to default width
+		this._register(addDisposableListener(handle, EventType.DBLCLICK, () => {
+			this._shilOverlayWidth = SidebarPart.SHIL_OVERLAY_DEFAULT_WIDTH;
+			this.applyOverlayWidth();
+			super.layout(this._shilOverlayWidth, 0, 0, 0);
+			this.storageService.store(
+				SidebarPart.SHIL_WIDTH_STORAGE_KEY,
+				this._shilOverlayWidth,
+				StorageScope.PROFILE,
+				StorageTarget.USER
+			);
+		}));
+	}
+
+	private applyOverlayWidth(): void {
+		const container = this.getContainer();
+		if (container) {
+			container.style.setProperty('--shil-sidebar-width', `${this._shilOverlayWidth}px`);
+		}
+	}
 
 	override layout(width: number, height: number, top: number, left: number): void {
 		if (!this.layoutService.isVisible(Parts.SIDEBAR_PART)) {
@@ -188,7 +277,7 @@ export class SidebarPart extends AbstractPaneCompositePart {
 		// Shil: sidebar is a CSS fixed overlay. The grid allocates 1px, but
 		// internal content layout must use the actual overlay width so tree
 		// views, composite bars, etc. render at the correct size.
-		super.layout(SidebarPart.SHIL_OVERLAY_WIDTH, height, top, left);
+		super.layout(this._shilOverlayWidth, height, top, left);
 	}
 
 	protected override getTitleAreaDropDownAnchorAlignment(): AnchorAlignment {
