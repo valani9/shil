@@ -1371,3 +1371,341 @@ body.shil-sidebar-resizing * {
 .monaco-workbench .editor-group-container.empty .editor-group-watermark .watermark-container {
 	font-family: 'Hanken Grotesk', -apple-system, sans-serif !important;
 }
+
+/* ============================================================================
+ *  LIST / TREE VIEW PREMIUM — file explorer, search results, outline, problems.
+ *  Makes structured data views feel distinctly Shil, not VS Code.
+ * ========================================================================== */
+
+/* Tree view twist (expand/collapse) icons: dimmed at rest, lime on hover. */
+.monaco-workbench .monaco-list .monaco-tl-twistie {
+	opacity: 0.45;
+	transition: opacity 150ms ease, color 150ms ease;
+}
+.monaco-workbench .monaco-list .monaco-list-row:hover .monaco-tl-twistie {
+	opacity: 0.85;
+}
+.monaco-workbench .monaco-list .monaco-list-row.selected .monaco-tl-twistie,
+.monaco-workbench .monaco-list .monaco-list-row.focused .monaco-tl-twistie {
+	opacity: 1;
+	color: #C2F24D !important;
+}
+
+/* File/folder labels in sidebar trees: Hanken Grotesk, slightly dimmed until hover. */
+.monaco-workbench .part.sidebar .monaco-list .monaco-list-row .label-name {
+	font-family: 'Hanken Grotesk', -apple-system, sans-serif;
+	transition: opacity 120ms ease;
+}
+.monaco-workbench .part.sidebar .monaco-list .monaco-list-row:not(.selected):not(.focused) .label-name {
+	opacity: 0.78;
+}
+.monaco-workbench .part.sidebar .monaco-list .monaco-list-row:hover .label-name,
+.monaco-workbench .part.sidebar .monaco-list .monaco-list-row.selected .label-name,
+.monaco-workbench .part.sidebar .monaco-list .monaco-list-row.focused .label-name {
+	opacity: 1;
+}
+
+/* File description (path hints): Martian Mono instrument, ultra-dim. */
+.monaco-workbench .part.sidebar .monaco-list .monaco-list-row .label-description {
+	font-family: 'Martian Mono', monospace;
+	font-size: 9px !important;
+	letter-spacing: 0.04em;
+	opacity: 0.40;
+}
+
+/* Hover row highlight: subtle lime tint instead of default gray. */
+.monaco-workbench .monaco-list .monaco-list-row:hover:not(.selected):not(.focused) {
+	background-color: rgba(194, 242, 77, 0.04) !important;
+}
+
+/* Selected row: deeper lime tint, not the default blue. */
+.monaco-workbench .monaco-list:focus .monaco-list-row.selected {
+	background-color: rgba(194, 242, 77, 0.10) !important;
+}
+.monaco-workbench .monaco-list .monaco-list-row.selected {
+	background-color: rgba(194, 242, 77, 0.06) !important;
+}
+
+/* Focused row: lime outline tightened. */
+.monaco-workbench .monaco-list:focus .monaco-list-row.focused {
+	outline: 1px solid rgba(194, 242, 77, 0.30) !important;
+	outline-offset: -1px;
+}
+
+/* Tree row horizontal padding: tighter for compact feel. */
+.monaco-workbench .part.sidebar .monaco-list .monaco-list-row .monaco-tl-row {
+	padding-left: 4px;
+	padding-right: 4px;
+}
+
+/* File decoration badges (git status, errors): smaller, rounded. */
+.monaco-workbench .monaco-list .monaco-list-row .file-decoration-icon-badge {
+	border-radius: 4px;
+	font-size: 9px;
+}
+
+/* Explorer section headers: instrument voice. */
+.monaco-workbench .part.sidebar .pane-header {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 10px !important;
+	letter-spacing: 0.10em !important;
+	text-transform: uppercase;
+	height: 28px !important;
+	line-height: 28px !important;
+}
+/* Pane header action buttons: ghost until hover. */
+.monaco-workbench .part.sidebar .pane-header .actions-container .action-label {
+	opacity: 0.35;
+	transition: opacity 120ms ease;
+}
+.monaco-workbench .part.sidebar .pane-header:hover .actions-container .action-label {
+	opacity: 0.7;
+}
+.monaco-workbench .part.sidebar .pane-header .actions-container .action-label:hover {
+	opacity: 1;
+}
+
+/* ============================================================================
+ *  FORM CONTROLS — inputs, checkboxes, toggles, dropdowns. Premium treatment
+ *  with rounded corners, lime focus, Hanken Grotesk labels.
+ * ========================================================================== */
+
+/* Text inputs globally: rounded, glass bg, lime focus. */
+.monaco-workbench .monaco-inputbox > .ibwrapper > .input,
+.monaco-workbench .monaco-inputbox > .ibwrapper > textarea {
+	font-family: 'Hanken Grotesk', -apple-system, sans-serif;
+	font-size: 12.5px;
+	border-radius: 6px;
+}
+
+/* Monaco select/dropdown: rounded, matching glass feel. */
+.monaco-workbench .monaco-select-box {
+	border-radius: 6px !important;
+	font-family: 'Hanken Grotesk', -apple-system, sans-serif !important;
+	font-size: 12px !important;
+}
+.monaco-workbench .monaco-select-box:focus {
+	outline: 1px solid rgba(194, 242, 77, 0.5) !important;
+	outline-offset: -1px;
+}
+/* Select dropdown menu: glass treatment. */
+.monaco-workbench .select-box-dropdown-list-container {
+	border-radius: 8px !important;
+	box-shadow: 0 12px 40px rgba(0, 0, 0, 0.55), inset 0 0 0 1px rgba(150, 158, 174, 0.10) !important;
+}
+.monaco-workbench .select-box-dropdown-list-container .monaco-list-row {
+	border-radius: 4px;
+	margin: 0 4px;
+}
+.monaco-workbench .select-box-dropdown-list-container .monaco-list-row.focused {
+	background-color: rgba(194, 242, 77, 0.12) !important;
+}
+
+/* Checkboxes: rounded corners, lime checked state. */
+.monaco-workbench .monaco-custom-toggle {
+	border-radius: 4px !important;
+	transition: background-color 120ms ease, border-color 120ms ease;
+}
+.monaco-workbench .monaco-custom-toggle.checked {
+	background-color: rgba(194, 242, 77, 0.18) !important;
+	border-color: rgba(194, 242, 77, 0.45) !important;
+}
+.monaco-workbench .monaco-custom-toggle:hover {
+	border-color: rgba(194, 242, 77, 0.35) !important;
+}
+
+/* Toggle switches (settings): lime track on checked. */
+.monaco-workbench .setting-item-bool .setting-value-checkbox {
+	border-radius: 4px !important;
+}
+
+/* Action buttons in toolbars: ghost until hover, rounded. */
+.monaco-workbench .monaco-action-bar .action-item .action-label {
+	border-radius: 5px;
+}
+
+/* ============================================================================
+ *  SEARCH RESULTS — file headers, match highlights, replace input.
+ * ========================================================================== */
+
+/* Search view input area: calmer, rounded. */
+.monaco-workbench .search-view .search-widget .input-box {
+	border-radius: 7px;
+}
+.monaco-workbench .search-view .search-widget .replace-input .input-box {
+	border-radius: 7px;
+}
+
+/* Search toggle buttons (regex, case, whole word): rounded, lime active. */
+.monaco-workbench .search-view .search-widget .monaco-custom-toggle,
+.monaco-workbench .editor-widget.find-widget .monaco-custom-toggle {
+	border-radius: 4px !important;
+}
+.monaco-workbench .search-view .search-widget .monaco-custom-toggle.checked,
+.monaco-workbench .editor-widget.find-widget .monaco-custom-toggle.checked {
+	background-color: rgba(194, 242, 77, 0.18) !important;
+	border-color: rgba(194, 242, 77, 0.45) !important;
+	color: #C2F24D !important;
+}
+
+/* Search result file headers: instrument voice, lime file count badge. */
+.monaco-workbench .search-view .monaco-list .filematch {
+	font-family: 'Hanken Grotesk', -apple-system, sans-serif;
+}
+.monaco-workbench .search-view .monaco-list .filematch .badge .badge-content {
+	border-radius: 8px;
+	font-family: 'Martian Mono', monospace;
+	font-size: 9px;
+	letter-spacing: 0.04em;
+}
+
+/* Search match highlights: lime instead of default. */
+.monaco-workbench .search-view .monaco-list .linematch .highlight {
+	color: #C2F24D !important;
+	font-weight: 500;
+}
+
+/* Search result line text: Hanken Grotesk for readability. */
+.monaco-workbench .search-view .monaco-list .linematch {
+	font-family: 'Hanken Grotesk', -apple-system, sans-serif;
+	font-size: 12px;
+}
+
+/* ============================================================================
+ *  DIFF EDITOR — glass treatment for side-by-side and inline diffs.
+ * ========================================================================== */
+
+/* Diff gutter decorations: lime for insertions, muted red for deletions. */
+.monaco-workbench .editor .line-insert .line-decoration {
+	border-left-color: rgba(194, 242, 77, 0.45) !important;
+}
+.monaco-workbench .editor .line-delete .line-decoration {
+	border-left-color: rgba(220, 80, 80, 0.40) !important;
+}
+
+/* Diff overview ruler (scrollbar mini-map): lime inserts, red deletes. */
+.monaco-workbench .diffOverviewRuler .diffOverviewRuler-insert {
+	background-color: rgba(194, 242, 77, 0.5) !important;
+}
+.monaco-workbench .diffOverviewRuler .diffOverviewRuler-delete {
+	background-color: rgba(220, 80, 80, 0.4) !important;
+}
+
+/* Diff editor border: subtle glass seam between panes. */
+.monaco-workbench .editor .diff-editor .editor.modified {
+	border-left: 1px solid rgba(150, 158, 174, 0.08);
+}
+
+/* ============================================================================
+ *  PROBLEMS / OUTPUT / DEBUG CONSOLE — structured data panel styling.
+ * ========================================================================== */
+
+/* Problems panel rows: Hanken Grotesk, tighter. */
+.monaco-workbench .markers-panel .monaco-list .monaco-list-row {
+	font-family: 'Hanken Grotesk', -apple-system, sans-serif;
+	font-size: 12px;
+}
+/* Problem severity icons: slightly dimmed at rest. */
+.monaco-workbench .markers-panel .monaco-list .marker-icon {
+	opacity: 0.75;
+}
+/* Problem file headers: instrument voice for the file path. */
+.monaco-workbench .markers-panel .monaco-list .file-icon .label-name {
+	font-family: 'Hanken Grotesk', -apple-system, sans-serif;
+}
+
+/* Output panel: JetBrains Mono for log content. */
+.monaco-workbench .output-view .view-lines {
+	font-family: 'JetBrains Mono', monospace;
+}
+
+/* Debug console: JetBrains Mono, with lime REPL prompt. */
+.monaco-workbench .repl .repl-tree .output.expression {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 12px;
+}
+/* Debug variables/watch: Hanken Grotesk labels, JetBrains Mono values. */
+.monaco-workbench .debug-view-content .monaco-list .monaco-list-row .name {
+	font-family: 'Hanken Grotesk', -apple-system, sans-serif;
+}
+.monaco-workbench .debug-view-content .monaco-list .monaco-list-row .value {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 11.5px;
+}
+
+/* Debug toolbar: glass treatment, rounded, lime active state. */
+.monaco-workbench .debug-toolbar {
+	border-radius: 10px !important;
+	box-shadow: 0 8px 28px rgba(0, 0, 0, 0.50), inset 0 0 0 1px rgba(150, 158, 174, 0.12) !important;
+	-webkit-backdrop-filter: blur(16px) saturate(1.3);
+	backdrop-filter: blur(16px) saturate(1.3);
+}
+.monaco-workbench .debug-toolbar .action-item .action-label {
+	border-radius: 6px;
+}
+.monaco-workbench .debug-toolbar .action-item .action-label:hover {
+	background-color: rgba(194, 242, 77, 0.10) !important;
+}
+
+/* ============================================================================
+ *  SCM / GIT VIEW — commit input, file list, staging controls.
+ * ========================================================================== */
+
+/* SCM input (commit message): rounded, lime focus, Hanken Grotesk. */
+.monaco-workbench .scm-view .scm-editor .monaco-editor {
+	border-radius: 8px !important;
+}
+.monaco-workbench .scm-view .scm-editor.focused .monaco-editor {
+	box-shadow: 0 0 0 1px rgba(194, 242, 77, 0.40);
+}
+
+/* SCM resource groups (Staged, Changes): instrument voice headers. */
+.monaco-workbench .scm-view .monaco-list .resource-group > .name {
+	font-family: 'Martian Mono', monospace;
+	font-size: 9.5px;
+	letter-spacing: 0.10em;
+	text-transform: uppercase;
+}
+
+/* SCM file decorations (M/A/D/U): tighter badges. */
+.monaco-workbench .scm-view .monaco-list .monaco-list-row .resource-decoration {
+	font-family: 'Martian Mono', monospace;
+	font-size: 9px;
+	letter-spacing: 0.04em;
+}
+
+/* SCM action buttons (commit, stage, discard): ghost until hover. */
+.monaco-workbench .scm-view .monaco-list .resource-group > .actions .action-label,
+.monaco-workbench .scm-view .monaco-list .resource .actions .action-label {
+	opacity: 0;
+	transition: opacity 120ms ease;
+}
+.monaco-workbench .scm-view .monaco-list .monaco-list-row:hover .actions .action-label {
+	opacity: 0.5;
+}
+.monaco-workbench .scm-view .monaco-list .monaco-list-row:hover .actions .action-label:hover {
+	opacity: 1;
+}
+
+/* ============================================================================
+ *  MINIMAP STYLING — for when users re-enable the minimap via settings.
+ * ========================================================================== */
+
+/* Minimap: dimmed at rest, brightens on hover. */
+.monaco-workbench .minimap {
+	opacity: 0.45;
+	transition: opacity 250ms ease;
+}
+.monaco-workbench .minimap:hover {
+	opacity: 0.80;
+}
+/* Minimap slider: lime tint instead of default. */
+.monaco-workbench .minimap .minimap-slider .minimap-slider-horizontal {
+	background-color: rgba(194, 242, 77, 0.08) !important;
+}
+.monaco-workbench .minimap .minimap-slider:hover .minimap-slider-horizontal {
+	background-color: rgba(194, 242, 77, 0.15) !important;
+}
+.monaco-workbench .minimap .minimap-slider.active .minimap-slider-horizontal {
+	background-color: rgba(194, 242, 77, 0.22) !important;
+}
