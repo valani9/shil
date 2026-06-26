@@ -288,3 +288,20 @@
 	40%  { background: rgba(160, 140, 255, 0.12); }
 	100% { background: rgba(194, 242, 77, 0.08); }
 }
+
+/* ── Clickable rail items ──────────────────────────────────────────────────── */
+
+.shil-rail-item--clickable {
+	cursor: pointer;
+}
+
+.shil-rail-item--clickable:hover .shil-rail-item-title {
+	color: #C2F24D;
+	text-decoration: underline;
+	text-decoration-color: rgba(194, 242, 77, 0.35);
+	text-underline-offset: 2px;
+}
+
+.shil-rail-item--clickable:active {
+	background: rgba(194, 242, 77, 0.06);
+}

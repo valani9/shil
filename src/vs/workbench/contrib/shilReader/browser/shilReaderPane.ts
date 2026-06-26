@@ -23,6 +23,7 @@ import { ILanguageService } from '../../../../editor/common/languages/language.j
 import { DisposableStore } from '../../../../base/common/lifecycle.js';
 import { IEditorService } from '../../../services/editor/common/editorService.js';
 import { IRange } from '../../../../editor/common/core/range.js';
+import { URI } from '../../../../base/common/uri.js';
 
 export class ShilReaderPane extends EditorPane {
 
@@ -33,7 +34,7 @@ export class ShilReaderPane extends EditorPane {
 	private contentElement: HTMLElement | undefined;
 	private railElement: HTMLElement | undefined;
 	private currentDoc: ReaderDoc | undefined;
-	private currentResource: import('../../../../base/common/uri.js').URI | undefined;
+	private currentResource: URI | undefined;
 	private readonly paneDisposables = this._register(new DisposableStore());
 
 	/** Map from connection ID to its DOM element in the rail, for fast highlight toggling. */
@@ -270,6 +271,34 @@ export class ShilReaderPane extends EditorPane {
 		});
 	}
 
+	/**
+	 * Open a connection's file in the editor. For connections with a valid
+	 * file path, navigates to that file. For database/pattern connections
+	 * (no path), this is a no-op.
+	 */
+	private navigateToConnection(conn: Connection): void {
+		if (!conn.path) {
+			return;
+		}
+		// Try the path as-is first, then with common extensions
+		const extensions = ['', '.ts', '.tsx', '.js', '.jsx', '.mjs'];
+		for (const ext of extensions) {
+			const uri = URI.file(conn.path + ext);
+			this.fileService.exists(uri).then(exists => {
+				if (exists) {
+					this.editorService.openEditor({
+						resource: uri,
+						options: { pinned: true, revealIfOpened: true },
+					});
+				}
+			});
+			// If the path already has an extension, only try the bare path
+			if (/\.\w+$/.test(conn.path)) {
+				break;
+			}
+		}
+	}
+
 	private renderError(): void {
 		if (!this.contentElement) {
 			return;
@@ -332,6 +361,12 @@ export class ShilReaderPane extends EditorPane {
 				const item = document.createElement('div');
 				item.className = `shil-rail-item shil-rail-item--${roleTone(role)}`;
 				item.dataset.connId = conn.id;
+
+				// Make items with file paths clickable
+				if (conn.path) {
+					item.classList.add('shil-rail-item--clickable');
+					item.addEventListener('click', () => this.navigateToConnection(conn));
+				}
 
 				const title = document.createElement('div');
 				title.className = 'shil-rail-item-title';

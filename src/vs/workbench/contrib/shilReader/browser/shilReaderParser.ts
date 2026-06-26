@@ -51,7 +51,10 @@ export function parseToReaderDoc(source: string, filePath: string, languageId: s
 			const asyncLabel = funcMatch.async ? 'async ' : '';
 			const params = funcMatch.params;
 			const paramDesc = params ? ` taking ${describeParams(params)}` : '';
-			spans.push(makeSpan(spanIdx++, start + 1, end + 1, exported ? 'export' : 'action',
+			const bodyText = lines.slice(funcMatch.bodyLine, end + 1).join('\n');
+			const bodyKind = classifyBodyKind(bodyText, funcMatch.name);
+			const kindForSpan = exported && bodyKind === 'action' ? 'export' : bodyKind;
+			spans.push(makeSpan(spanIdx++, start + 1, end + 1, kindForSpan,
 				`Defines ${exported ? 'an exported ' : ''}${asyncLabel}function "${funcMatch.name}"${paramDesc}.`));
 			i = end + 1;
 			continue;
@@ -95,7 +98,9 @@ export function parseToReaderDoc(source: string, filePath: string, languageId: s
 					const asyncLabel = methodMatch.async ? 'async ' : '';
 					const visibility = methodMatch.visibility ? `${methodMatch.visibility} ` : '';
 					const staticLabel = methodMatch.static ? 'static ' : '';
-					spans.push(makeSpan(spanIdx++, mStart + 1, mEnd + 1, 'action',
+					const methodBody = lines.slice(j, mEnd + 1).join('\n');
+					const methodKind = classifyBodyKind(methodBody, methodMatch.name);
+					spans.push(makeSpan(spanIdx++, mStart + 1, mEnd + 1, methodKind,
 						`${visibility}${staticLabel}${asyncLabel}method "${methodMatch.name}" of class "${className}".`));
 					j = mEnd + 1;
 					continue;
@@ -197,6 +202,62 @@ export function parseToReaderDoc(source: string, filePath: string, languageId: s
 
 function makeSpan(idx: number, lineStart: number, lineEnd: number, kind: SpanKind, english: string): ReaderSpan {
 	return { id: `s-${idx}`, english, lineStart, lineEnd, kind };
+}
+
+/**
+ * Classify the body of a function or method into a more specific SpanKind.
+ * Detects guard patterns (validation, auth, early returns), database operations,
+ * and response patterns (NextResponse, res.json, etc.).
+ */
+function classifyBodyKind(body: string, name: string): SpanKind {
+	// Check name-based hints first (strongest signal)
+	const lowerName = name.toLowerCase();
+	if (/^(auth|validate|check|require|assert|verify|ensure|guard|is[A-Z]|has[A-Z]|can[A-Z])/.test(name) ||
+		/^(middleware|protect|restrict|permit|deny|forbid)/.test(lowerName)) {
+		return 'guard';
+	}
+
+	// Count pattern signals in the body
+	let guardSignals = 0;
+	let dbSignals = 0;
+	let responseSignals = 0;
+
+	// Guard patterns: early returns, throws, status 401/403, validation
+	if (/\bthrow\s+new\s+\w*(?:Error|Exception)/i.test(body)) { guardSignals += 2; }
+	if (/\bif\s*\([^)]*\)\s*\{?\s*(?:return|throw)\b/.test(body)) { guardSignals += 2; }
+	if (/\b(?:401|403|404)\b/.test(body)) { guardSignals += 1; }
+	if (/\b(?:unauthorized|forbidden|unauthenticated)\b/i.test(body)) { guardSignals += 2; }
+	if (/\b(?:getSession|getServerSession|getToken|requireAuth|checkAuth|verifyToken|jwt\.verify)\b/.test(body)) { guardSignals += 3; }
+	if (/\b(?:z\.object|z\.string|z\.number|yup\.|joi\.|zod\b)/.test(body)) { guardSignals += 2; }
+	if (/\.parse\s*\(/.test(body) && /\b(?:schema|validator|zod|z\.)\b/.test(body)) { guardSignals += 2; }
+
+	// Database patterns: Prisma, Drizzle, Mongoose, Knex, raw SQL
+	if (/\bprisma\.\w+\.(?:findMany|findFirst|findUnique|findUniqueOrThrow|findFirstOrThrow|create|createMany|update|updateMany|upsert|delete|deleteMany|count|aggregate|groupBy)\b/.test(body)) { dbSignals += 3; }
+	if (/\bdb\.(?:select|insert|update|delete|query)\b/.test(body)) { dbSignals += 3; }
+	if (/\.(?:find|findOne|findById|save|create|insertMany|updateOne|updateMany|deleteOne|deleteMany|aggregate)\s*\(/.test(body)) { dbSignals += 2; }
+	if (/\b(?:SELECT|INSERT\s+INTO|UPDATE\s+\w+\s+SET|DELETE\s+FROM)\b/.test(body)) { dbSignals += 3; }
+	if (/\bawait\s+\w+\.(?:query|execute|raw)\s*\(/.test(body)) { dbSignals += 2; }
+	if (/\$queryRaw|sql`/.test(body)) { dbSignals += 3; }
+
+	// Response patterns: NextResponse, res.json, Response, return json
+	if (/\bNextResponse\.(?:json|redirect|rewrite|next)\s*\(/.test(body)) { responseSignals += 3; }
+	if (/\bResponse\.(?:json|redirect)\s*\(/.test(body)) { responseSignals += 3; }
+	if (/\bnew\s+Response\s*\(/.test(body)) { responseSignals += 2; }
+	if (/\bres\.(?:json|send|status|redirect|render|end)\s*\(/.test(body)) { responseSignals += 3; }
+	if (/\breturn\s+(?:json|redirect)\s*\(/.test(body)) { responseSignals += 2; }
+	if (/\b(?:json|NextResponse|Response)\s*\(\s*\{/.test(body)) { responseSignals += 1; }
+
+	// Pick the strongest signal (minimum threshold: 2)
+	const max = Math.max(guardSignals, dbSignals, responseSignals);
+	if (max < 2) {
+		return 'action';
+	}
+
+	if (guardSignals === max) { return 'guard'; }
+	if (dbSignals === max) { return 'db'; }
+	if (responseSignals === max) { return 'response'; }
+
+	return 'action';
 }
 
 function isImportLine(line: string): boolean {
