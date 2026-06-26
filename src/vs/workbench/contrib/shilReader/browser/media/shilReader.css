@@ -581,3 +581,23 @@
 	color: #C2F24D;
 	font-weight: 600;
 }
+
+.shil-hl-classdef {
+	color: #7FD0C0;
+	font-weight: 600;
+}
+
+.shil-hl-private {
+	color: #B09ED8;
+	font-style: italic;
+}
+
+.shil-hl-privatefn {
+	color: #B09ED8;
+	font-style: italic;
+	font-weight: 500;
+}
+
+.shil-hl-computed {
+	font-style: italic;
+}

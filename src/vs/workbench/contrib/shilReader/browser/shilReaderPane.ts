@@ -959,6 +959,23 @@ function highlightSyntax(line: string): string {
 			continue;
 		}
 
+		// 5b. Private field/method: #name
+		if (line[pos] === '#') {
+			const privMatch = line.slice(pos).match(/^#[a-zA-Z_$][\w$]*/);
+			if (privMatch) {
+				// Check if it's a method call (#name followed by ()
+				const afterPriv = line.slice(pos + privMatch[0].length);
+				const isCall = /^\s*\(/.test(afterPriv);
+				if (isCall) {
+					result.push(`<span class="shil-hl-privatefn">${esc(privMatch[0])}</span>`);
+				} else {
+					result.push(`<span class="shil-hl-private">${esc(privMatch[0])}</span>`);
+				}
+				pos += privMatch[0].length;
+				continue;
+			}
+		}
+
 		// 6. Words: keywords, types, function calls, or plain identifiers
 		const wordMatch = line.slice(pos).match(/^[a-zA-Z_$][\w$]*/);
 		if (wordMatch) {
@@ -1129,6 +1146,17 @@ function highlightSyntax(line: string): string {
 							result.push(`<span class="shil-hl-punct">${esc(closeBracket)}</span>`);
 							pos++;
 						}
+						continue;
+					}
+				}
+				// 6a-class. Class declaration name: class Foo / class Foo extends Bar
+				if (word === 'class') {
+					const afterClass = line.slice(pos + word.length);
+					const classNameMatch = afterClass.match(/^(\s+)([a-zA-Z_$][\w$]*)/);
+					if (classNameMatch) {
+						result.push(classNameMatch[1]);
+						result.push(`<span class="shil-hl-classdef">${esc(classNameMatch[2])}</span>`);
+						pos += word.length + classNameMatch[0].length;
 						continue;
 					}
 				}
@@ -1362,6 +1390,28 @@ function highlightSyntax(line: string): string {
 					result.push(`<span class="shil-hl-type">${esc(genericMatch[1])}</span>`);
 					result.push(`<span class="shil-hl-punct">&gt;</span>`);
 					pos += genericMatch[0].length;
+					continue;
+				}
+			}
+		}
+
+		// 8e2. Computed property names: [expr] at property position
+		if (line[pos] === '[') {
+			// Heuristic: computed property if preceded by start of line (after indent),
+			// comma+whitespace, or opening brace — i.e., object/class member position
+			const before = line.slice(0, pos).trimEnd();
+			const isComputed = before.length === 0 ||
+				/[{,;]$/.test(before) ||
+				/^\s*$/.test(before) ||
+				/(?:public|private|protected|static|readonly|override|abstract|get|set|async)\s*$/.test(before);
+			if (isComputed) {
+				const rest = line.slice(pos);
+				const bracketMatch = rest.match(/^\[([^\]]+)\]/);
+				if (bracketMatch) {
+					result.push('<span class="shil-hl-punct">[</span>');
+					result.push(`<span class="shil-hl-computed">${highlightSyntax(bracketMatch[1])}</span>`);
+					result.push('<span class="shil-hl-punct">]</span>');
+					pos += bracketMatch[0].length;
 					continue;
 				}
 			}
