@@ -67,7 +67,7 @@ const registry = Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Con
 					localize('workbench.editor.showTabs.none', "The editor title area is not displayed."),
 				],
 				'description': localize('showEditorTabs', "Controls whether opened editors should show as individual tabs, one single large tab or if the title area should not be shown."),
-				'default': 'multiple'
+				'default': 'single'
 			},
 			[LayoutSettings.EDITOR_ACTIONS_LOCATION]: {
 				'type': 'string',
@@ -247,7 +247,7 @@ const registry = Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Con
 			'window.density.editorTabHeight': {
 				'type': 'string',
 				'enum': ['default', 'compact'],
-				'default': 'default',
+				'default': 'compact',
 				'markdownDescription': localize({ comment: ['{0}, {1} will be a setting name rendered as a link'], key: 'workbench.editor.tabHeight' }, "Controls the height of editor tabs. Also applies to the title control bar when {0} is not set to {1}.", '`#workbench.editor.showTabs#`', '`multiple`')
 			},
 			'workbench.editor.pinnedTabSizing': {
@@ -623,7 +623,7 @@ const registry = Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Con
 			},
 			'workbench.statusBar.visible': {
 				'type': 'boolean',
-				'default': true,
+				'default': false,
 				'description': localize('statusBarVisibility', "Controls the visibility of the status bar at the bottom of the workbench."),
 				agentsWindow: { default: false, readOnly: true },
 			},
@@ -668,7 +668,7 @@ const registry = Registry.as<IConfigurationRegistry>(ConfigurationExtensions.Con
 			},
 			[LayoutSettings.ACTIVITY_BAR_COMPACT]: {
 				'type': 'boolean',
-				'default': false,
+				'default': true,
 				'markdownDescription': localize({ comment: ['This is the description for a setting'], key: 'activityBarCompact' }, "Controls whether the Activity Bar uses a compact layout with smaller icons and reduced width. This setting only applies when {0} is set to {1}.", '`#workbench.activityBar.location#`', '`default`'),
 				agentsWindow: { default: false, readOnly: true },
 			},
