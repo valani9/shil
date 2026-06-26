@@ -490,3 +490,30 @@
 .shil-reader-content:focus {
 	outline: none;
 }
+
+/* ── Syntax highlighting (matches Shil Dark tokenColors) ─────────────────── */
+
+.shil-hl-keyword {
+	color: #9FD17A;
+}
+
+.shil-hl-string {
+	color: #D8C68C;
+}
+
+.shil-hl-comment {
+	color: #545B6B;
+	font-style: italic;
+}
+
+.shil-hl-number {
+	color: #F0B97A;
+}
+
+.shil-hl-type {
+	color: #7FD0C0;
+}
+
+.shil-hl-punct {
+	color: #6B7488;
+}

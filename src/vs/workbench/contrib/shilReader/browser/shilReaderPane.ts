@@ -194,8 +194,16 @@ export class ShilReaderPane extends EditorPane {
 			this.searchFilter = searchInput.value.toLowerCase();
 			this.applyFilters();
 		});
-		// Prevent keyboard nav from stealing search keystrokes
-		searchInput.addEventListener('keydown', (e) => e.stopPropagation());
+		// Prevent keyboard nav from stealing search keystrokes; Escape returns focus to content
+		searchInput.addEventListener('keydown', (e) => {
+			if (e.key === 'Escape') {
+				e.stopPropagation();
+				searchInput.blur();
+				this.contentElement?.focus();
+				return;
+			}
+			e.stopPropagation();
+		});
 		filterBar.appendChild(searchInput);
 
 		// Kind filter pills
@@ -319,7 +327,7 @@ export class ShilReaderPane extends EditorPane {
 
 				const lineTd = document.createElement('td');
 				lineTd.className = 'shil-reader-code-line';
-				lineTd.textContent = excerptLines[i];
+				lineTd.innerHTML = highlightSyntax(excerptLines[i]);
 				tr.appendChild(lineTd);
 
 				tbody.appendChild(tr);
@@ -790,4 +798,148 @@ function roleTone(role: ConnectionRole): string {
 		case 'writes': return 'data';
 		case 'imports': return 'safe';
 	}
+}
+
+/**
+ * Simple regex-based syntax highlighter matching Shil Dark token colors.
+ * Tokenizes a single line into spans for: comments, strings, keywords,
+ * numbers, types, and punctuation. Returns safe HTML.
+ */
+function highlightSyntax(line: string): string {
+	// We tokenize left-to-right, emitting spans for recognized tokens
+	// and escaped plain text for the rest.
+	const result: string[] = [];
+	let pos = 0;
+
+	while (pos < line.length) {
+		// 1. Line comment (//)
+		if (line[pos] === '/' && line[pos + 1] === '/') {
+			result.push(`<span class="shil-hl-comment">${esc(line.slice(pos))}</span>`);
+			pos = line.length;
+			continue;
+		}
+
+		// 2. Block comment start (/* ... — may not close on this line)
+		if (line[pos] === '/' && line[pos + 1] === '*') {
+			const end = line.indexOf('*/', pos + 2);
+			if (end >= 0) {
+				result.push(`<span class="shil-hl-comment">${esc(line.slice(pos, end + 2))}</span>`);
+				pos = end + 2;
+			} else {
+				result.push(`<span class="shil-hl-comment">${esc(line.slice(pos))}</span>`);
+				pos = line.length;
+			}
+			continue;
+		}
+
+		// 3. Strings: single-quote, double-quote, template literal
+		if (line[pos] === "'" || line[pos] === '"' || line[pos] === '`') {
+			const quote = line[pos];
+			let end = pos + 1;
+			while (end < line.length) {
+				if (line[end] === '\\') {
+					end += 2; // skip escaped char
+					continue;
+				}
+				if (line[end] === quote) {
+					end++;
+					break;
+				}
+				end++;
+			}
+			result.push(`<span class="shil-hl-string">${esc(line.slice(pos, end))}</span>`);
+			pos = end;
+			continue;
+		}
+
+		// 4. Numbers (decimal, hex, binary, octal, scientific)
+		const numMatch = line.slice(pos).match(/^(?:0[xXbBoO][\da-fA-F_]+|[\d][\d_]*(?:\.[\d_]*)?(?:[eE][+-]?\d+)?n?)\b/);
+		if (numMatch && (pos === 0 || /[\s(,=[{;:+\-*/%<>!&|?~^]/.test(line[pos - 1]))) {
+			result.push(`<span class="shil-hl-number">${esc(numMatch[0])}</span>`);
+			pos += numMatch[0].length;
+			continue;
+		}
+
+		// 5. Words: keywords, types, or plain identifiers
+		const wordMatch = line.slice(pos).match(/^[a-zA-Z_$][\w$]*/);
+		if (wordMatch) {
+			const word = wordMatch[0];
+			const cls = tokenClass(word);
+			if (cls) {
+				result.push(`<span class="${cls}">${esc(word)}</span>`);
+			} else {
+				result.push(esc(word));
+			}
+			pos += word.length;
+			continue;
+		}
+
+		// 6. Decorators / @
+		if (line[pos] === '@') {
+			const decMatch = line.slice(pos).match(/^@[\w$]+/);
+			if (decMatch) {
+				result.push(`<span class="shil-hl-type">${esc(decMatch[0])}</span>`);
+				pos += decMatch[0].length;
+				continue;
+			}
+		}
+
+		// 7. Punctuation
+		if (/[{}()[\];:.,<>!=+\-*/%&|^~?]/.test(line[pos])) {
+			result.push(`<span class="shil-hl-punct">${esc(line[pos])}</span>`);
+			pos++;
+			continue;
+		}
+
+		// 8. Anything else (whitespace, etc.)
+		result.push(esc(line[pos]));
+		pos++;
+	}
+
+	return result.join('');
+}
+
+const KEYWORDS = new Set([
+	'abstract', 'as', 'async', 'await', 'break', 'case', 'catch', 'class',
+	'const', 'continue', 'debugger', 'declare', 'default', 'delete', 'do',
+	'else', 'enum', 'export', 'extends', 'finally', 'for', 'from', 'function',
+	'get', 'if', 'implements', 'import', 'in', 'instanceof', 'interface',
+	'is', 'keyof', 'let', 'module', 'namespace', 'new', 'of', 'override',
+	'private', 'protected', 'public', 'readonly', 'return', 'satisfies',
+	'set', 'static', 'super', 'switch', 'this', 'throw', 'try', 'type',
+	'typeof', 'var', 'void', 'while', 'with', 'yield',
+]);
+
+const CONSTANTS = new Set([
+	'true', 'false', 'null', 'undefined', 'NaN', 'Infinity',
+]);
+
+const BUILTIN_TYPES = new Set([
+	'Array', 'Boolean', 'Date', 'Error', 'Function', 'Map', 'Number',
+	'Object', 'Promise', 'RegExp', 'Set', 'String', 'Symbol', 'WeakMap',
+	'WeakSet', 'Record', 'Partial', 'Required', 'Readonly', 'Pick', 'Omit',
+	'Exclude', 'Extract', 'ReturnType', 'Parameters', 'InstanceType',
+	'Awaited', 'NonNullable',
+]);
+
+function tokenClass(word: string): string | undefined {
+	if (KEYWORDS.has(word)) {
+		return 'shil-hl-keyword';
+	}
+	if (CONSTANTS.has(word)) {
+		return 'shil-hl-number'; // constants use the same color as numbers in Shil Dark
+	}
+	if (BUILTIN_TYPES.has(word)) {
+		return 'shil-hl-type';
+	}
+	// Heuristic: PascalCase words are likely types/classes
+	if (/^[A-Z][a-zA-Z\d]+$/.test(word) && word.length > 1) {
+		return 'shil-hl-type';
+	}
+	return undefined;
+}
+
+/** Escape HTML special characters. */
+function esc(s: string): string {
+	return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
