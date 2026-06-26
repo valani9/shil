@@ -601,3 +601,18 @@
 .shil-hl-computed {
 	font-style: italic;
 }
+
+.shil-hl-abstractdef {
+	color: #7FD0C0;
+	font-weight: 600;
+	font-style: italic;
+}
+
+.shil-hl-enumdef {
+	color: #D4A8E0;
+	font-weight: 600;
+}
+
+.shil-hl-enummember {
+	color: #D4A8E0;
+}

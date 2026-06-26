@@ -1149,14 +1149,47 @@ function highlightSyntax(line: string): string {
 						continue;
 					}
 				}
-				// 6a-class. Class declaration name: class Foo / class Foo extends Bar
+				// 6a-class. Class declaration name: class Foo / abstract class Foo
 				if (word === 'class') {
 					const afterClass = line.slice(pos + word.length);
 					const classNameMatch = afterClass.match(/^(\s+)([a-zA-Z_$][\w$]*)/);
 					if (classNameMatch) {
+						// Check if preceded by `abstract` keyword — use distinct style
+						const beforeClass = line.slice(0, pos).trimEnd();
+						const isAbstract = beforeClass.endsWith('abstract') || /\babstract\s*$/.test(line.slice(0, pos));
 						result.push(classNameMatch[1]);
-						result.push(`<span class="shil-hl-classdef">${esc(classNameMatch[2])}</span>`);
+						const cls = isAbstract ? 'shil-hl-abstractdef' : 'shil-hl-classdef';
+						result.push(`<span class="${cls}">${esc(classNameMatch[2])}</span>`);
 						pos += word.length + classNameMatch[0].length;
+						continue;
+					}
+				}
+				// 6a-iface. Interface/type alias declaration name: interface IFoo / type MyType =
+				if (word === 'interface' || word === 'type') {
+					const afterDecl = line.slice(pos + word.length);
+					const declNameMatch = afterDecl.match(/^(\s+)([a-zA-Z_$][\w$]*)/);
+					if (declNameMatch) {
+						// For `type`, avoid false positive on `type` as import modifier (e.g. `import type`)
+						// by checking the name isn't a keyword used after `type` in import context
+						const declName = declNameMatch[2];
+						if (word === 'type' && (declName === 'of' || declName === 'from')) {
+							// Not a type alias — fall through to normal keyword rendering
+						} else {
+							result.push(declNameMatch[1]);
+							result.push(`<span class="shil-hl-classdef">${esc(declName)}</span>`);
+							pos += word.length + declNameMatch[0].length;
+							continue;
+						}
+					}
+				}
+				// 6a-enum. Enum declaration name: enum Direction { ... }
+				if (word === 'enum') {
+					const afterEnum = line.slice(pos + word.length);
+					const enumNameMatch = afterEnum.match(/^(\s+)([a-zA-Z_$][\w$]*)/);
+					if (enumNameMatch) {
+						result.push(enumNameMatch[1]);
+						result.push(`<span class="shil-hl-enumdef">${esc(enumNameMatch[2])}</span>`);
+						pos += word.length + enumNameMatch[0].length;
 						continue;
 					}
 				}
