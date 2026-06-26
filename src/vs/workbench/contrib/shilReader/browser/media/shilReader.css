@@ -101,6 +101,73 @@
 	border-color: rgba(194, 242, 77, 0.35);
 }
 
+/* ── Search / filter bar ────────────────────────────────────────────────────── */
+
+.shil-reader-filter-bar {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin-top: 12px;
+}
+
+.shil-reader-search {
+	font-family: 'Martian Mono', 'JetBrains Mono', monospace;
+	font-size: 11px;
+	color: rgba(255, 255, 255, 0.75);
+	background: rgba(255, 255, 255, 0.04);
+	border: 1px solid rgba(255, 255, 255, 0.08);
+	border-radius: 4px;
+	padding: 5px 10px;
+	outline: none;
+	transition: border-color 0.15s ease;
+	width: 100%;
+	box-sizing: border-box;
+}
+
+.shil-reader-search::placeholder {
+	color: rgba(255, 255, 255, 0.25);
+}
+
+.shil-reader-search:focus {
+	border-color: rgba(194, 242, 77, 0.35);
+}
+
+.shil-reader-kind-pills {
+	display: flex;
+	flex-wrap: wrap;
+	gap: 4px;
+}
+
+.shil-reader-kind-pill {
+	font-family: 'Martian Mono', 'JetBrains Mono', monospace;
+	font-size: 9px;
+	font-weight: 500;
+	letter-spacing: 0.06em;
+	color: rgba(255, 255, 255, 0.3);
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: 3px;
+	padding: 2px 7px;
+	cursor: pointer;
+	transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+}
+
+.shil-reader-kind-pill:hover {
+	color: rgba(255, 255, 255, 0.55);
+	background: rgba(255, 255, 255, 0.05);
+}
+
+.shil-reader-kind-pill--active {
+	color: #C2F24D;
+	background: rgba(194, 242, 77, 0.08);
+	border-color: rgba(194, 242, 77, 0.25);
+}
+
+.shil-reader-kind-pill--active:hover {
+	color: #C2F24D;
+	background: rgba(194, 242, 77, 0.12);
+}
+
 /* ── Spans ──────────────────────────────────────────────────────────────────── */
 
 .shil-reader-spans {
@@ -221,7 +288,7 @@
 /* Code excerpt */
 .shil-reader-span-code {
 	margin: 10px 0 0;
-	padding: 10px 14px;
+	padding: 6px 0;
 	background: rgba(255, 255, 255, 0.03);
 	border: 1px solid rgba(255, 255, 255, 0.06);
 	border-radius: 4px;
@@ -230,12 +297,34 @@
 	font-size: 12px;
 	line-height: 1.5;
 	color: rgba(255, 255, 255, 0.55);
-	white-space: pre;
 	tab-size: 4;
 }
 
-.shil-reader-span-code code {
-	font-family: inherit;
+/* Line-numbered code table */
+.shil-reader-code-table {
+	border-collapse: collapse;
+	width: 100%;
+}
+
+.shil-reader-code-gutter {
+	width: 1px;
+	white-space: nowrap;
+	padding: 0 12px 0 14px;
+	text-align: right;
+	color: rgba(255, 255, 255, 0.18);
+	font-size: 10px;
+	user-select: none;
+	vertical-align: top;
+	border-right: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.shil-reader-code-line {
+	padding: 0 14px;
+	white-space: pre;
+}
+
+.shil-reader-span:hover .shil-reader-code-gutter {
+	color: rgba(255, 255, 255, 0.28);
 }
 
 /* ── Error state ────────────────────────────────────────────────────────────── */

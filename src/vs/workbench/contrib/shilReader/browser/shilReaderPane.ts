@@ -49,6 +49,10 @@ export class ShilReaderPane extends EditorPane {
 	private allCollapsed = false;
 	/** Whether focus mode is active (only focused span expanded). */
 	private focusModeActive = false;
+	/** Current active kind filter (null = show all). */
+	private activeKindFilter: SpanKind | null = null;
+	/** Current search text filter. */
+	private searchFilter = '';
 
 	constructor(
 		group: IEditorGroup,
@@ -128,6 +132,8 @@ export class ShilReaderPane extends EditorPane {
 		this.contentElement.textContent = '';
 		this.allCollapsed = false;
 		this.focusModeActive = false;
+		this.activeKindFilter = null;
+		this.searchFilter = '';
 
 		// Header
 		const header = document.createElement('header');
@@ -174,6 +180,59 @@ export class ShilReaderPane extends EditorPane {
 		controls.appendChild(focusBtn);
 
 		header.appendChild(controls);
+
+		// Search / filter bar
+		const filterBar = document.createElement('div');
+		filterBar.className = 'shil-reader-filter-bar';
+
+		const searchInput = document.createElement('input');
+		searchInput.className = 'shil-reader-search';
+		searchInput.type = 'text';
+		searchInput.placeholder = 'Search spans\u2026';
+		searchInput.setAttribute('aria-label', 'Search spans by text');
+		searchInput.addEventListener('input', () => {
+			this.searchFilter = searchInput.value.toLowerCase();
+			this.applyFilters();
+		});
+		// Prevent keyboard nav from stealing search keystrokes
+		searchInput.addEventListener('keydown', (e) => e.stopPropagation());
+		filterBar.appendChild(searchInput);
+
+		// Kind filter pills
+		const kindPills = document.createElement('div');
+		kindPills.className = 'shil-reader-kind-pills';
+		const allKinds: SpanKind[] = ['import', 'guard', 'action', 'db', 'response', 'declaration', 'export'];
+		// Only show pills for kinds that exist in this document
+		const presentKinds = new Set(doc.spans.map(s => s.kind));
+		for (const k of allKinds) {
+			if (!presentKinds.has(k)) {
+				continue;
+			}
+			const pill = document.createElement('button');
+			pill.className = `shil-reader-kind-pill shil-reader-kind-pill--${k}`;
+			pill.textContent = kindLabel(k);
+			pill.dataset.kind = k;
+			pill.addEventListener('click', (e) => {
+				e.stopPropagation();
+				if (this.activeKindFilter === k) {
+					this.activeKindFilter = null;
+					pill.classList.remove('shil-reader-kind-pill--active');
+				} else {
+					// Deactivate previous
+					const prev = kindPills.querySelector('.shil-reader-kind-pill--active');
+					if (prev) {
+						prev.classList.remove('shil-reader-kind-pill--active');
+					}
+					this.activeKindFilter = k;
+					pill.classList.add('shil-reader-kind-pill--active');
+				}
+				this.applyFilters();
+			});
+			kindPills.appendChild(pill);
+		}
+		filterBar.appendChild(kindPills);
+		header.appendChild(filterBar);
+
 		this.contentElement.appendChild(header);
 
 		// Spans
@@ -238,16 +297,36 @@ export class ShilReaderPane extends EditorPane {
 		lineRef.title = 'Jump to this code';
 		detail.appendChild(lineRef);
 
-		// Full code excerpt
+		// Full code excerpt with line numbers
 		const sourceLines = doc.source.split('\n');
 		const excerptLines = sourceLines.slice(span.lineStart - 1, span.lineEnd);
 		if (excerptLines.length > 0) {
 			const code = document.createElement('pre');
 			code.className = 'shil-reader-span-code shil-reader-clickable';
 			code.title = 'Jump to this code';
-			const codeInner = document.createElement('code');
-			codeInner.textContent = excerptLines.join('\n');
-			code.appendChild(codeInner);
+
+			const table = document.createElement('table');
+			table.className = 'shil-reader-code-table';
+			table.setAttribute('role', 'presentation');
+			const tbody = document.createElement('tbody');
+
+			for (let i = 0; i < excerptLines.length; i++) {
+				const tr = document.createElement('tr');
+				const gutterTd = document.createElement('td');
+				gutterTd.className = 'shil-reader-code-gutter';
+				gutterTd.textContent = String(span.lineStart + i);
+				tr.appendChild(gutterTd);
+
+				const lineTd = document.createElement('td');
+				lineTd.className = 'shil-reader-code-line';
+				lineTd.textContent = excerptLines[i];
+				tr.appendChild(lineTd);
+
+				tbody.appendChild(tr);
+			}
+
+			table.appendChild(tbody);
+			code.appendChild(table);
 			detail.appendChild(code);
 		}
 
@@ -335,6 +414,12 @@ export class ShilReaderPane extends EditorPane {
 			e.preventDefault();
 			const btn = this.contentElement?.querySelector('.shil-reader-control-btn:nth-child(2)') as HTMLButtonElement | null;
 			this.toggleFocusMode(btn);
+		} else if (e.key === '/') {
+			e.preventDefault();
+			const search = this.contentElement?.querySelector('.shil-reader-search') as HTMLInputElement | null;
+			if (search) {
+				search.focus();
+			}
 		} else if (e.key === 'Escape') {
 			this.clearSpanFocus();
 		}
@@ -528,6 +613,31 @@ export class ShilReaderPane extends EditorPane {
 		}
 	}
 
+	/** Apply kind + text search filters to show/hide spans. */
+	private applyFilters(): void {
+		if (!this.currentDoc) {
+			return;
+		}
+		for (let i = 0; i < this.spanElements.length; i++) {
+			const span = this.currentDoc.spans[i];
+			const el = this.spanElements[i];
+			let visible = true;
+
+			if (this.activeKindFilter && span.kind !== this.activeKindFilter) {
+				visible = false;
+			}
+
+			if (visible && this.searchFilter) {
+				const haystack = span.english.toLowerCase();
+				if (!haystack.includes(this.searchFilter)) {
+					visible = false;
+				}
+			}
+
+			el.style.display = visible ? '' : 'none';
+		}
+	}
+
 	private renderError(): void {
 		if (!this.contentElement) {
 			return;
@@ -626,6 +736,8 @@ export class ShilReaderPane extends EditorPane {
 		this.focusedSpanIdx = -1;
 		this.allCollapsed = false;
 		this.focusModeActive = false;
+		this.activeKindFilter = null;
+		this.searchFilter = '';
 		this.currentDoc = undefined;
 		this.currentResource = undefined;
 		if (this.contentElement) {
