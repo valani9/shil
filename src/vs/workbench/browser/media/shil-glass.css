@@ -65,11 +65,11 @@ body {
 }
 
 /* Blue-tinted hairline seams give the glass real edges + depth. */
-.monaco-workbench .part.activitybar { box-shadow: inset -1px 0 0 0 rgba(120, 150, 255, 0.10); }
-.monaco-workbench .part.sidebar { box-shadow: inset -1px 0 0 0 rgba(120, 150, 255, 0.08); }
-.monaco-workbench .part.auxiliarybar { box-shadow: inset 1px 0 0 0 rgba(120, 150, 255, 0.08); }
-.monaco-workbench .part.statusbar { box-shadow: inset 0 1px 0 0 rgba(120, 150, 255, 0.10); }
-.monaco-workbench .part.titlebar { box-shadow: inset 0 -1px 0 0 rgba(120, 150, 255, 0.08); }
+.monaco-workbench .part.activitybar { box-shadow: inset -1px 0 0 0 rgba(150, 158, 174, 0.10); }
+.monaco-workbench .part.sidebar { box-shadow: inset -1px 0 0 0 rgba(150, 158, 174, 0.08); }
+.monaco-workbench .part.auxiliarybar { box-shadow: inset 1px 0 0 0 rgba(150, 158, 174, 0.08); }
+.monaco-workbench .part.statusbar { box-shadow: inset 0 1px 0 0 rgba(150, 158, 174, 0.10); }
+.monaco-workbench .part.titlebar { box-shadow: inset 0 -1px 0 0 rgba(150, 158, 174, 0.08); }
 
 /* Floating widgets read as frosted glass over the (opaque) content behind them. */
 .monaco-workbench .quick-input-widget,

@@ -86,7 +86,18 @@
         "label": "%minimalIconThemeLabel%",
         "path": "./fileicons/vs_minimal-icon-theme.json"
       }
-    ]
+    ],
+    "configurationDefaults": {
+      "workbench.startupEditor": "none",
+      "security.workspace.trust.enabled": false,
+      "chat.commandCenter.enabled": false,
+      "window.commandCenter": false,
+      "workbench.layoutControl.enabled": false,
+      "workbench.editor.empty.hint": "hidden",
+      "editor.minimap.enabled": false,
+      "breadcrumbs.enabled": false,
+      "workbench.tips.enabled": false
+    }
   },
   "repository": {
     "type": "git",
