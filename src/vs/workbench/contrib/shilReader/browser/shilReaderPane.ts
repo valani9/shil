@@ -916,7 +916,42 @@ function highlightSyntax(line: string): string {
 			continue;
 		}
 
-		// 4. Numbers (decimal, hex, binary, octal, scientific)
+		// 4. Regex literals (/pattern/flags) — must distinguish from division
+		if (line[pos] === '/' && pos + 1 < line.length && line[pos + 1] !== '/' && line[pos + 1] !== '*') {
+			// A / is a regex if preceded by: start of line, =, (, [, {, ,, ;, !, &, |, ?, :, return, typeof, case, or other operator context
+			const before = line.slice(0, pos).trimEnd();
+			const isRegex = before.length === 0 ||
+				/[=([{,;!&|?:+\-*%^~<>]$/.test(before) ||
+				/\b(?:return|typeof|case|in|of|instanceof|new|delete|void|throw|yield)\s*$/.test(before);
+			if (isRegex) {
+				let end = pos + 1;
+				let inClass = false; // inside character class []
+				while (end < line.length) {
+					if (line[end] === '\\') {
+						end += 2; // skip escaped char
+						continue;
+					}
+					if (line[end] === '[') {
+						inClass = true;
+					} else if (line[end] === ']') {
+						inClass = false;
+					} else if (line[end] === '/' && !inClass) {
+						end++;
+						break;
+					}
+					end++;
+				}
+				// Consume flags (g, i, m, s, u, v, y, d)
+				while (end < line.length && /[gimsuvyd]/.test(line[end])) {
+					end++;
+				}
+				result.push(`<span class="shil-hl-regex">${esc(line.slice(pos, end))}</span>`);
+				pos = end;
+				continue;
+			}
+		}
+
+		// 5. Numbers (decimal, hex, binary, octal, scientific)
 		const numMatch = line.slice(pos).match(/^(?:0[xXbBoO][\da-fA-F_]+|[\d][\d_]*(?:\.[\d_]*)?(?:[eE][+-]?\d+)?n?)\b/);
 		if (numMatch && (pos === 0 || /[\s(,=[{;:+\-*/%<>!&|?~^]/.test(line[pos - 1]))) {
 			result.push(`<span class="shil-hl-number">${esc(numMatch[0])}</span>`);
@@ -924,7 +959,7 @@ function highlightSyntax(line: string): string {
 			continue;
 		}
 
-		// 5. Words: keywords, types, function calls, or plain identifiers
+		// 6. Words: keywords, types, function calls, or plain identifiers
 		const wordMatch = line.slice(pos).match(/^[a-zA-Z_$][\w$]*/);
 		if (wordMatch) {
 			const word = wordMatch[0];
@@ -947,10 +982,27 @@ function highlightSyntax(line: string): string {
 				}
 			}
 			pos += word.length;
+
+			// 6b. Type annotation: word followed by `: TypeName`
+			// Only fires when the type name is recognizable (TS primitives, PascalCase, builtin types)
+			// to avoid false positives on object literal values like { key: value }
+			const typeAnnotMatch = line.slice(pos).match(/^(\s*:\s*)([a-zA-Z_$][\w$]*(?:\s*\.\s*[a-zA-Z_$][\w$]*)*(?:\s*<[^>]*>)?(?:\s*\[\s*\])*(?:\s*\|\s*[a-zA-Z_$][\w$]*(?:\s*\.\s*[a-zA-Z_$][\w$]*)*(?:\s*<[^>]*>)?(?:\s*\[\s*\])*)*)/);
+			if (typeAnnotMatch) {
+				const typeExpr = typeAnnotMatch[2];
+				// Extract the first type name (before any <, [, |, or .)
+				const firstTypeName = typeExpr.match(/^[a-zA-Z_$][\w$]*/)?.[0] ?? '';
+				if (isTypeName(firstTypeName)) {
+					const colonAndSpace = typeAnnotMatch[1];
+					result.push(`<span class="shil-hl-punct">${esc(colonAndSpace)}</span>`);
+					result.push(`<span class="shil-hl-type">${esc(typeExpr)}</span>`);
+					pos += typeAnnotMatch[0].length;
+				}
+			}
+
 			continue;
 		}
 
-		// 6. JSX/TSX tags: <Component, </div>, or self-closing <br />
+		// 7. JSX/TSX tags: <Component, </div>, or self-closing <br />
 		if (line[pos] === '<') {
 			const jsxMatch = line.slice(pos).match(/^<(\/?)([a-zA-Z_$][\w$.]*)/);
 			if (jsxMatch) {
@@ -1017,7 +1069,7 @@ function highlightSyntax(line: string): string {
 			}
 		}
 
-		// 7. Decorators (@)
+		// 7b. Decorators (@)
 		if (line[pos] === '@') {
 			const decMatch = line.slice(pos).match(/^@[\w$]+/);
 			if (decMatch) {
@@ -1027,14 +1079,21 @@ function highlightSyntax(line: string): string {
 			}
 		}
 
-		// 8. Punctuation
+		// 8. Arrow operator => (keyword-colored, not punctuation)
+		if (line[pos] === '=' && line[pos + 1] === '>') {
+			result.push(`<span class="shil-hl-keyword">=&gt;</span>`);
+			pos += 2;
+			continue;
+		}
+
+		// 9. Punctuation
 		if (/[{}()[\];:.,<>!=+\-*/%&|^~?]/.test(line[pos])) {
 			result.push(`<span class="shil-hl-punct">${esc(line[pos])}</span>`);
 			pos++;
 			continue;
 		}
 
-		// 9. Anything else (whitespace, etc.)
+		// 10. Anything else (whitespace, etc.)
 		result.push(esc(line[pos]));
 		pos++;
 	}
@@ -1065,6 +1124,12 @@ const BUILTIN_TYPES = new Set([
 	'Awaited', 'NonNullable',
 ]);
 
+/** TypeScript primitive type keywords used in annotations (`: string`, `: number`, etc.) */
+const TS_PRIMITIVE_TYPES = new Set([
+	'string', 'number', 'boolean', 'void', 'any', 'unknown', 'never',
+	'object', 'bigint', 'symbol', 'undefined', 'null',
+]);
+
 function tokenClass(word: string): string | undefined {
 	if (KEYWORDS.has(word)) {
 		return 'shil-hl-keyword';
@@ -1080,6 +1145,18 @@ function tokenClass(word: string): string | undefined {
 		return 'shil-hl-type';
 	}
 	return undefined;
+}
+
+/** Check if a name looks like a type (TS primitives, PascalCase, or builtin utility types). */
+function isTypeName(name: string): boolean {
+	if (TS_PRIMITIVE_TYPES.has(name) || BUILTIN_TYPES.has(name)) {
+		return true;
+	}
+	// PascalCase heuristic: starts with uppercase, has at least one lowercase letter
+	if (/^[A-Z][a-zA-Z\d]+$/.test(name) && name.length > 1) {
+		return true;
+	}
+	return false;
 }
 
 /** Escape HTML special characters. */
