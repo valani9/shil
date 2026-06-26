@@ -1180,6 +1180,8 @@ class DefaultAccountProviderContribution extends Disposable implements IWorkbenc
 	}
 }
 
+// Shil: keep the sign-in command registered (other code references the ID)
+// but make it a no-op for non-OSS builds — Shil is not GitHub's client.
 registerAction2(class extends Action2 {
 	constructor() {
 		super({
@@ -1188,6 +1190,10 @@ registerAction2(class extends Action2 {
 		});
 	}
 	async run(accessor: ServicesAccessor): Promise<void> {
+		const productService = accessor.get(IProductService);
+		if (productService.nameShort !== 'Code - OSS') {
+			return;
+		}
 		const defaultAccountService = accessor.get(IDefaultAccountService);
 		await defaultAccountService.signIn();
 	}
