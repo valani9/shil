@@ -1709,3 +1709,352 @@ body.shil-sidebar-resizing * {
 .monaco-workbench .minimap .minimap-slider.active .minimap-slider-horizontal {
 	background-color: rgba(194, 242, 77, 0.22) !important;
 }
+
+/* ============================================================================
+ *  COLOR PICKER WIDGET — inline color swatch popup in the editor.
+ * ========================================================================== */
+
+/* Color picker container: glass treatment, rounded, shadow. */
+.monaco-workbench .colorpicker-widget {
+	border-radius: 10px !important;
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), inset 0 0.5px 0 rgba(255, 255, 255, 0.06) !important;
+	overflow: hidden;
+}
+/* Color picker header (saturation/hue area): rounded top. */
+.monaco-workbench .colorpicker-header {
+	border-radius: 10px 10px 0 0;
+}
+/* Color picker body (inputs, sliders): glass bg, Hanken Grotesk labels. */
+.monaco-workbench .colorpicker-body {
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
+	border-radius: 0 0 10px 10px;
+}
+/* Color picker text inputs: rounded, lime focus. */
+.monaco-workbench .colorpicker-body .monaco-inputbox {
+	border-radius: 4px !important;
+}
+.monaco-workbench .colorpicker-body .monaco-inputbox.synthetic-focus {
+	box-shadow: 0 0 0 1px rgba(194, 242, 77, 0.45) !important;
+}
+
+/* ============================================================================
+ *  KEYBINDING EDITOR — keyboard shortcuts preferences page.
+ * ========================================================================== */
+
+/* Keybinding editor header: instrument voice, tracked. */
+.monaco-workbench .keybindings-editor > .keybindings-header {
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
+}
+.monaco-workbench .keybindings-editor > .keybindings-header .search-widget .input {
+	border-radius: 8px !important;
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
+	font-size: 13px;
+}
+.monaco-workbench .keybindings-editor > .keybindings-header .search-widget .input.synthetic-focus {
+	box-shadow: 0 0 0 1px rgba(194, 242, 77, 0.45) !important;
+}
+/* Keybinding table: Hanken Grotesk labels, instrument-voice keybinding chords. */
+.monaco-workbench .keybindings-editor .keybindings-table-container .monaco-table .monaco-list-row {
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
+	font-size: 12.5px;
+}
+/* Keybinding chord badges: Martian Mono, rounded, tighter. */
+.monaco-workbench .keybindings-editor .keybinding .monaco-keybinding-key {
+	font-family: 'Martian Mono', monospace;
+	font-size: 10px;
+	border-radius: 4px;
+	letter-spacing: 0.02em;
+}
+/* Keybinding source label: instrument voice. */
+.monaco-workbench .keybindings-editor .keybindings-table-container .monaco-table .keybinding-label-source {
+	font-family: 'Martian Mono', monospace;
+	font-size: 9px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+	opacity: 0.55;
+}
+
+/* ============================================================================
+ *  TERMINAL TABS — tab strip in the panel for multiple terminals.
+ * ========================================================================== */
+
+/* Terminal tabs: JetBrains Mono, slim height. */
+.monaco-workbench .terminal-tabs-entry {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 11px;
+}
+/* Terminal tab icon: dimmed at rest, full on active. */
+.monaco-workbench .terminal-tabs-entry .codicon {
+	opacity: 0.55;
+	transition: opacity 150ms ease;
+}
+.monaco-workbench .terminal-tabs-entry.is-active .codicon {
+	opacity: 1;
+}
+/* Terminal tab name: dimmed at rest, brightens on hover/active. */
+.monaco-workbench .terminal-tabs-entry .label {
+	opacity: 0.65;
+	transition: opacity 150ms ease;
+}
+.monaco-workbench .terminal-tabs-entry:hover .label {
+	opacity: 0.85;
+}
+.monaco-workbench .terminal-tabs-entry.is-active .label {
+	opacity: 1;
+}
+/* Terminal tab actions: ghost until hover. */
+.monaco-workbench .terminal-tabs-entry .actions .action-label {
+	opacity: 0;
+	transition: opacity 120ms ease;
+}
+.monaco-workbench .terminal-tabs-entry:hover .actions .action-label {
+	opacity: 0.5;
+}
+.monaco-workbench .terminal-tabs-entry:hover .actions .action-label:hover {
+	opacity: 1;
+}
+
+/* ============================================================================
+ *  RENAME INPUT WIDGET — inline rename popup in the editor.
+ * ========================================================================== */
+
+/* Rename input: glass treatment, rounded, shadow. */
+.monaco-workbench .rename-box {
+	border-radius: 8px !important;
+	box-shadow: 0 6px 24px rgba(0, 0, 0, 0.40), inset 0 0.5px 0 rgba(255, 255, 255, 0.06) !important;
+	font-family: 'JetBrains Mono', monospace;
+	overflow: hidden;
+}
+/* Rename input field: lime focus glow. */
+.monaco-workbench .rename-box .rename-input {
+	border-radius: 6px !important;
+}
+.monaco-workbench .rename-box .rename-input:focus {
+	box-shadow: 0 0 0 1px rgba(194, 242, 77, 0.50) !important;
+}
+/* Rename candidate list (AI rename suggestions): glass list. */
+.monaco-workbench .rename-box .rename-candidates-view .monaco-list-row {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 12px;
+	border-radius: 4px;
+}
+.monaco-workbench .rename-box .rename-candidates-view .monaco-list-row.focused {
+	box-shadow: inset 0 0 0 1px rgba(194, 242, 77, 0.30);
+}
+
+/* ============================================================================
+ *  CODE ACTION WIDGET — lightbulb menu (Quick Fix, Refactor, etc).
+ * ========================================================================== */
+
+/* Code action widget container: glass, rounded, shadow. */
+.monaco-workbench .action-widget {
+	border-radius: 10px !important;
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45), inset 0 0.5px 0 rgba(255, 255, 255, 0.06) !important;
+	overflow: hidden;
+}
+/* Code action header (categories): instrument voice. */
+.monaco-workbench .action-widget .action-widget-action-bar .action-label {
+	font-family: 'Martian Mono', monospace;
+	font-size: 9.5px;
+	letter-spacing: 0.06em;
+	text-transform: uppercase;
+}
+/* Code action list items: Hanken Grotesk, hover lime tint. */
+.monaco-workbench .action-widget .monaco-list .monaco-list-row {
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
+	font-size: 12.5px;
+	border-radius: 5px;
+	margin: 0 4px;
+}
+.monaco-workbench .action-widget .monaco-list .monaco-list-row.focused {
+	background-color: rgba(194, 242, 77, 0.08) !important;
+}
+/* Code action keybinding hints: Martian Mono. */
+.monaco-workbench .action-widget .monaco-list .monaco-list-row .monaco-keybinding-key {
+	font-family: 'Martian Mono', monospace;
+	font-size: 9px;
+	border-radius: 3px;
+}
+/* Code action separator: thin hairline. */
+.monaco-workbench .action-widget .action-widget-action.separator {
+	border-top-color: rgba(138, 143, 152, 0.10) !important;
+}
+
+/* ============================================================================
+ *  INLINE COMPLETIONS / GHOST TEXT — AI suggestions inline in the editor.
+ * ========================================================================== */
+
+/* Ghost text: dimmed lime tint for brand presence in AI suggestions. */
+.monaco-workbench .ghost-text-decoration {
+	opacity: 0.45;
+	color: rgba(194, 242, 77, 0.55) !important;
+	font-style: italic;
+}
+/* Inline suggest toolbar: glass, rounded, slim. */
+.monaco-workbench .inline-editor-suggest-widget {
+	border-radius: 8px !important;
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.35), inset 0 0.5px 0 rgba(255, 255, 255, 0.05) !important;
+}
+/* Inline suggest toolbar buttons: ghost, lime on hover. */
+.monaco-workbench .inline-editor-suggest-widget .action-label {
+	opacity: 0.55;
+	transition: opacity 120ms ease;
+}
+.monaco-workbench .inline-editor-suggest-widget .action-label:hover {
+	opacity: 1;
+	color: #C2F24D !important;
+}
+
+/* ============================================================================
+ *  SUGGEST DETAILS — expanded documentation panel next to autocomplete.
+ * ========================================================================== */
+
+/* Suggest details container: glass, rounded, shadow. */
+.monaco-workbench .suggest-details-container {
+	border-radius: 10px !important;
+	box-shadow: 0 8px 32px rgba(0, 0, 0, 0.40), inset 0 0.5px 0 rgba(255, 255, 255, 0.06) !important;
+	overflow: hidden;
+}
+/* Suggest details header: type signature in JetBrains Mono. */
+.monaco-workbench .suggest-details .header .type {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 11px;
+}
+/* Suggest details docs: Hanken Grotesk, readable. */
+.monaco-workbench .suggest-details .body {
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
+	font-size: 12.5px;
+	line-height: 1.5;
+}
+/* Suggest details code blocks: JetBrains Mono. */
+.monaco-workbench .suggest-details .body code,
+.monaco-workbench .suggest-details .body pre {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 11px;
+	border-radius: 4px;
+}
+/* Suggest details close button: ghost, brightens on hover. */
+.monaco-workbench .suggest-details .close {
+	opacity: 0.40;
+	transition: opacity 120ms ease;
+}
+.monaco-workbench .suggest-details .close:hover {
+	opacity: 1;
+}
+
+/* ============================================================================
+ *  GO-TO-DEFINITION PEEK — inline peek view for references/definitions.
+ * ========================================================================== */
+
+/* Peek view header: glass treatment (supplement to existing peek styling). */
+.monaco-workbench .peekview-widget .head .peekview-title .filename {
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
+	font-size: 12px;
+}
+.monaco-workbench .peekview-widget .head .peekview-title .dirname {
+	font-family: 'Martian Mono', monospace;
+	font-size: 9px;
+	letter-spacing: 0.04em;
+	opacity: 0.55;
+}
+/* Peek view reference list: Hanken Grotesk, lime active. */
+.monaco-workbench .peekview-widget .ref-tree .monaco-list-row {
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
+	font-size: 12px;
+}
+.monaco-workbench .peekview-widget .ref-tree .monaco-list-row.focused {
+	box-shadow: inset 0 0 0 1px rgba(194, 242, 77, 0.25);
+}
+/* Peek view reference file headers: instrument voice. */
+.monaco-workbench .peekview-widget .ref-tree .reference-file {
+	font-family: 'Martian Mono', monospace;
+	font-size: 10px;
+	letter-spacing: 0.04em;
+}
+
+/* ============================================================================
+ *  MARKER / PROBLEMS NAVIGATION — inline problem peek widgets (F8 / Shift+F8).
+ * ========================================================================== */
+
+/* Marker navigation widget: glass, rounded, shadow. */
+.monaco-workbench .marker-widget {
+	border-radius: 10px !important;
+	box-shadow: 0 6px 24px rgba(0, 0, 0, 0.40), inset 0 0.5px 0 rgba(255, 255, 255, 0.06) !important;
+	overflow: hidden;
+}
+/* Marker widget message: Hanken Grotesk. */
+.monaco-workbench .marker-widget .descriptioncontainer .message {
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
+	font-size: 12.5px;
+}
+/* Marker widget source/code: instrument voice. */
+.monaco-workbench .marker-widget .descriptioncontainer .source,
+.monaco-workbench .marker-widget .descriptioncontainer .code {
+	font-family: 'Martian Mono', monospace;
+	font-size: 9px;
+	letter-spacing: 0.04em;
+	opacity: 0.55;
+}
+
+/* ============================================================================
+ *  EDITOR STICKY WIDGET — "Sticky Scroll" headers when re-enabled by users.
+ * ========================================================================== */
+
+/* Sticky scroll: solid bg (already handled), add font refinement. */
+.monaco-workbench .sticky-widget .sticky-line-content {
+	font-family: 'JetBrains Mono', monospace;
+}
+/* Sticky scroll shadow: subtler hairline instead of default blob. */
+.monaco-workbench .sticky-widget.peek {
+	box-shadow: 0 1px 0 rgba(138, 143, 152, 0.08) !important;
+}
+
+/* ============================================================================
+ *  EDITOR FOLDING — collapsed region decorations.
+ * ========================================================================== */
+
+/* Fold controls: dimmed at rest, lime on hover/active. */
+.monaco-workbench .margin-view-overlays .codicon-folding-expanded,
+.monaco-workbench .margin-view-overlays .codicon-folding-collapsed,
+.monaco-workbench .margin-view-overlays .codicon-folding-manual-collapsed {
+	opacity: 0.30;
+	transition: opacity 150ms ease, color 150ms ease;
+}
+.monaco-workbench .margin-view-overlays .cldr:hover .codicon-folding-expanded,
+.monaco-workbench .margin-view-overlays .cldr:hover .codicon-folding-collapsed,
+.monaco-workbench .margin-view-overlays .cldr:hover .codicon-folding-manual-collapsed {
+	opacity: 0.80;
+	color: #C2F24D !important;
+}
+
+/* ============================================================================
+ *  WELCOME EDITOR — for when users open the welcome tab manually.
+ * ========================================================================== */
+
+/* Welcome editor walkthrough steps: Hanken Grotesk body, rounded cards. */
+.monaco-workbench .gettingStartedContainer .gettingStartedSlide .categories-column .category-column .category-descriptors .getting-started-category {
+	border-radius: 10px;
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
+}
+
+/* ============================================================================
+ *  DIFF REVIEW WIDGET — accessible diff review overlay (F7 in diff editor).
+ * ========================================================================== */
+
+/* Diff review widget: glass, rounded, shadow. */
+.monaco-workbench .diff-review {
+	border-radius: 8px !important;
+	box-shadow: 0 6px 24px rgba(0, 0, 0, 0.40) !important;
+	overflow: hidden;
+}
+/* Diff review entries: Hanken Grotesk labels. */
+.monaco-workbench .diff-review .diff-review-line-entry {
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
+	font-size: 12px;
+}
+/* Diff review line numbers: Martian Mono, dimmed. */
+.monaco-workbench .diff-review .line-count {
+	font-family: 'Martian Mono', monospace;
+	font-size: 10px;
+	opacity: 0.50;
+}
