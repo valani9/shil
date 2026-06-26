@@ -195,8 +195,25 @@ body {
 .monaco-workbench .part.statusbar { height: 22px !important; font-size: 10px; }
 .monaco-workbench .part.statusbar .statusbar-item { font-size: 10px; line-height: 22px; }
 
-/* Thin scrollbars. */
-.monaco-workbench .monaco-scrollable-element > .scrollbar > .slider { border-radius: 6px; }
+/* ---- SCROLLBARS — thin, dimmed, rounded. Invisible at rest, appear on scroll/hover.
+   Premium feel: narrow tracks, ghostly thumbs that brighten on interaction. ---- */
+.monaco-workbench .monaco-scrollable-element > .scrollbar > .slider {
+	border-radius: 6px;
+	background-color: rgba(150, 158, 174, 0.14) !important;
+	transition: background-color 150ms ease, opacity 150ms ease;
+}
+.monaco-workbench .monaco-scrollable-element > .scrollbar > .slider:hover {
+	background-color: rgba(150, 158, 174, 0.28) !important;
+}
+.monaco-workbench .monaco-scrollable-element > .scrollbar > .slider.active {
+	background-color: rgba(194, 242, 77, 0.25) !important;
+}
+/* Scrollbar arrows: hidden — clean track, no retro arrows. */
+.monaco-workbench .monaco-scrollable-element > .scrollbar > .arrow-background,
+.monaco-workbench .monaco-scrollable-element > .scrollbar > .up-arrow,
+.monaco-workbench .monaco-scrollable-element > .scrollbar > .down-arrow {
+	display: none !important;
+}
 
 /* ============================================================================
  *  READER-CENTRIC CALM: maximize content area, minimize chrome distraction.
@@ -469,4 +486,91 @@ body {
 	backdrop-filter: blur(14px) saturate(1.3);
 	border-radius: 8px !important;
 	box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.5), inset 0 0 0 1px rgba(150, 158, 174, 0.10) !important;
+}
+
+/* ============================================================================
+ *  TAB CLOSE BUTTONS — ghost until hover. The close "x" on tabs is visual noise;
+ *  fade it until the user approaches. On tab hover it ghosts in, on button hover
+ *  it brightens to full. Rounded hit zone.
+ * ========================================================================== */
+
+.monaco-workbench .tab .tab-close {
+	opacity: 0;
+	transition: opacity 120ms ease;
+}
+.monaco-workbench .tab:hover .tab-close,
+.monaco-workbench .tab.active .tab-close {
+	opacity: 0.4;
+}
+.monaco-workbench .tab .tab-close:hover {
+	opacity: 1;
+	background-color: rgba(150, 158, 174, 0.12) !important;
+	border-radius: 4px;
+}
+
+/* ============================================================================
+ *  EDITOR CURSOR — lime blinking cursor for brand presence in the content area.
+ * ========================================================================== */
+
+.monaco-editor .cursor {
+	background-color: #C2F24D !important;
+	border-color: #C2F24D !important;
+}
+
+/* ============================================================================
+ *  EDITOR SELECTION — subtle lime tint instead of the default blue.
+ * ========================================================================== */
+
+.monaco-editor .selected-text {
+	background-color: rgba(194, 242, 77, 0.12) !important;
+}
+/* Highlight on find match: warmer tint to distinguish from selection. */
+.monaco-editor .findMatch {
+	background-color: rgba(194, 242, 77, 0.22) !important;
+	border-radius: 2px;
+}
+.monaco-editor .currentFindMatch {
+	background-color: rgba(194, 242, 77, 0.35) !important;
+	border-radius: 2px;
+}
+
+/* ============================================================================
+ *  BRACKET MATCHING — subtle lime outline instead of the default highlight.
+ * ========================================================================== */
+
+.monaco-editor .bracket-match {
+	border-color: rgba(194, 242, 77, 0.35) !important;
+	background-color: rgba(194, 242, 77, 0.06) !important;
+}
+
+/* ============================================================================
+ *  INDENT GUIDES — dimmer, barely visible until active line.
+ * ========================================================================== */
+
+.monaco-editor .lines-content .cigr {
+	box-shadow: 1px 0 0 0 rgba(150, 158, 174, 0.06) inset !important;
+}
+.monaco-editor .lines-content .cigra {
+	box-shadow: 1px 0 0 0 rgba(194, 242, 77, 0.18) inset !important;
+}
+
+/* ============================================================================
+ *  DIFF EDITOR — tighter, calmer diff view.
+ * ========================================================================== */
+
+.monaco-workbench .monaco-diff-editor .insert-sign,
+.monaco-workbench .monaco-diff-editor .delete-sign {
+	border-radius: 2px;
+}
+
+/* ============================================================================
+ *  PEEK VIEW — glass treatment for the peek widget.
+ * ========================================================================== */
+
+.monaco-workbench .peekview-widget .head {
+	background-color: rgba(8, 11, 20, 0.85) !important;
+}
+.monaco-workbench .peekview-widget .body {
+	background-color: rgba(5, 7, 12, 0.95) !important;
+	border-color: rgba(194, 242, 77, 0.18) !important;
 }
