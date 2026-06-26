@@ -26,6 +26,8 @@ import { IRange } from '../../../../editor/common/core/range.js';
 import { URI } from '../../../../base/common/uri.js';
 import { createTrustedTypesPolicy } from '../../../../base/browser/trustedTypes.js';
 import { IShilModelService } from './shilModelService.js';
+import { INotificationService, Severity } from '../../../../platform/notification/common/notification.js';
+import { ICommandService } from '../../../../platform/commands/common/commands.js';
 
 const readerTrustedTypes = createTrustedTypesPolicy('shilReader', {
 	createHTML: (value: string) => value,
@@ -59,6 +61,8 @@ export class ShilReaderPane extends EditorPane {
 	private activeKindFilter: SpanKind | null = null;
 	/** Current search text filter. */
 	private searchFilter = '';
+	/** Whether the API key notification has been shown this session (avoid nagging). */
+	private static apiKeyNotifShown = false;
 
 	constructor(
 		group: IEditorGroup,
@@ -69,6 +73,8 @@ export class ShilReaderPane extends EditorPane {
 		@ILanguageService private readonly languageService: ILanguageService,
 		@IEditorService private readonly editorService: IEditorService,
 		@IShilModelService private readonly modelService: IShilModelService,
+		@INotificationService private readonly notificationService: INotificationService,
+		@ICommandService private readonly commandService: ICommandService,
 	) {
 		super(ShilReaderPane.ID, group, telemetryService, themeService, storageService);
 	}
@@ -151,6 +157,28 @@ export class ShilReaderPane extends EditorPane {
 				// No model configured — use regex parser only
 				this.currentDoc = doc;
 				this.renderDoc(doc);
+				this.showConfigHintBanner();
+
+				// Show notification once per session
+				if (!ShilReaderPane.apiKeyNotifShown) {
+					ShilReaderPane.apiKeyNotifShown = true;
+					this.notificationService.notify({
+						severity: Severity.Info,
+						message: 'Reader is using basic parsing. Configure an API key for richer plain-English descriptions.',
+						actions: {
+							primary: [{
+								id: 'shil.openModelSettings',
+								label: 'Configure API Key',
+								tooltip: 'Open Shil model settings',
+								class: undefined,
+								enabled: true,
+								run: () => {
+									this.commandService.executeCommand('workbench.action.openSettings', 'shil.model');
+								}
+							}]
+						}
+					});
+				}
 			}
 
 			// Scan connections in background (non-blocking)
@@ -691,6 +719,40 @@ export class ShilReaderPane extends EditorPane {
 			}
 
 			el.style.display = visible ? '' : 'none';
+		}
+	}
+
+	private showConfigHintBanner(): void {
+		if (!this.contentElement) {
+			return;
+		}
+		// Don't add duplicate banners
+		if (this.contentElement.querySelector('.shil-reader-config-hint')) {
+			return;
+		}
+		const banner = document.createElement('div');
+		banner.className = 'shil-reader-config-hint';
+		const text = document.createElement('span');
+		text.textContent = 'Using basic parsing \u2014 ';
+		banner.appendChild(text);
+		const link = document.createElement('a');
+		link.className = 'shil-reader-config-link';
+		link.textContent = 'configure an API key';
+		link.title = 'Open Shil model settings for richer English descriptions';
+		link.addEventListener('click', (e) => {
+			e.preventDefault();
+			this.commandService.executeCommand('workbench.action.openSettings', 'shil.model');
+		});
+		banner.appendChild(link);
+		const suffix = document.createElement('span');
+		suffix.textContent = ' for richer descriptions.';
+		banner.appendChild(suffix);
+		// Insert after the header
+		const header = this.contentElement.querySelector('.shil-reader-header');
+		if (header && header.nextSibling) {
+			this.contentElement.insertBefore(banner, header.nextSibling);
+		} else {
+			this.contentElement.appendChild(banner);
 		}
 	}
 
