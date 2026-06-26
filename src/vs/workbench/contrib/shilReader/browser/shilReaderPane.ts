@@ -1362,11 +1362,11 @@ function highlightSyntax(line: string): string {
 			}
 		}
 
-		// 7b. Decorators (@)
+		// 7b. Decorators (@Decorator, @ns.Sub, @Injectable())
 		if (line[pos] === '@') {
-			const decMatch = line.slice(pos).match(/^@[\w$]+/);
+			const decMatch = line.slice(pos).match(/^@[a-zA-Z_$][\w$]*(?:\.[a-zA-Z_$][\w$]*)*/);
 			if (decMatch) {
-				result.push(`<span class="shil-hl-type">${esc(decMatch[0])}</span>`);
+				result.push(`<span class="shil-hl-decorator">${esc(decMatch[0])}</span>`);
 				pos += decMatch[0].length;
 				continue;
 			}
@@ -1509,6 +1509,12 @@ const OPERATOR_KEYWORDS = new Set([
 function tokenClass(word: string): string | undefined {
 	if (word === 'async' || word === 'await') {
 		return 'shil-hl-async';
+	}
+	if (word === 'declare') {
+		return 'shil-hl-declare';
+	}
+	if (word === 'readonly') {
+		return 'shil-hl-readonly';
 	}
 	if (OPERATOR_KEYWORDS.has(word)) {
 		return 'shil-hl-opkw';

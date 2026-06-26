@@ -616,3 +616,19 @@
 .shil-hl-enummember {
 	color: #D4A8E0;
 }
+
+.shil-hl-decorator {
+	color: #E08A6F;
+	font-style: italic;
+}
+
+.shil-hl-declare {
+	color: #9FD17A;
+	font-style: italic;
+	opacity: 0.7;
+}
+
+.shil-hl-readonly {
+	color: #9FD17A;
+	font-style: italic;
+}
