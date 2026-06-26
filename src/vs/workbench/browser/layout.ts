@@ -1694,11 +1694,9 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 
 		this._register(this.storageService.onWillSaveState(() => {
 
-			// Side Bar Size
-			const sideBarSize = this.stateModel.getRuntimeValue(LayoutStateKeys.SIDEBAR_HIDDEN)
-				? this.workbenchGrid.getViewCachedVisibleSize(this.sideBarPartView)
-				: this.workbenchGrid.getViewSize(this.sideBarPartView).width;
-			this.stateModel.setInitializationValue(LayoutStateKeys.SIDEBAR_SIZE, sideBarSize as number);
+			// Side Bar Size — Shil: sidebar is a CSS overlay always at 1px in
+			// the grid, so don't save the grid value. Keep the stored size as-is.
+			// (The overlay width is fixed in SidebarPart.SHIL_OVERLAY_WIDTH.)
 
 			// Panel Size
 			const panelSize = this.stateModel.getRuntimeValue(LayoutStateKeys.PANEL_HIDDEN)
@@ -1924,8 +1922,15 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 			this.mainContainer.classList.remove(LayoutClasses.SIDEBAR_HIDDEN);
 		}
 
-		// Propagate to grid
-		this.workbenchGrid.setViewVisible(this.sideBarPartView, !hidden);
+		// Shil: sidebar is a CSS fixed overlay — do NOT toggle grid visibility.
+		// The grid keeps the sidebar always visible at 1px so the editor gets full
+		// width. Show/hide is controlled by the CSS class above (transform-based
+		// slide transition). When revealing, trigger layout so content renders at
+		// the overlay width.
+		if (!hidden) {
+			const viewSize = this.workbenchGrid.getViewSize(this.sideBarPartView);
+			this.sideBarPartView.layout(viewSize.width, viewSize.height, 0, 0);
+		}
 
 		// If sidebar becomes hidden, also hide the current active Viewlet if any
 		if (hidden && this.paneCompositeService.getActivePaneComposite(ViewContainerLocation.Sidebar)) {
@@ -2624,7 +2629,9 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 
 	private arrangeMiddleSectionNodes(nodes: { editor: ISerializedNode; panel: ISerializedNode; activityBar: ISerializedNode; sideBar: ISerializedNode; auxiliaryBar: ISerializedNode }, availableWidth: number, availableHeight: number): ISerializedNode[] {
 		const activityBarSize = this.stateModel.getRuntimeValue(LayoutStateKeys.ACTIVITYBAR_HIDDEN) ? 0 : nodes.activityBar.size;
-		const sideBarSize = this.stateModel.getRuntimeValue(LayoutStateKeys.SIDEBAR_HIDDEN) ? 0 : nodes.sideBar.size;
+		// Shil: sidebar is a CSS overlay at 1px in the grid — always treat as 0 for
+		// editor width calculation so the editor never loses space.
+		const sideBarSize = 0;
 		const auxiliaryBarSize = this.stateModel.getRuntimeValue(LayoutStateKeys.AUXILIARYBAR_HIDDEN) ? 0 : nodes.auxiliaryBar.size;
 		const panelSize = this.stateModel.getInitializationValue(LayoutStateKeys.PANEL_SIZE) ? 0 : nodes.panel.size;
 
@@ -2699,7 +2706,7 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 
 	private createGridDescriptor(): ISerializedGrid {
 		const { width, height } = this._mainContainerDimension;
-		const sideBarSize = this.stateModel.getInitializationValue(LayoutStateKeys.SIDEBAR_SIZE);
+		// Shil: sidebar size is unused — the overlay sidebar is always 1px in the grid.
 		const auxiliaryBarSize = this.stateModel.getInitializationValue(LayoutStateKeys.AUXILIARYBAR_SIZE);
 		const panelSize = this.stateModel.getInitializationValue(LayoutStateKeys.PANEL_SIZE);
 
@@ -2734,8 +2741,10 @@ export abstract class Layout extends Disposable implements IWorkbenchLayoutServi
 		const sideBarNode: ISerializedLeafNode = {
 			type: 'leaf',
 			data: { type: Parts.SIDEBAR_PART },
-			size: sideBarSize,
-			visible: !this.stateModel.getRuntimeValue(LayoutStateKeys.SIDEBAR_HIDDEN)
+			// Shil: sidebar is a CSS fixed overlay — always visible in grid at 1px
+			// so the editor gets full width. Visual show/hide is CSS-driven.
+			size: 1,
+			visible: true
 		};
 
 		const auxiliaryBarNode: ISerializedLeafNode = {

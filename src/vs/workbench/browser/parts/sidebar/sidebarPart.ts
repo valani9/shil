@@ -41,7 +41,7 @@ export class SidebarPart extends AbstractPaneCompositePart {
 
 	//#region IView
 
-	readonly minimumWidth: number = 170;
+	readonly minimumWidth: number = 1;
 	readonly maximumWidth: number = Number.POSITIVE_INFINITY;
 	readonly minimumHeight: number = 0;
 	readonly maximumHeight: number = Number.POSITIVE_INFINITY;
@@ -178,12 +178,17 @@ export class SidebarPart extends AbstractPaneCompositePart {
 		container.style.outlineColor = this.getColor(SIDE_BAR_DRAG_AND_DROP_BACKGROUND) ?? '';
 	}
 
+	private static readonly SHIL_OVERLAY_WIDTH = 280;
+
 	override layout(width: number, height: number, top: number, left: number): void {
 		if (!this.layoutService.isVisible(Parts.SIDEBAR_PART)) {
 			return;
 		}
 
-		super.layout(width, height, top, left);
+		// Shil: sidebar is a CSS fixed overlay. The grid allocates 1px, but
+		// internal content layout must use the actual overlay width so tree
+		// views, composite bars, etc. render at the correct size.
+		super.layout(SidebarPart.SHIL_OVERLAY_WIDTH, height, top, left);
 	}
 
 	protected override getTitleAreaDropDownAnchorAlignment(): AnchorAlignment {

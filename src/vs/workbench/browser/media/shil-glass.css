@@ -236,8 +236,8 @@ body {
 .monaco-workbench .editor-group-container > .title { min-height: 0 !important; }
 
 /* Sidebar: hidden by default. When toggled open (Cmd+B), it appears as a
-   calm, premium file rail — tight min-width, Martian Mono header, no clutter. */
-.monaco-workbench .part.sidebar { min-width: 160px; }
+   calm, premium file rail — Martian Mono header, no clutter.
+   Width is set in the SIDEBAR OVERLAY section (280px fixed). */
 /* Sidebar composite title bar: slim, quiet, Shil instrument voice. */
 .monaco-workbench .part.sidebar > .composite.title {
 	height: 30px !important; min-height: 30px !important;
@@ -413,7 +413,10 @@ body {
 }
 
 /* ============================================================================
- *  SIDEBAR BRANDING — drawer shadow, lime accent when sidebar is visible.
+ *  SIDEBAR OVERLAY — true fixed-position drawer that overlays the editor
+ *  without content reflow. The grid allocates 1px to the sidebar (editor gets
+ *  full width); CSS renders it at 280px via position:fixed. Show/hide is
+ *  driven by transform + the .sidebar-hidden class.
  * ========================================================================== */
 
 /* Sidebar composite title: lime hairline at top for brand signal when open. */
@@ -421,15 +424,47 @@ body {
 	border-top: 1px solid rgba(194, 242, 77, 0.25);
 }
 
-/* Drawer shadow: dramatic right-edge shadow when sidebar is open for depth. */
-.monaco-workbench:not(.sidebar-hidden) .part.sidebar {
-	box-shadow: 8px 0 32px -4px rgba(0, 0, 0, 0.45),
-	            inset -1px 0 0 0 rgba(150, 158, 174, 0.08) !important;
-	z-index: 1;
+/* Base overlay positioning: always fixed, full height between title + status. */
+.monaco-workbench .part.sidebar {
+	position: fixed !important;
+	left: 40px;  /* activity bar width */
+	top: 30px;   /* title bar height */
+	bottom: 22px; /* status bar height */
+	width: 280px !important;
+	height: auto !important;
+	z-index: 100;
+	border-radius: 0 10px 10px 0;
 }
-/* Reset when hidden so the shadow doesn't flash during close transition. */
+
+/* Visible state: slide in + drawer shadow + depth. */
+.monaco-workbench:not(.sidebar-hidden) .part.sidebar {
+	transform: translateX(0);
+	opacity: 1;
+	box-shadow: 8px 0 40px -4px rgba(0, 0, 0, 0.55),
+	            inset -1px 0 0 0 rgba(150, 158, 174, 0.08) !important;
+	transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
+	            opacity 220ms ease,
+	            box-shadow 220ms ease;
+}
+
+/* Hidden state: slide out to the left, invisible. */
 .monaco-workbench.sidebar-hidden .part.sidebar {
+	transform: translateX(-110%);
+	opacity: 0;
 	box-shadow: none !important;
+	pointer-events: none;
+	transition: transform 180ms cubic-bezier(0.55, 0, 1, 0.45),
+	            opacity 180ms ease,
+	            box-shadow 180ms ease;
+}
+
+/* Keep the grid wrapper visible even when the grid marks it as not-visible,
+   so the sidebar DOM stays in the document for fixed positioning. */
+.split-view-view:has(> .part.sidebar) {
+	overflow: visible !important;
+}
+.split-view-view:has(> .part.sidebar):not(.visible) {
+	display: block !important;
 }
 
 /* ============================================================================
@@ -1010,29 +1045,14 @@ body {
 }
 
 /* ============================================================================
- *  SIDEBAR SLIDE TRANSITION — smooth reveal/hide animation.
- *  When sidebar toggles, it slides in/out with a subtle eased motion
- *  instead of an instant snap. Premium, calm, keyboard-driven.
+ *  SIDEBAR OVERLAY TRANSITIONS — cinematic dimming + no editor reflow.
+ *  The sidebar is now a fixed overlay (see SIDEBAR OVERLAY section above).
+ *  The editor no longer needs a width transition since it never resizes.
  * ========================================================================== */
-
-.monaco-workbench .part.sidebar {
-	transition: width 180ms cubic-bezier(0.22, 1, 0.36, 1),
-	            opacity 180ms ease,
-	            box-shadow 180ms ease;
-}
-/* When sidebar is hidden, the class is added. Fade out. */
-.monaco-workbench.sidebar-hidden .part.sidebar {
-	opacity: 0;
-}
-
-/* The editor area also transitions smoothly when sidebar appears/disappears. */
-.monaco-workbench .part.editor {
-	transition: width 180ms cubic-bezier(0.22, 1, 0.36, 1) !important;
-}
 
 /* Editor dim: subtle darkening when sidebar drawer is open (cinematic focus). */
 .monaco-workbench:not(.sidebar-hidden) .part.editor > .content {
-	filter: brightness(0.92);
+	filter: brightness(0.90);
 	transition: filter 250ms ease;
 }
 .monaco-workbench.sidebar-hidden .part.editor > .content {
