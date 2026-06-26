@@ -11,6 +11,18 @@
  *  Palette: cool near-black ground #05070C, blue-tinted hairlines, one cyan signal accent.
  *--------------------------------------------------------------------------------------------*/
 
+/* ---- Shil typography (self-hosted): Martian Mono = the chrome/instrument voice,
+   JetBrains Mono = code, Hanken Grotesk = the reader prose (Mona Sans substitute). ---- */
+@font-face { font-family: 'Martian Mono'; font-weight: 400; font-display: swap; src: url('./fonts/martian-mono-400.woff2') format('woff2'); }
+@font-face { font-family: 'Martian Mono'; font-weight: 500; font-display: swap; src: url('./fonts/martian-mono-500.woff2') format('woff2'); }
+@font-face { font-family: 'Martian Mono'; font-weight: 600; font-display: swap; src: url('./fonts/martian-mono-600.woff2') format('woff2'); }
+@font-face { font-family: 'JetBrains Mono'; font-weight: 400; font-display: swap; src: url('./fonts/jetbrains-mono-400.woff2') format('woff2'); }
+@font-face { font-family: 'JetBrains Mono'; font-weight: 500; font-display: swap; src: url('./fonts/jetbrains-mono-500.woff2') format('woff2'); }
+@font-face { font-family: 'JetBrains Mono'; font-weight: 700; font-display: swap; src: url('./fonts/jetbrains-mono-700.woff2') format('woff2'); }
+@font-face { font-family: 'Hanken Grotesk'; font-weight: 400; font-display: swap; src: url('./fonts/hanken-grotesk-400.woff2') format('woff2'); }
+@font-face { font-family: 'Hanken Grotesk'; font-weight: 500; font-display: swap; src: url('./fonts/hanken-grotesk-500.woff2') format('woff2'); }
+@font-face { font-family: 'Hanken Grotesk'; font-weight: 600; font-display: swap; src: url('./fonts/hanken-grotesk-600.woff2') format('woff2'); }
+
 /* The window is created with the native macOS vibrancy material. Keep html/body fully
    transparent so the material shows, and give the workbench a translucent dark ground so
    the chrome reads as frosted glass and the window is never fully see-through. */
@@ -18,8 +30,19 @@ html,
 body {
 	background-color: transparent !important;
 }
+
+/* The workbench chrome speaks in the Martian Mono instrument voice. */
 .monaco-workbench {
 	background-color: rgba(5, 7, 12, 0.40) !important;
+	font-family: 'Martian Mono', ui-monospace, 'SF Mono', Menlo, monospace !important;
+	letter-spacing: -0.02em;
+}
+
+/* Section headers (EXPLORER, OUTLINE, …) as wide-tracked instrument labels. */
+.monaco-workbench .pane-header .title,
+.monaco-workbench .composite-bar .action-label,
+.monaco-workbench .sidebar .title-label > h2 {
+	letter-spacing: 0.05em !important;
 }
 
 /* ---- CHROME = translucent dark glass (reveals the vibrancy material) ---- */
