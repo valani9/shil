@@ -40,7 +40,7 @@ const enum WindowSettingNames {
 
 export const defaultWindowTitle = (() => {
 	if (isMacintosh && isNative) {
-		return '${activeEditorShort}${separator}${rootName}${separator}${profileName}'; // macOS has native dirty indicator
+		return '${activeEditorShort}${separator}${rootName}'; // macOS has native dirty indicator
 	}
 
 	const base = '${dirty}${activeEditorShort}${separator}${rootName}${separator}${profileName}${separator}${appName}';

@@ -107,14 +107,20 @@ body {
 /* Base density: smaller + tighter than VS Code's defaults. */
 .monaco-workbench { font-size: 12px; }
 
-/* Title bar: slim + quiet. */
-.monaco-workbench .part.titlebar { height: 34px !important; }
+/* Title bar: ultra-slim + quiet. No command center, no navigation controls —
+   just the file name + project as a centered instrument label. */
+.monaco-workbench .part.titlebar { height: 30px !important; }
 .monaco-workbench .part.titlebar .window-title {
 	font-family: 'Martian Mono', monospace; font-size: 10px; letter-spacing: 0.08em; color: #7E8699;
 }
+/* Title bar action buttons: smaller, faded until hover. */
+.monaco-workbench .part.titlebar .titlebar-right .action-label {
+	opacity: 0.4; transition: opacity 120ms ease;
+}
+.monaco-workbench .part.titlebar .titlebar-right .action-label:hover { opacity: 0.9; }
 
-/* Activity bar: ultra-slim icon rail, compact mode.
-   With compact=true default, icons shrink + bar narrows. We push it further. */
+/* Activity bar: hidden by default. When re-enabled via View menu, it appears as
+   an ultra-slim icon rail in compact mode. */
 .monaco-workbench .part.activitybar { width: 40px !important; }
 .monaco-workbench .activitybar .monaco-action-bar .action-item .action-label {
 	opacity: 0.5; transition: opacity 120ms ease;
