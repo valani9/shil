@@ -2765,3 +2765,370 @@ body.shil-sidebar-resizing * {
 .monaco-workbench .part.statusbar .statusbar-item a.codicon:hover {
 	opacity: 0.85;
 }
+
+/* ============================================================================
+ *  SNIPPET / TAB STOP HIGHLIGHTS — when expanding snippets (Tab key),
+ *  the placeholder positions and tab-stop targets get lime-tinted highlights
+ *  instead of the default blue/gray.
+ * ========================================================================== */
+
+/* Active snippet tab stop — lime tint background. */
+.monaco-workbench .monaco-editor .snippet-placeholder {
+	background-color: rgba(194, 242, 77, 0.12) !important;
+	border: 1px solid rgba(194, 242, 77, 0.25) !important;
+	border-radius: 2px;
+}
+/* Final snippet tab stop — dimmer lime. */
+.monaco-workbench .monaco-editor .finish-snippet-placeholder {
+	background-color: rgba(194, 242, 77, 0.06) !important;
+	border: 1px solid rgba(194, 242, 77, 0.15) !important;
+	border-radius: 2px;
+}
+
+/* ============================================================================
+ *  DEBUG INLINE VALUES — the inline value decorations that appear during
+ *  debugging sessions (variable values shown beside lines). Dimmed, glass feel.
+ * ========================================================================== */
+
+/* Inline value container: subtle pill shape with glass background. */
+.monaco-workbench .monaco-editor .view-overlays .inline-debug-decoration {
+	font-family: 'JetBrains Mono', monospace !important;
+	font-size: 11px !important;
+	opacity: 0.72;
+	border-radius: 3px;
+	padding: 0 4px;
+}
+/* Changed values: warm amber highlight for updated-during-step values. */
+.monaco-workbench .monaco-editor .view-overlays .inline-debug-decoration-changed {
+	opacity: 0.88;
+}
+
+/* ============================================================================
+ *  SOURCE CONTROL GUTTER DECORATIONS — modified/added/deleted line marks
+ *  in the editor gutter. Dimmer, thinner, consistent with the calm aesthetic.
+ * ========================================================================== */
+
+/* All gutter decorations: thinner (2px instead of 3px), subtler transitions. */
+.monaco-workbench .monaco-editor .margin-view-overlays .dirty-diff-modified {
+	border-left-width: 2px !important;
+	opacity: 0.65;
+	transition: opacity 150ms ease;
+}
+.monaco-workbench .monaco-editor .margin-view-overlays .dirty-diff-added {
+	border-left-width: 2px !important;
+	opacity: 0.65;
+	transition: opacity 150ms ease;
+}
+.monaco-workbench .monaco-editor .margin-view-overlays .dirty-diff-deleted::after {
+	opacity: 0.55;
+	transition: opacity 150ms ease;
+}
+/* Hover state: brighten gutter marks for interactive feel. */
+.monaco-workbench .monaco-editor .margin-view-overlays .dirty-diff-modified:hover,
+.monaco-workbench .monaco-editor .margin-view-overlays .dirty-diff-added:hover {
+	opacity: 1.0;
+}
+.monaco-workbench .monaco-editor .margin-view-overlays .dirty-diff-deleted:hover::after {
+	opacity: 0.85;
+}
+
+/* ============================================================================
+ *  TIMELINE VIEW — the timeline panel in the sidebar (git history, file saves).
+ *  Consistent Shil typography and ghost pattern.
+ * ========================================================================== */
+
+/* Timeline item rows: Hanken Grotesk labels, dimmed timestamps. */
+.monaco-workbench .timeline .timeline-list-container .monaco-list-row {
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
+	font-size: 12px;
+}
+/* Timeline timestamp/description text: instrument voice, dimmed. */
+.monaco-workbench .timeline .timeline-list-container .monaco-list-row .description {
+	font-family: 'Martian Mono', monospace;
+	font-size: 9px;
+	letter-spacing: 0.03em;
+	opacity: 0.50;
+}
+/* Timeline header title: instrument voice, consistent with other pane headers. */
+.monaco-workbench .timeline .timeline-view-header {
+	font-family: 'Martian Mono', monospace;
+	font-size: 10px;
+	text-transform: uppercase;
+	letter-spacing: 0.05em;
+}
+/* Timeline icons: dimmed at rest, brighten on hover. */
+.monaco-workbench .timeline .timeline-list-container .monaco-list-row .codicon {
+	opacity: 0.50;
+	transition: opacity 150ms ease;
+}
+.monaco-workbench .timeline .timeline-list-container .monaco-list-row:hover .codicon {
+	opacity: 0.85;
+}
+
+/* ============================================================================
+ *  COMMENTS / REVIEW PANEL — inline review comments (GitHub PR reviews,
+ *  comment threads from extensions). Glass container treatment.
+ * ========================================================================== */
+
+/* Comment thread widget: glass container. */
+.monaco-workbench .monaco-editor .review-widget {
+	border-radius: 8px !important;
+	box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), inset 0 0.5px 0 rgba(255, 255, 255, 0.06) !important;
+	overflow: hidden;
+}
+/* Comment body text: readable prose. */
+.monaco-workbench .monaco-editor .review-widget .body {
+	font-family: 'Hanken Grotesk', system-ui, sans-serif !important;
+	font-size: 12.5px !important;
+	line-height: 1.5 !important;
+}
+/* Comment author: Martian Mono instrument voice. */
+.monaco-workbench .monaco-editor .review-widget .comment-title .author {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 10px !important;
+	letter-spacing: 0.03em;
+}
+/* Comment timestamp: dimmed instrument voice. */
+.monaco-workbench .monaco-editor .review-widget .comment-title .timestamp {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 9px !important;
+	letter-spacing: 0.03em;
+	opacity: 0.50;
+}
+/* Comment reply input: glass-styled textarea. */
+.monaco-workbench .monaco-editor .review-widget .comment-form .monaco-editor {
+	border-radius: 6px !important;
+}
+/* Comment action buttons: rounded, ghost pattern. */
+.monaco-workbench .monaco-editor .review-widget .review-actions .monaco-button {
+	border-radius: 6px !important;
+}
+
+/* ============================================================================
+ *  EDITOR OVERVIEW RULER — the thin vertical strip at the far right of the
+ *  scrollbar showing error/warning/info markers. Dimmer for calm reading.
+ * ========================================================================== */
+
+/* Overview ruler: slightly narrower, dimmer marks. */
+.monaco-workbench .monaco-editor .editor-scrollable > .decorationsOverviewRuler {
+	opacity: 0.65;
+	width: 10px !important;
+}
+
+/* ============================================================================
+ *  PANEL MAXIMIZE / RESTORE ANIMATION — smooth transition when panel toggles
+ *  between normal and maximized states.
+ * ========================================================================== */
+
+/* Panel size transition: smooth height/width change on maximize/restore. */
+.monaco-workbench .part.panel {
+	transition: none;
+}
+/* When panel is being resized via maximize, add a brief transition. */
+.monaco-workbench .part.panel.maximized {
+	border-radius: 0 !important;
+}
+
+/* ============================================================================
+ *  EDITOR LINKED EDITING — when renaming a symbol, all occurrences that
+ *  will be renamed simultaneously get a coordinated highlight.
+ * ========================================================================== */
+
+/* Linked editing ranges: lime tint consistent with selection language. */
+.monaco-workbench .monaco-editor .linked-editing-decoration {
+	background-color: rgba(194, 242, 77, 0.10) !important;
+	border: 1px solid rgba(194, 242, 77, 0.30) !important;
+	border-radius: 2px;
+}
+
+/* ============================================================================
+ *  EDITOR ZONE WIDGET — generic zone widget styling (peek, debug exception,
+ *  test results). Glass container + rounded corners.
+ * ========================================================================== */
+
+/* Zone widget container: glass treatment for all zone-style widgets. */
+.monaco-workbench .monaco-editor .zone-widget {
+	border-radius: 8px !important;
+	overflow: hidden;
+}
+/* Zone widget sash (resize handle at top/bottom): lime hover. */
+.monaco-workbench .monaco-editor .zone-widget .zone-widget-container .sash {
+	opacity: 0;
+	transition: opacity 150ms ease;
+}
+.monaco-workbench .monaco-editor .zone-widget:hover .zone-widget-container .sash {
+	opacity: 0.5;
+}
+
+/* ============================================================================
+ *  DEBUG EXCEPTION WIDGET — the inline exception info that appears when
+ *  debugging hits an error. Glass container with error accent.
+ * ========================================================================== */
+
+/* Exception widget: glass container with subtle red left accent. */
+.monaco-workbench .monaco-editor .zone-widget .exception-widget {
+	border-radius: 8px !important;
+	box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), inset 0 0.5px 0 rgba(255, 255, 255, 0.06) !important;
+}
+/* Exception title: Hanken Grotesk, readable. */
+.monaco-workbench .monaco-editor .zone-widget .exception-widget .title {
+	font-family: 'Hanken Grotesk', system-ui, sans-serif !important;
+	font-size: 13px !important;
+}
+/* Exception details: JetBrains Mono for stack traces. */
+.monaco-workbench .monaco-editor .zone-widget .exception-widget .details {
+	font-family: 'JetBrains Mono', monospace !important;
+	font-size: 11px !important;
+	opacity: 0.78;
+}
+
+/* ============================================================================
+ *  DEBUG BREAKPOINT WIDGET — the breakpoint condition/logpoint editor inline.
+ *  Glass container treatment.
+ * ========================================================================== */
+
+/* Breakpoint widget: glass container. */
+.monaco-workbench .monaco-editor .zone-widget .breakpoint-widget {
+	border-radius: 8px !important;
+	box-shadow: 0 4px 24px rgba(0, 0, 0, 0.45), inset 0 0.5px 0 rgba(255, 255, 255, 0.06) !important;
+}
+/* Breakpoint condition input: JetBrains Mono with lime focus. */
+.monaco-workbench .monaco-editor .zone-widget .breakpoint-widget .inputContainer .monaco-inputbox {
+	border-radius: 6px !important;
+	font-family: 'JetBrains Mono', monospace !important;
+}
+/* Breakpoint type selector: instrument voice labels. */
+.monaco-workbench .monaco-editor .zone-widget .breakpoint-widget .inputContainer .select-container select {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 10px !important;
+	border-radius: 4px !important;
+}
+
+/* ============================================================================
+ *  EDITOR GLYPH MARGIN — breakpoint dots, fold indicators, and other gutter
+ *  decorations. Dimmed at rest, interactive on hover.
+ * ========================================================================== */
+
+/* Glyph margin icons: slightly dimmed at rest. */
+.monaco-workbench .monaco-editor .margin-view-overlays .cgmr {
+	opacity: 0.70;
+	transition: opacity 150ms ease;
+}
+.monaco-workbench .monaco-editor .margin-view-overlays .cgmr:hover {
+	opacity: 1.0;
+}
+
+/* ============================================================================
+ *  ACCESSIBILITY HELP DIALOG — the accessibility help overlay (Alt+F1).
+ *  Glass container, readable prose.
+ * ========================================================================== */
+
+/* Accessibility help: glass container treatment. */
+.monaco-workbench .monaco-editor .accessibilityHelpWidget {
+	border-radius: 10px !important;
+	box-shadow: 0 8px 40px rgba(0, 0, 0, 0.5), inset 0 0.5px 0 rgba(255, 255, 255, 0.06) !important;
+}
+/* Accessibility help content: readable prose. */
+.monaco-workbench .monaco-editor .accessibilityHelpWidget .accessibility-help-content {
+	font-family: 'Hanken Grotesk', system-ui, sans-serif !important;
+	font-size: 13px !important;
+	line-height: 1.6 !important;
+}
+
+/* ============================================================================
+ *  WORKBENCH DROPDOWN MENUS — dropdown selectors throughout the workbench
+ *  (output channel, terminal profile, etc). Consistent glass treatment.
+ * ========================================================================== */
+
+/* Dropdown menu container: glass + rounded. */
+.monaco-workbench .monaco-dropdown-with-primary .monaco-dropdown .monaco-dropdown-button {
+	border-radius: 4px !important;
+}
+
+/* ============================================================================
+ *  EDITOR CODELENS — inline code lens decorations (references, test status).
+ *  Dimmed instrument voice, interactive on hover.
+ * ========================================================================== */
+
+/* CodeLens items: Martian Mono instrument voice, dimmed. */
+.monaco-workbench .monaco-editor .codelens-decoration > a,
+.monaco-workbench .monaco-editor .codelens-decoration > span {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 10px !important;
+	letter-spacing: 0.03em;
+	opacity: 0.45;
+	transition: opacity 150ms ease;
+}
+.monaco-workbench .monaco-editor .codelens-decoration > a:hover {
+	opacity: 0.85;
+	color: #C2F24D !important;
+}
+
+/* ============================================================================
+ *  EDITOR LIGHTBULB — the code action indicator in the gutter.
+ *  Dimmed at rest, lime glow on hover.
+ * ========================================================================== */
+
+/* Lightbulb icon: dimmed at rest. */
+.monaco-workbench .monaco-editor .lightbulb-glyph {
+	opacity: 0.55;
+	transition: opacity 150ms ease;
+}
+.monaco-workbench .monaco-editor .lightbulb-glyph:hover {
+	opacity: 1.0;
+}
+
+/* ============================================================================
+ *  OUTLINE VIEW — the document outline in the sidebar.
+ *  Consistent with tree view styling, with symbol kind distinction.
+ * ========================================================================== */
+
+/* Outline symbol labels: Hanken Grotesk. */
+.monaco-workbench .outline-pane .monaco-list .monaco-list-row .outline-element-label {
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
+	font-size: 12px;
+}
+/* Outline symbol detail/type: JetBrains Mono, dimmed. */
+.monaco-workbench .outline-pane .monaco-list .monaco-list-row .outline-element-detail {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 10px;
+	opacity: 0.50;
+}
+
+/* ============================================================================
+ *  EDITOR INLAY HINTS — type annotations and parameter names shown inline.
+ *  Dimmed, unobtrusive, readable.
+ * ========================================================================== */
+
+/* Inlay hints: JetBrains Mono, dimmed, subtle pill shape. */
+.monaco-workbench .monaco-editor .inlayHints {
+	font-family: 'JetBrains Mono', monospace !important;
+	font-size: 10px !important;
+	opacity: 0.40;
+	transition: opacity 200ms ease;
+}
+/* Inlay hints brighter when line is hovered. */
+.monaco-workbench .monaco-editor .view-line:hover .inlayHints {
+	opacity: 0.65;
+}
+
+/* ============================================================================
+ *  EDITOR MINIMAP SLIDER — already has ghost behavior, enhance with
+ *  smoother transitions and lime tint on active.
+ * ========================================================================== */
+
+/* Minimap slider: smoother transition. */
+.monaco-workbench .monaco-editor .minimap-slider {
+	transition: opacity 150ms ease;
+}
+
+/* ============================================================================
+ *  WORKBENCH ACTION BAR — action buttons in toolbar areas (editor title,
+ *  view title, panel title). Consistent ghost pattern.
+ * ========================================================================== */
+
+/* Toolbar separator bars: dimmer. */
+.monaco-workbench .monaco-toolbar .monaco-action-bar .action-item.separator {
+	opacity: 0.20 !important;
+	border-left-color: rgba(140, 147, 168, 0.20) !important;
+}

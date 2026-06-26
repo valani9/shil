@@ -246,7 +246,61 @@
 
 		"editorError.foreground": "#FF3B57",
 		"editorWarning.foreground": "#F0B97A",
-		"editorInfo.foreground": "#C2F24D"
+		"editorInfo.foreground": "#C2F24D",
+
+		"editor.snippetTabstopHighlightBackground": "#C2F24D1F",
+		"editor.snippetTabstopHighlightBorder": "#C2F24D40",
+		"editor.snippetFinalTabstopHighlightBackground": "#C2F24D0F",
+		"editor.snippetFinalTabstopHighlightBorder": "#C2F24D26",
+
+		"editorInlayHint.foreground": "#8A93A8",
+		"editorInlayHint.background": "#8C93A80F",
+		"editorInlayHint.typeForeground": "#7FD0C0",
+		"editorInlayHint.typeBackground": "#7FD0C00F",
+		"editorInlayHint.parameterForeground": "#C2D98A",
+		"editorInlayHint.parameterBackground": "#C2D98A0F",
+
+		"editorCodeLens.foreground": "#585C6B",
+
+		"editor.foldBackground": "#C2F24D0A",
+
+		"editorGutter.addedBackground": "#C2D98A",
+		"editorGutter.modifiedBackground": "#F0B97A",
+		"editorGutter.deletedBackground": "#FF3B57",
+
+		"debugExceptionWidget.background": "#0A0E16",
+		"debugExceptionWidget.border": "#FF3B5744",
+		"debugToolBar.background": "#080B12",
+		"debugToolBar.border": "#8C93A81F",
+		"debugIcon.breakpointForeground": "#FF3B57",
+		"debugIcon.startForeground": "#C2F24D",
+		"debugIcon.pauseForeground": "#F0B97A",
+		"debugIcon.stopForeground": "#FF3B57",
+		"debugIcon.stepOverForeground": "#C2F24D",
+		"debugIcon.stepIntoForeground": "#C2F24D",
+		"debugIcon.stepOutForeground": "#C2F24D",
+		"debugIcon.continueForeground": "#C2F24D",
+		"debugIcon.disconnectForeground": "#FF3B57",
+		"debugTokenExpression.name": "#C2D98A",
+		"debugTokenExpression.value": "#D8C68C",
+		"debugTokenExpression.string": "#D8C68C",
+		"debugTokenExpression.number": "#F0B97A",
+		"debugTokenExpression.boolean": "#F0B97A",
+		"debugTokenExpression.error": "#FF3B57",
+		"debugView.exceptionLabelBackground": "#FF3B5733",
+		"debugView.exceptionLabelForeground": "#FF3B57",
+		"debugView.stateLabelBackground": "#C2F24D24",
+		"debugView.stateLabelForeground": "#C2F24D",
+		"debugView.valueChangedHighlight": "#C2F24D44",
+
+		"editorGhostText.foreground": "#C2F24D8C",
+		"editorGhostText.border": "#00000000",
+
+		"commentsView.resolvedIcon": "#585C6B",
+		"commentsView.unresolvedIcon": "#C2F24D",
+
+		"editorUnnecessaryCode.opacity": "#00000088",
+		"editorUnnecessaryCode.border": "#00000000"
 	},
 	"tokenColors": [
 		{
