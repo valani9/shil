@@ -194,6 +194,14 @@ export function defaultBrowserWindowOptions(accessor: ServicesAccessor, windowSt
 		if (windowSettings?.clickThroughInactive === false) {
 			options.acceptFirstMouse = false;
 		}
+
+		// Shil: native macOS glass material behind the translucent navigation chrome.
+		// The editor, reader prose and terminal paint OPAQUE on top (see the workbench
+		// glass CSS), so only the chrome reveals the vibrancy — the premium, perf-safe
+		// reading of "liquid glass" (the floating chrome layer, never the content layer).
+		options.vibrancy = 'under-window';
+		options.visualEffectState = 'active';
+		options.backgroundColor = '#00000000'; // let the native vibrancy material show; do NOT cover it with an opaque color
 	}
 
 	if (overrides?.disableFullscreen) {

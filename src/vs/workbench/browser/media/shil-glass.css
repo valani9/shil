@@ -1,0 +1,77 @@
+/*---------------------------------------------------------------------------------------------
+ *  Shil — liquid-glass workbench chrome.
+ *
+ *  The navigation chrome (title bar, activity bar, side bar, panel, status bar, floating
+ *  widgets) renders as translucent dark glass over the native macOS vibrancy material that the
+ *  window is created with. The content surfaces (the editor, the terminal, and the plain-English
+ *  reader) stay FULLY OPAQUE — glass on the floating chrome layer only, never the content layer.
+ *  This is the perf-safe, legible reading of "liquid glass": a scrolling editor never pays a
+ *  per-frame backdrop re-blur, and text always sits on a solid ground.
+ *
+ *  Palette: cool near-black ground #05070C, blue-tinted hairlines, one cyan signal accent.
+ *--------------------------------------------------------------------------------------------*/
+
+/* The window is created with the native macOS vibrancy material. Keep html/body fully
+   transparent so the material shows, and give the workbench a translucent dark ground so
+   the chrome reads as frosted glass and the window is never fully see-through. */
+html,
+body {
+	background-color: transparent !important;
+}
+.monaco-workbench {
+	background-color: rgba(5, 7, 12, 0.40) !important;
+}
+
+/* ---- CHROME = translucent dark glass (reveals the vibrancy material) ---- */
+.monaco-workbench .part.titlebar,
+.monaco-workbench .part.activitybar,
+.monaco-workbench .part.sidebar,
+.monaco-workbench .part.auxiliarybar,
+.monaco-workbench .part.panel,
+.monaco-workbench .part.statusbar {
+	background-color: rgba(6, 9, 16, 0.50) !important;
+	-webkit-backdrop-filter: saturate(1.3);
+	backdrop-filter: saturate(1.3);
+}
+
+/* Keep the chrome's themed surfaces translucent too, so the glass reads cohesively. */
+.monaco-workbench .part.sidebar .composite.title,
+.monaco-workbench .part.panel .composite.title,
+.monaco-workbench .part.activitybar .activitybar-container {
+	background-color: transparent !important;
+}
+
+/* Blue-tinted hairline seams give the glass real edges + depth. */
+.monaco-workbench .part.activitybar { box-shadow: inset -1px 0 0 0 rgba(120, 150, 255, 0.10); }
+.monaco-workbench .part.sidebar { box-shadow: inset -1px 0 0 0 rgba(120, 150, 255, 0.08); }
+.monaco-workbench .part.auxiliarybar { box-shadow: inset 1px 0 0 0 rgba(120, 150, 255, 0.08); }
+.monaco-workbench .part.statusbar { box-shadow: inset 0 1px 0 0 rgba(120, 150, 255, 0.10); }
+.monaco-workbench .part.titlebar { box-shadow: inset 0 -1px 0 0 rgba(120, 150, 255, 0.08); }
+
+/* Floating widgets read as frosted glass over the (opaque) content behind them. */
+.monaco-workbench .quick-input-widget,
+.monaco-workbench .monaco-menu .monaco-action-bar.vertical,
+.monaco-workbench .editor-widget.suggest-widget,
+.monaco-workbench .notifications-toasts .notification-toast {
+	background-color: rgba(8, 11, 20, 0.72) !important;
+	-webkit-backdrop-filter: blur(14px) saturate(1.3);
+	backdrop-filter: blur(14px) saturate(1.3);
+}
+
+/* ---- CONTENT = OPAQUE (never glass — perf + legibility) ---- */
+.monaco-workbench .part.editor,
+.monaco-workbench .part.editor > .content,
+.monaco-workbench .editor-group-container,
+.monaco-workbench .editor-group-container > .editor-container,
+.monaco-workbench .monaco-editor .monaco-editor-background,
+.monaco-workbench .monaco-editor .margin,
+.monaco-workbench .terminal-outer-container,
+.monaco-workbench .integrated-terminal .xterm-screen {
+	background-color: #05070c !important;
+}
+
+/* The empty editor area / watermark ground also stays solid. */
+.monaco-workbench .part.editor .editor-group-watermark,
+.monaco-workbench .part.editor .editor-group-container.empty {
+	background-color: #05070c !important;
+}
