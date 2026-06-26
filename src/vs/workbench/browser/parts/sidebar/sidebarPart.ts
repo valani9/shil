@@ -34,7 +34,7 @@ import { localize2 } from '../../../../nls.js';
 import { IHoverService } from '../../../../platform/hover/browser/hover.js';
 import { VisibleViewContainersTracker } from '../visibleViewContainersTracker.js';
 import { Extensions } from '../../panecomposite.js';
-import { $, addDisposableListener, EventType, getWindow } from '../../../../base/browser/dom.js';
+import { $, addDisposableListener, EventType, getWindow, isAncestorUsingFlowTo } from '../../../../base/browser/dom.js';
 
 export class SidebarPart extends AbstractPaneCompositePart {
 
@@ -200,6 +200,19 @@ export class SidebarPart extends AbstractPaneCompositePart {
 				this.layoutService.setPartHidden(true, Parts.SIDEBAR_PART);
 			}));
 		}
+
+		// Shil: Escape key dismisses sidebar when it has focus (keyboard complement to scrim click).
+		this._register(addDisposableListener(parent, EventType.KEY_DOWN, (e: KeyboardEvent) => {
+			if (e.key === 'Escape' && this.layoutService.isVisible(Parts.SIDEBAR_PART)) {
+				// Only dismiss if focus is inside the sidebar or activity bar
+				const active = parent.ownerDocument.activeElement;
+				if (active && (isAncestorUsingFlowTo(active, parent) || isAncestorUsingFlowTo(active, parent.closest('.monaco-workbench')?.querySelector('.part.activitybar') ?? parent))) {
+					e.preventDefault();
+					e.stopPropagation();
+					this.layoutService.setPartHidden(true, Parts.SIDEBAR_PART);
+				}
+			}
+		}));
 
 		// Restore persisted width
 		const stored = this.storageService.getNumber(

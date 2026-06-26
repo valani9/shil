@@ -678,6 +678,46 @@ body.shil-sidebar-resizing * {
 }
 
 /* ============================================================================
+ *  TAB DIRTY INDICATOR — lime dot for unsaved files. VS Code uses a gray
+ *  circle-filled icon on the close button; we color it lime so modified
+ *  files have a clear, branded signal. The dot is always visible (unlike
+ *  the close button which is ghosted until hover).
+ * ========================================================================== */
+
+/* Dirty dot: lime color, always visible even when tab-close is ghosted. */
+.monaco-workbench .tab.dirty > .tab-actions .action-label:not(:hover)::before {
+	color: #C2F24D !important;
+	opacity: 0.7;
+}
+/* Dirty tab: show the close/dot button area even at rest (override ghost). */
+.monaco-workbench .tab.dirty .tab-close {
+	opacity: 0.6 !important;
+}
+/* On hover the close "x" appears normally; the dot is only shown when not hovered. */
+.monaco-workbench .tab.dirty:hover .tab-close,
+.monaco-workbench .tab.dirty.active .tab-close {
+	opacity: 0.7 !important;
+}
+
+/* ============================================================================
+ *  EDITOR GROUP TITLE BAR — compact, quieter, less VS Code.
+ *  Tighter height, dimmer actions, Shil typography.
+ * ========================================================================== */
+
+/* Editor group title area: tight height, no clutter. */
+.monaco-workbench .part.editor > .content .editor-group-container > .title {
+	height: 30px !important;
+}
+/* No-tab title bar: even slimmer, file path in instrument voice. */
+.monaco-workbench .part.editor > .content .editor-group-container > .title.title-border-bottom {
+	border-bottom-color: rgba(150, 158, 174, 0.06) !important;
+}
+/* Editor group separator sash: dimmer. */
+.monaco-workbench .editor-group-container .editor-group-container-border {
+	opacity: 0.4;
+}
+
+/* ============================================================================
  *  EDITOR CURSOR — lime blinking cursor for brand presence in the content area.
  * ========================================================================== */
 
