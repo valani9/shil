@@ -1019,8 +1019,28 @@ function highlightSyntax(line: string): string {
 						// Continue to parse `from 'module'` via the main loop
 						continue;
 					}
-					// Default import or * as: import foo from 'module', import * as foo from 'module'
-					// Let the main loop handle these naturally
+					// Namespace import: import * as name from 'module'
+					const nsMatch = afterImport.match(/^(\s*)\*(\s+)(as)(\s+)([a-zA-Z_$][\w$]*)/);
+					if (nsMatch) {
+						result.push(nsMatch[1]);
+						result.push('<span class="shil-hl-punct">*</span>');
+						result.push(nsMatch[2]);
+						result.push(`<span class="shil-hl-keyword">${esc(nsMatch[3])}</span>`);
+						result.push(nsMatch[4]);
+						result.push(`<span class="shil-hl-destr">${esc(nsMatch[5])}</span>`);
+						pos += word.length + nsMatch[0].length;
+						// Continue to parse `from 'module'` via the main loop
+						continue;
+					}
+					// Default import: import foo from 'module'
+					const defImpMatch = afterImport.match(/^(\s+)([a-zA-Z_$][\w$]*)/);
+					if (defImpMatch && defImpMatch[2] !== 'type') {
+						result.push(defImpMatch[1]);
+						result.push(`<span class="shil-hl-destr">${esc(defImpMatch[2])}</span>`);
+						pos += word.length + defImpMatch[0].length;
+						// After default, main loop handles comma or `from`
+						continue;
+					}
 				}
 				// 6a. Destructuring: const/let/var followed by { or [
 				if ((word === 'const' || word === 'let' || word === 'var')) {
@@ -1295,6 +1315,13 @@ function highlightSyntax(line: string): string {
 			}
 		}
 
+		// 8f. Spread/rest operator ... (outside destructuring)
+		if (line[pos] === '.' && line[pos + 1] === '.' && line[pos + 2] === '.') {
+			result.push('<span class="shil-hl-spread">...</span>');
+			pos += 3;
+			continue;
+		}
+
 		// 9. Punctuation
 		if (/[{}()[\];:.,<>!=+\-*/%&|^~?]/.test(line[pos])) {
 			result.push(`<span class="shil-hl-punct">${esc(line[pos])}</span>`);
@@ -1339,7 +1366,15 @@ const TS_PRIMITIVE_TYPES = new Set([
 	'object', 'bigint', 'symbol', 'undefined', 'null',
 ]);
 
+/** Operator-like keywords that get emphasis styling to distinguish from regular keywords. */
+const OPERATOR_KEYWORDS = new Set([
+	'typeof', 'keyof', 'instanceof', 'in', 'of', 'is', 'satisfies',
+]);
+
 function tokenClass(word: string): string | undefined {
+	if (OPERATOR_KEYWORDS.has(word)) {
+		return 'shil-hl-opkw';
+	}
 	if (KEYWORDS.has(word)) {
 		return 'shil-hl-keyword';
 	}
