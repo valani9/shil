@@ -47,6 +47,10 @@
 			data.layoutInfo = undefined;
 		}
 
+		// Shil: always use our branded dark palette as the default
+		const SHIL_BG = '#05070C';
+		const SHIL_FG = '#8A8F98';
+
 		// minimal color configuration (works with or without persisted data)
 		let baseTheme;
 		let shellBackground;
@@ -65,16 +69,10 @@
 				shellBackground = '#FFFFFF';
 				shellForeground = '#000000';
 			}
-		} else if (configuration.autoDetectColorScheme) {
-			if (configuration.colorScheme.dark) {
-				baseTheme = 'vs-dark';
-				shellBackground = '#1E1E1E';
-				shellForeground = '#CCCCCC';
-			} else {
-				baseTheme = 'vs';
-				shellBackground = '#FFFFFF';
-				shellForeground = '#000000';
-			}
+		} else {
+			baseTheme = 'vs-dark';
+			shellBackground = SHIL_BG;
+			shellForeground = SHIL_FG;
 		}
 
 		const style = document.createElement('style');
@@ -86,6 +84,15 @@
 		if (typeof data?.zoomLevel === 'number' && typeof preloadGlobals?.webFrame?.setZoomLevel === 'function') {
 			preloadGlobals.webFrame.setZoomLevel(data.zoomLevel);
 		}
+
+		// Shil: inject branded splash animation styles
+		const splashStyle = document.createElement('style');
+		splashStyle.textContent = `
+			@keyframes shil-pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+			@keyframes shil-bar { 0% { transform: scaleX(0); transform-origin: left; } 50% { transform: scaleX(1); transform-origin: left; } 50.01% { transform-origin: right; } 100% { transform: scaleX(0); transform-origin: right; } }
+			@keyframes shil-fade-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+		`;
+		window.document.head.appendChild(splashStyle);
 
 		// restore parts if possible (we might not always store layout info)
 		if (data?.layoutInfo) {
@@ -267,8 +274,46 @@
 				}
 			}
 
+			appendShilBrandOverlay(splash);
+			window.document.body.appendChild(splash);
+		} else {
+			// No persisted layout — show a clean branded splash
+			const splash = document.createElement('div');
+			splash.id = 'monaco-parts-splash';
+			splash.className = baseTheme ?? 'vs-dark';
+			splash.style.position = 'absolute';
+			splash.style.inset = '0';
+			splash.style.backgroundColor = SHIL_BG;
+			appendShilBrandOverlay(splash);
 			window.document.body.appendChild(splash);
 		}
+	}
+
+	function appendShilBrandOverlay(splash: HTMLElement) {
+		const overlay = document.createElement('div');
+		overlay.style.cssText = 'position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:10;pointer-events:none;animation:shil-fade-in 0.3s ease-out both';
+
+		// Wordmark: "shil" in a clean monospace
+		const wordmark = document.createElement('div');
+		wordmark.style.cssText = 'font-family:ui-monospace,"SF Mono",Menlo,monospace;font-size:28px;font-weight:600;letter-spacing:0.12em;color:#C2F24D;text-transform:lowercase;animation:shil-pulse 2.4s ease-in-out infinite';
+		wordmark.textContent = 'shil';
+		overlay.appendChild(wordmark);
+
+		// Tagline
+		const tagline = document.createElement('div');
+		tagline.style.cssText = 'font-family:-apple-system,BlinkMacSystemFont,sans-serif;font-size:11px;font-weight:400;letter-spacing:0.04em;color:rgba(138,143,152,0.6);margin-top:10px';
+		tagline.textContent = 'reads your code';
+		overlay.appendChild(tagline);
+
+		// Loading bar: thin lime line
+		const barTrack = document.createElement('div');
+		barTrack.style.cssText = 'position:absolute;bottom:0;left:0;width:100%;height:2px;background:rgba(194,242,77,0.08)';
+		const barFill = document.createElement('div');
+		barFill.style.cssText = 'width:100%;height:100%;background:linear-gradient(90deg,transparent,#C2F24D,transparent);animation:shil-bar 1.8s ease-in-out infinite';
+		barTrack.appendChild(barFill);
+		overlay.appendChild(barTrack);
+
+		splash.appendChild(overlay);
 	}
 
 	//#endregion
