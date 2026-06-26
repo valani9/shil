@@ -2242,3 +2242,236 @@ body.shil-sidebar-resizing * {
 .monaco-workbench .monaco-list-type-filter .controls .filter-toggle.checked {
 	color: #C2F24D !important;
 }
+
+/* ============================================================================
+ *  WORKBENCH HOVER / TOOLTIP — glass treatment for IHoverService tooltips.
+ *  These are the workbench-level tooltips (toolbar hints, status bar info,
+ *  tree item details) — distinct from the editor hover widget styled above.
+ * ========================================================================== */
+
+/* Workbench hover widget: glass container, rounded, depth shadow. */
+.monaco-workbench .workbench-hover {
+	background-color: rgba(8, 11, 20, 0.88) !important;
+	-webkit-backdrop-filter: blur(16px) saturate(1.4);
+	backdrop-filter: blur(16px) saturate(1.4);
+	border-radius: 8px !important;
+	border: 1px solid rgba(150, 158, 174, 0.10) !important;
+	box-shadow: 0 6px 20px -4px rgba(0, 0, 0, 0.55),
+	            0 2px 6px -1px rgba(0, 0, 0, 0.3) !important;
+}
+/* Hover row content: Hanken Grotesk prose. */
+.monaco-workbench .workbench-hover .hover-row .hover-contents {
+	font-family: 'Hanken Grotesk', -apple-system, sans-serif !important;
+	font-size: 12px !important;
+	line-height: 1.45;
+}
+/* Code in hover: JetBrains Mono. */
+.monaco-workbench .workbench-hover .hover-row .hover-contents code,
+.monaco-workbench .workbench-hover .hover-row .hover-contents .code {
+	font-family: 'JetBrains Mono', monospace !important;
+	font-size: 11px !important;
+}
+/* Hover status bar: instrument voice. */
+.monaco-workbench .workbench-hover .hover-row.status-bar {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 9px !important;
+	letter-spacing: 0.03em;
+	opacity: 0.55;
+}
+/* Hover pointer arrow: match background. */
+.monaco-workbench .workbench-hover-pointer::after {
+	background-color: rgba(8, 11, 20, 0.88) !important;
+}
+
+/* ============================================================================
+ *  EXTENSIONS VIEWLET — the extension sidebar list and search.
+ * ========================================================================== */
+
+/* Extensions search input: glass, rounded. */
+.monaco-workbench .extensions-viewlet > .header .search-box > .monaco-inputbox {
+	background-color: rgba(8, 11, 20, 0.55) !important;
+	border-radius: 8px !important;
+	font-family: 'Hanken Grotesk', -apple-system, sans-serif !important;
+	font-size: 12.5px !important;
+}
+/* Extension list items: Hanken Grotesk labels. */
+.monaco-workbench .extensions-viewlet .extension-list-item .details .header-container .name {
+	font-family: 'Hanken Grotesk', -apple-system, sans-serif !important;
+	font-weight: 500;
+}
+.monaco-workbench .extensions-viewlet .extension-list-item .details .description {
+	font-family: 'Hanken Grotesk', -apple-system, sans-serif !important;
+	font-size: 11.5px !important;
+	opacity: 0.72;
+}
+/* Extension publisher/author: dim instrument voice. */
+.monaco-workbench .extensions-viewlet .extension-list-item .details .header-container .publisher {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 9px !important;
+	letter-spacing: 0.04em;
+	opacity: 0.50;
+}
+/* Extension install count / rating badges: Martian Mono. */
+.monaco-workbench .extensions-viewlet .extension-list-item .footer .install-count,
+.monaco-workbench .extensions-viewlet .extension-list-item .footer .ratings {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 9px !important;
+	opacity: 0.50;
+}
+/* Extension action buttons: rounded. */
+.monaco-workbench .extensions-viewlet .extension-list-item .footer .monaco-text-button {
+	border-radius: 5px !important;
+}
+
+/* ============================================================================
+ *  EXTENSION EDITOR — the extension detail page (full-tab view).
+ * ========================================================================== */
+
+/* Extension detail header: Hanken Grotesk typography, better spacing. */
+.monaco-workbench .extension-editor > .header > .details > .title .name {
+	font-family: 'Hanken Grotesk', -apple-system, sans-serif !important;
+	font-weight: 600;
+}
+.monaco-workbench .extension-editor > .header > .details > .subtitle .publisher {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 11px !important;
+	letter-spacing: 0.04em;
+	opacity: 0.65;
+}
+/* Extension description: readable prose font. */
+.monaco-workbench .extension-editor > .header > .details > .description {
+	font-family: 'Hanken Grotesk', -apple-system, sans-serif !important;
+	font-size: 13px !important;
+	line-height: 1.5;
+	opacity: 0.82;
+}
+/* Extension detail action buttons: rounded, lime focus. */
+.monaco-workbench .extension-editor > .header > .details .actions-status-container .monaco-text-button {
+	border-radius: 6px !important;
+}
+/* Extension detail body: Hanken Grotesk for readme text. */
+.monaco-workbench .extension-editor > .body .extension-editor-body {
+	font-family: 'Hanken Grotesk', -apple-system, sans-serif !important;
+	font-size: 13px !important;
+	line-height: 1.6;
+}
+/* Extension detail body code blocks: JetBrains Mono. */
+.monaco-workbench .extension-editor > .body .extension-editor-body code,
+.monaco-workbench .extension-editor > .body .extension-editor-body pre {
+	font-family: 'JetBrains Mono', monospace !important;
+	font-size: 12px !important;
+	border-radius: 4px;
+}
+/* Extension detail nav bar: instrument voice tabs. */
+.monaco-workbench .extension-editor > .body > .navbar .action-item .action-label {
+	font-family: 'Hanken Grotesk', -apple-system, sans-serif !important;
+	font-size: 12px !important;
+	opacity: 0.60;
+	transition: opacity 150ms ease;
+}
+.monaco-workbench .extension-editor > .body > .navbar .action-item .action-label:hover {
+	opacity: 0.85;
+}
+.monaco-workbench .extension-editor > .body > .navbar .action-item .action-label.checked {
+	opacity: 1;
+	border-bottom-color: #C2F24D !important;
+}
+/* Extension icon in detail page: rounded corners. */
+.monaco-workbench .extension-editor > .header > .icon-container .extension-icon .icon {
+	border-radius: 12px;
+}
+
+/* ============================================================================
+ *  SETTINGS EDITOR ENHANCED CONTROLS — boolean toggles, enum radio,
+ *  settings text area, and JSON editor link styling.
+ * ========================================================================== */
+
+/* Settings boolean toggle (checkbox/toggle): lime checked state. */
+.monaco-workbench .settings-editor .setting-item-bool .setting-value-checkbox {
+	border-radius: 3px;
+}
+.monaco-workbench .settings-editor .setting-item-bool .setting-value-checkbox:checked {
+	accent-color: #C2F24D;
+}
+/* Settings textarea (for multiline values): glass input. */
+.monaco-workbench .settings-editor .setting-item-control textarea {
+	background-color: rgba(8, 11, 20, 0.50) !important;
+	border-radius: 6px !important;
+	font-family: 'JetBrains Mono', monospace !important;
+	font-size: 12px !important;
+}
+/* Settings "edit in settings.json" link: lime accent. */
+.monaco-workbench .settings-editor .edit-in-settings-button {
+	color: rgba(194, 242, 77, 0.75) !important;
+}
+.monaco-workbench .settings-editor .edit-in-settings-button:hover {
+	color: #C2F24D !important;
+}
+/* Settings list widget (array items): rounded, glass. */
+.monaco-workbench .settings-editor .setting-list-widget {
+	border-radius: 6px !important;
+}
+.monaco-workbench .settings-editor .setting-list-widget .setting-list-row {
+	font-family: 'JetBrains Mono', monospace !important;
+	font-size: 12px !important;
+}
+/* Settings "Also modified in" scope labels: dim instrument voice. */
+.monaco-workbench .settings-editor .setting-item-override-indicator {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 9px !important;
+	opacity: 0.50;
+}
+
+/* ============================================================================
+ *  SIDEBAR BACKDROP TUNING — increase scrim depth for cinematic focus.
+ *  The scrim was at blur(4px) + 18% opacity; increase to 6px + 22% for
+ *  stronger separation between the drawer and the dimmed editor.
+ * ========================================================================== */
+
+.monaco-workbench:not(.sidebar-hidden) .shil-sidebar-scrim {
+	background: rgba(5, 7, 12, 0.22) !important;
+	-webkit-backdrop-filter: blur(6px) !important;
+	backdrop-filter: blur(6px) !important;
+}
+
+/* ============================================================================
+ *  EDITOR GRAIN TEXTURE — subtle noise overlay for analog depth.
+ *  A CSS-only static noise pattern (repeating-conic-gradient trick) that
+ *  gives the editor surface a micro-texture, preventing the flat-digital look.
+ *  Ultra-low opacity (2%) — perceptible on close inspection, not distracting.
+ * ========================================================================== */
+
+.monaco-workbench .part.editor > .content .editor-instance .monaco-editor .overflow-guard::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	z-index: 1;
+	opacity: 0.020;
+	background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='200' height='200'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+	background-repeat: repeat;
+	background-size: 200px 200px;
+	mix-blend-mode: overlay;
+}
+
+/* ============================================================================
+ *  TITLE BAR REFINEMENT — window title styling polish. Center-align
+ *  the workspace name, dim project path, increase traffic light clearance.
+ * ========================================================================== */
+
+/* Window title: Hanken Grotesk, dimmed secondary path. */
+.monaco-workbench .part.titlebar .window-title .window-title-separator {
+	opacity: 0.30;
+	margin: 0 4px;
+}
+/* Title bar right-side actions: ghost until hover. */
+.monaco-workbench .part.titlebar .titlebar-right .action-item .action-label {
+	opacity: 0.45;
+	transition: opacity 150ms ease;
+}
+.monaco-workbench .part.titlebar .titlebar-right .action-item .action-label:hover {
+	opacity: 0.85;
+}
+.monaco-workbench .part.titlebar .titlebar-right .action-item .action-label:active {
+	opacity: 1;
+}
