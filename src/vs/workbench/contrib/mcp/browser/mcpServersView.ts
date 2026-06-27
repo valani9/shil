@@ -538,6 +538,10 @@ export class McpServersViewsContribution extends Disposable implements IWorkbenc
 	constructor() {
 		super();
 
+		if (!VIEW_CONTAINER) {
+			return;
+		}
+
 		Registry.as<IViewsRegistry>(ViewExtensions.ViewsRegistry).registerViews([
 			{
 				id: InstalledMcpServersViewId,

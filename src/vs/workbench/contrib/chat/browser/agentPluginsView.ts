@@ -636,33 +636,35 @@ export class AgentPluginsViewsContribution extends Disposable implements IWorkbe
 		registerAction2(CheckForPluginUpdatesCommand);
 		registerAction2(ForceUpdatePluginsCommand);
 
-		Registry.as<IViewsRegistry>(ViewExtensions.ViewsRegistry).registerViews([
-			{
-				id: InstalledAgentPluginsViewId,
-				name: localize2('agent-plugins-installed', "Agent Plugins - Installed"),
-				ctorDescriptor: new SyncDescriptor(AgentPluginsListView, [{ installedOnly: true }]),
-				when: ContextKeyExpr.and(DefaultViewsContext, HasInstalledAgentPluginsContext, ChatContextKeys.Setup.hidden.negate()),
-				weight: 30,
-				order: 5,
-				canToggleVisibility: true,
-			},
-			{
-				id: 'workbench.views.agentPlugins.default.marketplace',
-				name: localize2('agent-plugins', "Agent Plugins"),
-				ctorDescriptor: new SyncDescriptor(AgentPluginsListView, [{}]),
-				when: ContextKeyExpr.and(DefaultViewsContext, HasInstalledAgentPluginsContext.toNegated(), ChatContextKeys.Setup.hidden.negate()),
-				weight: 30,
-				order: 5,
-				canToggleVisibility: true,
-				hideByDefault: true,
-			},
-			{
-				id: 'workbench.views.agentPlugins.marketplace',
-				name: localize2('agent-plugins', "Agent Plugins"),
-				ctorDescriptor: new SyncDescriptor(AgentPluginsListView, [{}]),
-				when: ContextKeyExpr.and(SearchAgentPluginsContext, ChatContextKeys.Setup.hidden.negate()),
-			},
-		], VIEW_CONTAINER);
+		if (VIEW_CONTAINER) {
+			Registry.as<IViewsRegistry>(ViewExtensions.ViewsRegistry).registerViews([
+				{
+					id: InstalledAgentPluginsViewId,
+					name: localize2('agent-plugins-installed', "Agent Plugins - Installed"),
+					ctorDescriptor: new SyncDescriptor(AgentPluginsListView, [{ installedOnly: true }]),
+					when: ContextKeyExpr.and(DefaultViewsContext, HasInstalledAgentPluginsContext, ChatContextKeys.Setup.hidden.negate()),
+					weight: 30,
+					order: 5,
+					canToggleVisibility: true,
+				},
+				{
+					id: 'workbench.views.agentPlugins.default.marketplace',
+					name: localize2('agent-plugins', "Agent Plugins"),
+					ctorDescriptor: new SyncDescriptor(AgentPluginsListView, [{}]),
+					when: ContextKeyExpr.and(DefaultViewsContext, HasInstalledAgentPluginsContext.toNegated(), ChatContextKeys.Setup.hidden.negate()),
+					weight: 30,
+					order: 5,
+					canToggleVisibility: true,
+					hideByDefault: true,
+				},
+				{
+					id: 'workbench.views.agentPlugins.marketplace',
+					name: localize2('agent-plugins', "Agent Plugins"),
+					ctorDescriptor: new SyncDescriptor(AgentPluginsListView, [{}]),
+					when: ContextKeyExpr.and(SearchAgentPluginsContext, ChatContextKeys.Setup.hidden.negate()),
+				},
+			], VIEW_CONTAINER);
+		}
 	}
 }
 
