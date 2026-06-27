@@ -157,8 +157,15 @@ export class ShilReaderPane extends EditorPane {
 				const cts = new CancellationTokenSource(token);
 				this.pendingGenerationCts = cts;
 
-				// Generate spans via CLI (default, keyless) or API key fallback
-				const llmSpans = await this.modelService.generateReaderSpans(source, filePath, languageId, cts.token);
+				// Generate spans via streaming CLI — spans appear progressively
+				let streamedCount = 0;
+				const llmSpans = await this.modelService.generateReaderSpansStreaming(
+					source, filePath, languageId, cts.token,
+					(_span, _index) => {
+						streamedCount++;
+						this.updateLoadingProgress(streamedCount);
+					}
+				);
 				if (cts.token.isCancellationRequested) {
 					cts.dispose();
 					return;
@@ -923,6 +930,10 @@ export class ShilReaderPane extends EditorPane {
 		dots.className = 'shil-reader-loading-dots';
 		label.appendChild(dots);
 
+		const progress = document.createElement('span');
+		progress.className = 'shil-reader-loading-progress';
+		label.appendChild(progress);
+
 		const timer = document.createElement('span');
 		timer.className = 'shil-reader-loading-timer';
 		timer.textContent = '0s';
@@ -949,6 +960,13 @@ export class ShilReaderPane extends EditorPane {
 			this.loadingTimerInterval = undefined;
 		}
 		this.contentElement?.querySelector('.shil-reader-loading')?.remove();
+	}
+
+	private updateLoadingProgress(spanCount: number): void {
+		const el = this.contentElement?.querySelector('.shil-reader-loading-progress');
+		if (el) {
+			el.textContent = spanCount === 1 ? '1 span' : `${spanCount} spans`;
+		}
 	}
 
 	private cancelPendingGeneration(): void {
@@ -1016,7 +1034,14 @@ export class ShilReaderPane extends EditorPane {
 
 		const cts = new CancellationTokenSource();
 		this.pendingGenerationCts = cts;
-		const llmSpans = await this.modelService.generateReaderSpans(source, filePath, languageId, cts.token);
+		let streamedCount = 0;
+		const llmSpans = await this.modelService.generateReaderSpansStreaming(
+			source, filePath, languageId, cts.token,
+			(_span, _index) => {
+				streamedCount++;
+				this.updateLoadingProgress(streamedCount);
+			}
+		);
 		if (cts.token.isCancellationRequested) {
 			cts.dispose();
 			return;

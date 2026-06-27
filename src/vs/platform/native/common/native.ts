@@ -287,6 +287,11 @@ export interface ICommonNativeHostService {
 	// Shil CLI
 	shilRunCli(command: string, args: string[], timeoutMs?: number, stdin?: string): Promise<{ stdout: string; stderr: string; exitCode: number }>;
 
+	// Shil CLI streaming — fires stdout chunks and exit events keyed by requestId
+	readonly onShilCliData: Event<{ requestId: number; chunk: string }>;
+	readonly onShilCliExit: Event<{ requestId: number; exitCode: number; stderr: string }>;
+	shilStartCliStream(command: string, args: string[], timeoutMs?: number, stdin?: string): Promise<number>;
+
 	// Power
 	getSystemIdleState(idleThreshold: number): Promise<SystemIdleState>;
 	getSystemIdleTime(): Promise<number>;

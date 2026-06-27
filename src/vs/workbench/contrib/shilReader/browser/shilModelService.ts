@@ -11,6 +11,7 @@ import { IConfigurationService } from '../../../../platform/configuration/common
 import { ILogService } from '../../../../platform/log/common/log.js';
 import { INativeHostService } from '../../../../platform/native/common/native.js';
 import { stringHash } from '../../../../base/common/hash.js';
+import { DisposableStore } from '../../../../base/common/lifecycle.js';
 import type { ReaderSpan, SpanKind } from './shilReaderTypes.js';
 
 export const IShilModelService = createDecorator<IShilModelService>('shilModelService');
@@ -34,6 +35,13 @@ export interface IShilModelService {
 	 * Return cached spans for this file+content, or `undefined` if not cached.
 	 */
 	getCached(filePath: string, source: string): ReaderSpan[] | undefined;
+
+	/**
+	 * Generate spans with streaming: calls `onSpan` as each span is parsed from CLI output.
+	 * Falls back to batch `generateReaderSpans` if streaming is unavailable.
+	 * Returns the final complete set of spans.
+	 */
+	generateReaderSpansStreaming(source: string, filePath: string, languageId: string, token: CancellationToken, onSpan: (span: ReaderSpan, index: number) => void): Promise<ReaderSpan[] | undefined>;
 
 	/**
 	 * Reset CLI availability flag so the next generation attempt re-probes the CLI.
@@ -90,6 +98,70 @@ function buildCliPrompt(source: string, filePath: string, languageId: string): s
 	return `${SYSTEM_PROMPT}
 
 ${buildUserPrompt(source, filePath, languageId)}`;
+}
+
+/**
+ * Extract complete JSON objects from a partially-received JSON array string.
+ * Handles nested braces and strings with escaped characters.
+ * Returns parsed objects starting from `startIndex` (skips already-extracted ones).
+ */
+function extractCompleteSpanObjects(text: string, startIndex: number): Array<Record<string, unknown>> {
+	const results: Array<Record<string, unknown>> = [];
+	let objectCount = 0;
+	let braceDepth = 0;
+	let inString = false;
+	let escaped = false;
+	let objectStart = -1;
+
+	for (let i = 0; i < text.length; i++) {
+		const ch = text[i];
+
+		if (escaped) {
+			escaped = false;
+			continue;
+		}
+
+		if (ch === '\\' && inString) {
+			escaped = true;
+			continue;
+		}
+
+		if (ch === '"') {
+			inString = !inString;
+			continue;
+		}
+
+		if (inString) {
+			continue;
+		}
+
+		if (ch === '{') {
+			if (braceDepth === 0) {
+				objectStart = i;
+			}
+			braceDepth++;
+		} else if (ch === '}') {
+			braceDepth--;
+			if (braceDepth === 0 && objectStart >= 0) {
+				// We have a complete object
+				if (objectCount >= startIndex) {
+					const objStr = text.substring(objectStart, i + 1);
+					try {
+						const parsed = JSON.parse(objStr);
+						if (typeof parsed === 'object' && parsed !== null) {
+							results.push(parsed as Record<string, unknown>);
+						}
+					} catch {
+						// Incomplete or malformed — skip
+					}
+				}
+				objectCount++;
+				objectStart = -1;
+			}
+		}
+	}
+
+	return results;
 }
 
 export class ShilModelService implements IShilModelService {
@@ -166,6 +238,155 @@ export class ShilModelService implements IShilModelService {
 		}
 
 		return undefined;
+	}
+
+	async generateReaderSpansStreaming(source: string, filePath: string, languageId: string, token: CancellationToken, onSpan: (span: ReaderSpan, index: number) => void): Promise<ReaderSpan[] | undefined> {
+		// Return cached result if available
+		const key = this.cacheKey(filePath, source);
+		const cached = this.cache.get(key);
+		if (cached) {
+			for (let i = 0; i < cached.length; i++) {
+				onSpan(cached[i], i);
+			}
+			return cached;
+		}
+
+		// Guard: skip generation for very large files
+		const lineCount = source.split('\n').length;
+		if (lineCount > 500 || source.length > 50_000) {
+			this.logService.info(`[ShilModel] File too large for streaming generation (${lineCount} lines, ${source.length} chars): ${filePath}`);
+			return undefined;
+		}
+
+		// Try streaming CLI first
+		if (this.cliAvailable !== false) {
+			const streamResult = await this.generateViaCliStream(source, filePath, languageId, token, onSpan);
+			if (streamResult) {
+				this.cacheSpans(key, streamResult);
+				return streamResult;
+			}
+		}
+
+		// Fallback to batch generation (API key path doesn't stream)
+		const batchResult = await this.generateReaderSpans(source, filePath, languageId, token);
+		if (batchResult) {
+			for (let i = 0; i < batchResult.length; i++) {
+				onSpan(batchResult[i], i);
+			}
+		}
+		return batchResult;
+	}
+
+	private async generateViaCliStream(source: string, filePath: string, languageId: string, token: CancellationToken, onSpan: (span: ReaderSpan, index: number) => void): Promise<ReaderSpan[] | undefined> {
+		try {
+			const cliCommand = this.configService.getValue<string>('shil.model.cliCommand') || this.defaultCliCommand();
+			const prompt = buildCliPrompt(source, filePath, languageId);
+			this.logService.info(`[ShilModel] Starting streaming CLI: "${cliCommand}" with ${prompt.length} char prompt`);
+
+			const requestId = await this.nativeHostService.shilStartCliStream(cliCommand, ['-p', '--output-format', 'text'], 120_000, prompt);
+
+			return new Promise<ReaderSpan[] | undefined>((resolve) => {
+				const disposables = new DisposableStore();
+				let accumulated = '';
+				const spans: ReaderSpan[] = [];
+				let spanIndex = 0;
+				let resolved = false;
+
+				const finish = (result: ReaderSpan[] | undefined) => {
+					if (resolved) {
+						return;
+					}
+					resolved = true;
+					disposables.dispose();
+					resolve(result);
+				};
+
+				// Listen for cancellation
+				if (token.isCancellationRequested) {
+					finish(undefined);
+					return;
+				}
+				disposables.add(token.onCancellationRequested(() => {
+					this.logService.info('[ShilModel] Streaming cancelled');
+					finish(undefined);
+				}));
+
+				// Listen for data chunks
+				disposables.add(this.nativeHostService.onShilCliData(e => {
+					if (e.requestId !== requestId || resolved) {
+						return;
+					}
+					accumulated += e.chunk;
+
+					// Try to extract complete JSON span objects from accumulated text
+					const newSpans = extractCompleteSpanObjects(accumulated, spanIndex);
+					for (const s of newSpans) {
+						const validated = this.validateSingleSpan(s, spanIndex);
+						if (validated) {
+							spans.push(validated);
+							onSpan(validated, spanIndex);
+							spanIndex++;
+						}
+					}
+				}));
+
+				// Listen for process exit
+				disposables.add(this.nativeHostService.onShilCliExit(e => {
+					if (e.requestId !== requestId || resolved) {
+						return;
+					}
+
+					this.logService.info(`[ShilModel] Streaming CLI exit=${e.exitCode}, accumulated=${accumulated.length} chars`);
+
+					if (e.exitCode !== 0) {
+						if (e.stderr.includes('ENOENT') || e.stderr.includes('not found') || e.stderr.includes('No such file')) {
+							this.cliAvailable = false;
+						}
+						finish(undefined);
+						return;
+					}
+
+					this.cliAvailable = true;
+
+					// Final pass: parse any remaining spans from the complete output
+					const finalParsed = this.parseRawSpans(accumulated);
+					if (finalParsed && finalParsed.length > spans.length) {
+						// Emit any spans we missed during streaming
+						for (let i = spans.length; i < finalParsed.length; i++) {
+							onSpan(finalParsed[i], i);
+						}
+						finish(finalParsed);
+					} else if (spans.length > 0) {
+						finish(spans);
+					} else {
+						finish(finalParsed);
+					}
+				}));
+			});
+		} catch (err) {
+			const msg = err instanceof Error ? err.message : String(err);
+			this.logService.warn(`[ShilModel] Streaming CLI failed: ${msg}`);
+			if (msg.includes('not implemented') || msg.includes('not available')) {
+				this.cliAvailable = false;
+			}
+			return undefined;
+		}
+	}
+
+	/** Validate a single parsed span object and normalize it. */
+	private validateSingleSpan(raw: Record<string, unknown>, index: number): ReaderSpan | undefined {
+		if (typeof raw.english !== 'string' || typeof raw.lineStart !== 'number' || typeof raw.lineEnd !== 'number') {
+			return undefined;
+		}
+		const validKinds = new Set<SpanKind>(['narration', 'import', 'guard', 'action', 'db', 'response', 'declaration', 'export']);
+		const kind = validKinds.has(raw.kind as SpanKind) ? (raw.kind as SpanKind) : 'action';
+		return {
+			id: `s-${index}`,
+			english: raw.english,
+			lineStart: raw.lineStart,
+			lineEnd: raw.lineEnd,
+			kind,
+		};
 	}
 
 	private async generateViaCli(source: string, filePath: string, languageId: string, token: CancellationToken): Promise<ReaderSpan[] | undefined> {

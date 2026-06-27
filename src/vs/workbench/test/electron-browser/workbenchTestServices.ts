@@ -194,6 +194,9 @@ export class TestNativeHostService implements INativeHostService {
 
 	// Shil CLI
 	async shilRunCli(_command: string, _args: string[], _timeoutMs?: number, _stdin?: string): Promise<{ stdout: string; stderr: string; exitCode: number }> { return { stdout: '', stderr: '', exitCode: 1 }; }
+	readonly onShilCliData: Event<{ requestId: number; chunk: string }> = Event.None;
+	readonly onShilCliExit: Event<{ requestId: number; exitCode: number; stderr: string }> = Event.None;
+	async shilStartCliStream(_command: string, _args: string[], _timeoutMs?: number, _stdin?: string): Promise<number> { return 0; }
 
 	// Power APIs
 	async getSystemIdleState(idleThreshold: number): Promise<SystemIdleState> { return 'unknown'; }

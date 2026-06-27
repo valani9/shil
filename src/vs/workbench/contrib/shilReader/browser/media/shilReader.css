@@ -511,6 +511,17 @@
 	min-width: 1.2em;
 }
 
+.shil-reader-loading-progress {
+	margin-left: 10px;
+	color: rgba(194, 242, 77, 0.55);
+	font-variant-numeric: tabular-nums;
+}
+
+.shil-reader-loading-progress:not(:empty)::before {
+	content: '\2014\00a0';
+	color: rgba(194, 242, 77, 0.20);
+}
+
 .shil-reader-loading-timer {
 	margin-left: 10px;
 	color: rgba(194, 242, 77, 0.30);

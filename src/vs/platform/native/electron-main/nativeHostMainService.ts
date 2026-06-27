@@ -1439,20 +1439,62 @@ export class NativeHostMainService extends Disposable implements INativeHostMain
 
 	//#region Shil CLI
 
-	async shilRunCli(_windowId: number | undefined, command: string, args: string[], timeoutMs?: number, stdin?: string): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+	// Shil CLI streaming
+	private readonly _onShilCliData = this._register(new Emitter<{ requestId: number; chunk: string }>());
+	readonly onShilCliData = this._onShilCliData.event;
+
+	private readonly _onShilCliExit = this._register(new Emitter<{ requestId: number; exitCode: number; stderr: string }>());
+	readonly onShilCliExit = this._onShilCliExit.event;
+
+	private nextCliRequestId = 1;
+
+	async shilStartCliStream(_windowId: number | undefined, command: string, args: string[], timeoutMs?: number, stdin?: string): Promise<number> {
+		const requestId = this.nextCliRequestId++;
 		const timeout = timeoutMs ?? 120_000;
+		const env = this.buildCliEnv();
+
+		const child = spawn(command, args, { env, stdio: ['pipe', 'pipe', 'pipe'] });
+		let stderr = '';
+		let killed = false;
+		const timer = setTimeout(() => { killed = true; child.kill('SIGTERM'); }, timeout);
+
+		child.stdout.on('data', (data: Buffer) => {
+			this._onShilCliData.fire({ requestId, chunk: data.toString() });
+		});
+		child.stderr.on('data', (data: Buffer) => { stderr += data.toString(); });
+		child.on('close', (code: number | null) => {
+			clearTimeout(timer);
+			this._onShilCliExit.fire({ requestId, exitCode: killed ? 1 : (code ?? 1), stderr });
+		});
+		child.on('error', (err: Error) => {
+			clearTimeout(timer);
+			this._onShilCliExit.fire({ requestId, exitCode: 1, stderr: err.message });
+		});
+		if (stdin) {
+			child.stdin.write(stdin);
+		}
+		child.stdin.end();
+
+		return requestId;
+	}
+
+	private buildCliEnv(): Record<string, string | undefined> {
 		const env = { ...process.env };
 		delete env['ELECTRON_RUN_AS_NODE'];
-		// Strip VSCODE_* env vars so the child process does not think it is inside VS Code
 		for (const key of Object.keys(env)) {
 			if (key.startsWith('VSCODE_')) {
 				delete env[key];
 			}
 		}
-		// Augment PATH with common binary locations (Electron GUI apps often lack the user's shell PATH)
 		const home = env['HOME'] || '';
 		const extraPaths = ['/usr/local/bin', '/opt/homebrew/bin', `${home}/.local/bin`, `${home}/.npm/bin`];
 		env['PATH'] = [...extraPaths, env['PATH'] || ''].join(':');
+		return env;
+	}
+
+	async shilRunCli(_windowId: number | undefined, command: string, args: string[], timeoutMs?: number, stdin?: string): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+		const timeout = timeoutMs ?? 120_000;
+		const env = this.buildCliEnv();
 
 		return new Promise<{ stdout: string; stderr: string; exitCode: number }>((resolve) => {
 			const child = spawn(command, args, { env, stdio: ['pipe', 'pipe', 'pipe'] });
