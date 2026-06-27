@@ -4671,3 +4671,161 @@ body.shil-sidebar-resizing * {
 	0% { opacity: 0; transform: scale(0.96); }
 	100% { opacity: 1; transform: scale(1); }
 }
+
+/* ---- FIND WIDGET ENTRANCE — slides down with spring ---- */
+/* The find/replace bar drops in from the top with a subtle spring bounce. */
+.monaco-workbench .editor-widget.find-widget {
+	animation: shil-find-widget-enter 200ms cubic-bezier(0.22, 1.08, 0.36, 1) both;
+	transform-origin: top center;
+}
+@keyframes shil-find-widget-enter {
+	0% { opacity: 0; transform: translateY(-12px) scaleY(0.95); }
+	100% { opacity: 1; transform: translateY(0) scaleY(1); }
+}
+
+/* ---- SUGGEST WIDGET ENTRANCE — pops in from below cursor ---- */
+/* Autocomplete list fades up with a slight spring for physical feel. */
+.monaco-workbench .editor-widget.suggest-widget {
+	animation: shil-suggest-enter 160ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes shil-suggest-enter {
+	0% { opacity: 0; transform: translateY(6px) scale(0.97); }
+	100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ---- HOVER WIDGET ENTRANCE — gentle fade-scale ---- */
+/* Editor hovers (type info, docs) pop in with a subtle scale from 97%. */
+.monaco-workbench .monaco-hover {
+	animation: shil-hover-enter 150ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes shil-hover-enter {
+	0% { opacity: 0; transform: scale(0.97); }
+	100% { opacity: 1; transform: scale(1); }
+}
+
+/* ---- DIALOG ENTRANCE — cinematic scale-in ---- */
+/* Modal dialogs (save, delete, confirm) scale in with spring overshoot. */
+.monaco-workbench .dialog-box {
+	animation: shil-dialog-enter 240ms cubic-bezier(0.22, 1.12, 0.36, 1) both;
+}
+@keyframes shil-dialog-enter {
+	0% { opacity: 0; transform: scale(0.94) translateY(8px); }
+	100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ---- DROPDOWN MENU ENTRANCE — scale from origin ---- */
+/* Select box dropdown lists pop with a quick spring. */
+.monaco-workbench .select-box-dropdown-list-container {
+	animation: shil-dropdown-enter 140ms cubic-bezier(0.22, 1, 0.36, 1) both;
+	transform-origin: top center;
+}
+@keyframes shil-dropdown-enter {
+	0% { opacity: 0; transform: scaleY(0.92); }
+	100% { opacity: 1; transform: scaleY(1); }
+}
+
+/* ---- TOOLTIP / IHOVER ENTRANCE — quick fade-scale ---- */
+/* Workbench tooltips (IHoverService) pop in subtly. */
+.monaco-workbench .workbench-hover {
+	animation: shil-tooltip-enter 120ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes shil-tooltip-enter {
+	0% { opacity: 0; transform: scale(0.96) translateY(2px); }
+	100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ---- BREADCRUMB HOVER LIFT — items lift on hover ---- */
+/* Breadcrumb items get a subtle upward lift + lime glow on hover for
+   interactive affordance. The transition is smooth and gentle. */
+.monaco-workbench .part.editor .breadcrumbs-control .monaco-breadcrumb-item {
+	transition: transform 120ms ease, color 150ms ease, opacity 150ms ease;
+}
+.monaco-workbench .part.editor .breadcrumbs-control .monaco-breadcrumb-item:hover {
+	transform: translateY(-1px);
+}
+
+/* ---- PARAMETER HINTS ENTRANCE — slides up from cursor ---- */
+/* Parameter hints (function signature help) fade up from below. */
+.monaco-workbench .parameter-hints-widget {
+	animation: shil-param-hints-enter 160ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes shil-param-hints-enter {
+	0% { opacity: 0; transform: translateY(4px); }
+	100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ---- NOTIFICATION CENTER ENTRANCE — slides in from right ---- */
+/* When the notification center opens, it slides in with a spring. */
+.monaco-workbench > .notifications-center {
+	animation: shil-notif-center-enter 220ms cubic-bezier(0.22, 1.05, 0.36, 1) both;
+}
+@keyframes shil-notif-center-enter {
+	0% { opacity: 0; transform: translateX(20px); }
+	100% { opacity: 1; transform: translateX(0); }
+}
+
+/* ---- SETTINGS EDITOR ENTRANCE — fade in ---- */
+/* Settings editor content fades in smoothly when opened. */
+.monaco-workbench .settings-editor {
+	animation: shil-settings-enter 250ms ease-out both;
+}
+@keyframes shil-settings-enter {
+	0% { opacity: 0; }
+	100% { opacity: 1; }
+}
+
+/* ---- MINIMAP HOVER PREVIEW — enhanced interaction ---- */
+/* When hovering the minimap, the slider gains a stronger lime presence
+   and the minimap content brightens for better readability. */
+.monaco-workbench .minimap:hover .minimap-decorations-layer {
+	opacity: 0.85 !important;
+	transition: opacity 200ms ease;
+}
+/* Minimap cursor decoration: lime tint on the current-line indicator. */
+.monaco-workbench .minimap .minimap-slider .minimap-slider-horizontal {
+	transition: background-color 150ms ease;
+}
+
+/* ---- PEEK VIEW ENTRANCE — scale from header ---- */
+/* Peek view (go-to-definition, references) scales in from the top. */
+.monaco-workbench .peekview-widget {
+	animation: shil-peek-enter 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+	transform-origin: top center;
+}
+@keyframes shil-peek-enter {
+	0% { opacity: 0; transform: scaleY(0.92); }
+	100% { opacity: 1; transform: scaleY(1); }
+}
+
+/* ---- RENAME INPUT ENTRANCE — pops at cursor ---- */
+/* The rename input widget pops in at the cursor position. */
+.monaco-workbench .monaco-editor .rename-box {
+	animation: shil-rename-enter 140ms cubic-bezier(0.22, 1.05, 0.36, 1) both;
+}
+@keyframes shil-rename-enter {
+	0% { opacity: 0; transform: scale(0.94); }
+	100% { opacity: 1; transform: scale(1); }
+}
+
+/* ---- CODE ACTION WIDGET ENTRANCE — lightbulb menu ---- */
+/* The lightbulb / quick fix menu pops in with a quick spring. */
+.monaco-workbench .editor-widget.action-widget {
+	animation: shil-codeaction-enter 150ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes shil-codeaction-enter {
+	0% { opacity: 0; transform: scale(0.95) translateY(-4px); }
+	100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+/* ---- EDITOR TAB HOVER LIFT — subtle upward nudge ---- */
+/* Inactive tabs get a slight lift on hover for tactile feedback. */
+.monaco-workbench .tab:not(.active):hover {
+	transform: translateY(-0.5px);
+	transition: transform 100ms ease, opacity 120ms ease, background-color 150ms ease;
+}
+
+/* ---- SCROLLBAR THUMB ENTRANCE — fade in on scroll ---- */
+/* Scrollbar thumbs smoothly appear when scrolling starts. */
+.monaco-workbench .slider {
+	transition: opacity 200ms ease, background-color 150ms ease, width 150ms ease, height 150ms ease;
+}
