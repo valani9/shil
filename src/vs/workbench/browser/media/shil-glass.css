@@ -3132,3 +3132,420 @@ body.shil-sidebar-resizing * {
 	opacity: 0.20 !important;
 	border-left-color: rgba(140, 147, 168, 0.20) !important;
 }
+
+/* ============================================================================
+ *  STICKY SCROLL DEPTH SHADOW — progressive shadow beneath the sticky scroll
+ *  header that creates a floating-above-content effect. Subtle gradient fade
+ *  anchors the sticky header visually without a hard border line.
+ * ========================================================================== */
+
+/* Depth shadow: bottom edge gradient via box-shadow. */
+.monaco-workbench .monaco-editor .sticky-widget {
+	box-shadow: 0 4px 12px -2px rgba(0, 0, 0, 0.45),
+	            0 2px 4px -1px rgba(0, 0, 0, 0.25) !important;
+	border-bottom: 1px solid rgba(140, 147, 168, 0.08) !important;
+	z-index: 5;
+}
+
+/* ============================================================================
+ *  NOTEBOOK EDITOR — cell containers, toolbar, output areas, and status bars.
+ *  Glass treatment on cell boundaries, Hanken Grotesk for markdown cells,
+ *  JetBrains Mono for code cells. Calm, integrated notebook feel.
+ * ========================================================================== */
+
+/* Notebook container: opaque ground. */
+.monaco-workbench .notebookOverlay {
+	background-color: #05070C !important;
+}
+
+/* Cell containers: subtle rounded glass. */
+.monaco-workbench .notebookOverlay .cell-list-container .cell-outer-container {
+	border-radius: 6px;
+	margin-bottom: 2px;
+}
+
+/* Focused cell: lime left accent. */
+.monaco-workbench .notebookOverlay .cell-list-container .cell-outer-container.focused {
+	border-left: 2px solid rgba(194, 242, 77, 0.35);
+}
+
+/* Markdown cell content: Hanken Grotesk prose. */
+.monaco-workbench .notebookOverlay .cell-list-container .cell-outer-container .cell-output-container .output,
+.monaco-workbench .notebookOverlay .cell-list-container .cell-outer-container .markup-cell-output {
+	font-family: 'Hanken Grotesk', 'Segoe UI', sans-serif !important;
+	font-size: 13px;
+	line-height: 1.55;
+	color: rgba(234, 240, 255, 0.85);
+}
+
+/* Cell toolbar: ghost buttons, rounded. */
+.monaco-workbench .notebookOverlay .cell-list-container .cell-title-toolbar .monaco-toolbar .action-item .action-label {
+	opacity: 0.50;
+	transition: opacity 150ms ease;
+	border-radius: 4px;
+}
+.monaco-workbench .notebookOverlay .cell-list-container .cell-title-toolbar .monaco-toolbar .action-item .action-label:hover {
+	opacity: 1.0;
+	background-color: rgba(140, 147, 168, 0.12);
+}
+
+/* Cell status bar: instrument voice. */
+.monaco-workbench .notebookOverlay .cell-list-container .cell-statusbar-container {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 9px !important;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: rgba(126, 134, 153, 0.75);
+}
+
+/* Cell execution count / run button: lime accent. */
+.monaco-workbench .notebookOverlay .cell-list-container .cell-execution-count {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 9px !important;
+	color: rgba(194, 242, 77, 0.65);
+}
+
+/* Output area: darker ground, slight inset. */
+.monaco-workbench .notebookOverlay .cell-list-container .output-inner-container {
+	background-color: #080B12;
+	border-radius: 4px;
+	padding: 8px 12px;
+	margin-top: 4px;
+}
+
+/* ============================================================================
+ *  SEARCH VIEW — result file decorations, match highlights, and the search
+ *  editor. Lime match highlights, instrument-voice file paths, dimmed context.
+ * ========================================================================== */
+
+/* Search result file names: Hanken Grotesk. */
+.monaco-workbench .search-view .filematch .filematch-name {
+	font-family: 'Hanken Grotesk', 'Segoe UI', sans-serif !important;
+	font-size: 12px;
+}
+
+/* Search result file paths: instrument voice. */
+.monaco-workbench .search-view .filematch .foldermatch-name,
+.monaco-workbench .search-view .filematch .filematch-description {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 9px !important;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	opacity: 0.55;
+}
+
+/* Search result match lines: JetBrains Mono, readable. */
+.monaco-workbench .search-view .linematch .match {
+	font-family: 'JetBrains Mono', monospace !important;
+	font-size: 11.5px;
+}
+
+/* Search result line numbers: dimmed. */
+.monaco-workbench .search-view .linematch .matchLineNum {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 9px !important;
+	opacity: 0.45;
+}
+
+/* Search results info bar: instrument voice. */
+.monaco-workbench .search-view .messages .message {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 10px !important;
+	letter-spacing: 0.03em;
+	color: rgba(138, 147, 168, 0.75);
+}
+
+/* Replace input highlight: lime tint. */
+.monaco-workbench .search-view .replace.findInFileMatch {
+	background-color: rgba(194, 242, 77, 0.18) !important;
+	border-radius: 2px;
+}
+
+/* ============================================================================
+ *  DIFF EDITOR — side-by-side and inline diff views. Calmer diff colors with
+ *  green/red tints from the Shil palette, glass gutter decorations.
+ * ========================================================================== */
+
+/* Diff editor container: no distracting separators. */
+.monaco-workbench .monaco-diff-editor .diffOverview {
+	opacity: 0.65;
+}
+
+/* Diff gutter decorations: softer, rounded indicators. */
+.monaco-workbench .monaco-diff-editor .line-insert .line-numbers,
+.monaco-workbench .monaco-diff-editor .char-insert .line-numbers {
+	color: rgba(194, 217, 138, 0.65) !important;
+}
+.monaco-workbench .monaco-diff-editor .line-delete .line-numbers,
+.monaco-workbench .monaco-diff-editor .char-delete .line-numbers {
+	color: rgba(255, 59, 87, 0.55) !important;
+}
+
+/* Diff editor unchanged region: collapsed fold indicator styling. */
+.monaco-workbench .monaco-diff-editor .diff-unchanged-region {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 10px !important;
+	letter-spacing: 0.03em;
+	opacity: 0.55;
+}
+
+/* Diff editor actions (inline revert, stage): ghost pattern. */
+.monaco-workbench .monaco-diff-editor .action-bar .action-label {
+	opacity: 0.55;
+	transition: opacity 150ms ease;
+}
+.monaco-workbench .monaco-diff-editor .action-bar .action-label:hover {
+	opacity: 1.0;
+}
+
+/* ============================================================================
+ *  DEBUG CONSOLE — the REPL-style debug output. JetBrains Mono for output,
+ *  lime input prompt, glass input field, instrument-voice filter.
+ * ========================================================================== */
+
+/* Debug console output: JetBrains Mono, readable. */
+.monaco-workbench .debug-console .monaco-list-row .expression .value {
+	font-family: 'JetBrains Mono', monospace !important;
+	font-size: 11.5px;
+	line-height: 1.45;
+}
+
+/* Debug console variable names: warm green. */
+.monaco-workbench .debug-console .monaco-list-row .expression .name {
+	font-family: 'JetBrains Mono', monospace !important;
+	font-size: 11.5px;
+	color: rgba(194, 217, 138, 0.90);
+}
+
+/* Debug console input field: glass treatment. */
+.monaco-workbench .debug-console .monaco-editor {
+	border-radius: 6px;
+}
+
+/* Debug console filter: instrument voice. */
+.monaco-workbench .debug-console .monaco-action-bar .action-item.monaco-text-button {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 9px !important;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+/* Debug console source link: lime on hover. */
+.monaco-workbench .debug-console .source-link {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 9px !important;
+	opacity: 0.50;
+	transition: opacity 150ms ease, color 150ms ease;
+}
+.monaco-workbench .debug-console .source-link:hover {
+	opacity: 1.0;
+	color: #C2F24D !important;
+}
+
+/* ============================================================================
+ *  BANNER WIDGET — info/warning banners at the top of the editor area.
+ *  Glass treatment, rounded, Hanken Grotesk text, lime icon accent.
+ * ========================================================================== */
+
+/* Banner: glass container. */
+.monaco-workbench .part.editor > .content .editor-banner {
+	backdrop-filter: blur(12px) saturate(1.4);
+	-webkit-backdrop-filter: blur(12px) saturate(1.4);
+	border-radius: 6px;
+	margin: 4px 8px;
+	border: 1px solid rgba(140, 147, 168, 0.10);
+}
+
+/* Banner text: Hanken Grotesk. */
+.monaco-workbench .part.editor > .content .editor-banner .message-content {
+	font-family: 'Hanken Grotesk', 'Segoe UI', sans-serif !important;
+	font-size: 12.5px;
+	line-height: 1.5;
+}
+
+/* Banner action buttons: rounded, ghost. */
+.monaco-workbench .part.editor > .content .editor-banner .action-container .monaco-button {
+	border-radius: 4px !important;
+	font-family: 'Hanken Grotesk', 'Segoe UI', sans-serif !important;
+	font-size: 11px;
+}
+
+/* Banner close button: ghost pattern. */
+.monaco-workbench .part.editor > .content .editor-banner .action-container .codicon {
+	opacity: 0.55;
+	transition: opacity 150ms ease;
+}
+.monaco-workbench .part.editor > .content .editor-banner .action-container .codicon:hover {
+	opacity: 1.0;
+}
+
+/* ============================================================================
+ *  CHECKBOX / RADIO / TOGGLE — form controls across the workbench (settings,
+ *  search options, filter toggles). Rounded, lime accent on checked state.
+ * ========================================================================== */
+
+/* Checkboxes: rounded. */
+.monaco-workbench .monaco-checkbox {
+	border-radius: 3px !important;
+}
+
+/* Toggle switches: rounded pill shape. */
+.monaco-workbench .setting-list-widget .setting-list-row .setting-list-value .monaco-toggle {
+	border-radius: 10px;
+}
+
+/* ============================================================================
+ *  BREADCRUMB BAR — file path breadcrumbs above the editor. Instrument-voice
+ *  typography, dimmed at rest, lime highlight on active segment.
+ * ========================================================================== */
+
+/* Breadcrumb items: instrument voice typography. */
+.monaco-workbench .breadcrumbs-control .monaco-breadcrumb-item {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 9.5px !important;
+	letter-spacing: 0.03em;
+}
+
+/* Breadcrumb separator: dimmed. */
+.monaco-workbench .breadcrumbs-control .monaco-breadcrumb-item::before {
+	opacity: 0.35;
+}
+
+/* ============================================================================
+ *  SCM VIEW (Source Control) — the git panel. File change decorations,
+ *  commit message input, action buttons. Instrument-voice branch labels.
+ * ========================================================================== */
+
+/* SCM input box: glass treatment. */
+.monaco-workbench .scm-view .scm-editor {
+	border-radius: 6px;
+}
+
+/* SCM input placeholder: Hanken Grotesk. */
+.monaco-workbench .scm-view .scm-editor .monaco-editor .placeholder-text {
+	font-family: 'Hanken Grotesk', 'Segoe UI', sans-serif !important;
+	font-size: 12px;
+}
+
+/* SCM resource group title: instrument voice. */
+.monaco-workbench .scm-view .scm-provider .name {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 10px !important;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+/* SCM action buttons: ghost pattern. */
+.monaco-workbench .scm-view .monaco-toolbar .action-item .action-label {
+	opacity: 0.55;
+	transition: opacity 150ms ease;
+}
+.monaco-workbench .scm-view .monaco-toolbar .action-item .action-label:hover {
+	opacity: 1.0;
+}
+
+/* SCM change count badge: instrument voice. */
+.monaco-workbench .scm-view .count-badge {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 9px !important;
+	letter-spacing: 0.04em;
+}
+
+/* ============================================================================
+ *  PROBLEMS VIEW — the diagnostics panel. Error/warning/info markers with
+ *  Shil palette colors. File names in Hanken Grotesk, paths instrument-voice.
+ * ========================================================================== */
+
+/* Problems table file name: Hanken Grotesk. */
+.monaco-workbench .markers-panel .monaco-list-row .marker-file .file-name {
+	font-family: 'Hanken Grotesk', 'Segoe UI', sans-serif !important;
+	font-size: 12px;
+}
+
+/* Problems table file path: instrument voice. */
+.monaco-workbench .markers-panel .monaco-list-row .marker-file .file-path {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 9px !important;
+	letter-spacing: 0.03em;
+	opacity: 0.50;
+}
+
+/* Problems marker message: readable. */
+.monaco-workbench .markers-panel .monaco-list-row .marker-message {
+	font-family: 'Hanken Grotesk', 'Segoe UI', sans-serif !important;
+	font-size: 12px;
+	line-height: 1.45;
+}
+
+/* Problems source label: instrument voice. */
+.monaco-workbench .markers-panel .monaco-list-row .marker-source {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 9px !important;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	opacity: 0.55;
+}
+
+/* Problems code: instrument voice, lime link. */
+.monaco-workbench .markers-panel .monaco-list-row .marker-code {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 9px !important;
+}
+.monaco-workbench .markers-panel .monaco-list-row .marker-code a {
+	color: rgba(194, 242, 77, 0.70);
+}
+.monaco-workbench .markers-panel .monaco-list-row .marker-code a:hover {
+	color: #C2F24D;
+}
+
+/* ============================================================================
+ *  EDITOR BACKGROUND SUBTLE GRADIENT — a very faint vignette-enhanced
+ *  gradient overlay on the editor to add depth and visual interest beyond
+ *  the flat solid background. Near-imperceptible but adds dimension.
+ * ========================================================================== */
+
+/* Editor inner corner vignette enhancement: slightly stronger corners. */
+.monaco-workbench .editor-instance > .monaco-editor::after {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+	bottom: 0;
+	pointer-events: none;
+	background: radial-gradient(ellipse 120% 100% at 50% 0%, transparent 60%, rgba(0, 0, 0, 0.06) 100%);
+	z-index: 0;
+}
+
+/* ============================================================================
+ *  EXTENSION RECOMMENDATION MODAL — the "Do you want to install..." dialog
+ *  that appears for recommended extensions. Glass treatment.
+ * ========================================================================== */
+
+/* Extension recommendation: same glass as other dialogs. */
+.monaco-workbench .dialog-shadow .monaco-dialog-box .dialog-message .dialog-message-detail {
+	font-family: 'Hanken Grotesk', 'Segoe UI', sans-serif !important;
+	font-size: 12.5px;
+	line-height: 1.5;
+	color: rgba(192, 200, 216, 0.85);
+}
+
+/* ============================================================================
+ *  EDITOR FOLDING CONTROLS — fold/unfold chevrons in the gutter. Already
+ *  ghost-styled in glyph margin section, add fold region background hover.
+ * ========================================================================== */
+
+/* Fold region: subtle highlight on hover to show the foldable range. */
+.monaco-workbench .monaco-editor .foldingDecoration:hover ~ .view-lines .view-line {
+	background-color: rgba(194, 242, 77, 0.03);
+}
+
+/* ============================================================================
+ *  GLOBAL SCROLLBAR CORNER — hide the dead square where horizontal and
+ *  vertical scrollbars meet. Clean intersection.
+ * ========================================================================== */
+
+/* Hide the scrollbar corner dead square. */
+.monaco-workbench .monaco-scrollable-element > .corner {
+	background-color: transparent !important;
+}
