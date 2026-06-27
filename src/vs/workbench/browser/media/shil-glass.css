@@ -3549,3 +3549,433 @@ body.shil-sidebar-resizing * {
 .monaco-workbench .monaco-scrollable-element > .corner {
 	background-color: transparent !important;
 }
+
+/* ============================================================================
+ *  UI REINVENTION v28 — remaining workbench surfaces brought into Shil design
+ *  language. Covers: merge editor, debug call-stack/watch/variables, keyboard
+ *  shortcut editor when-clause/conflicts, terminal tab status, folded ranges,
+ *  command center (if re-enabled), settings sync/empty state, extension editor
+ *  headings/changelog, minimap shadow/viewport.
+ * ========================================================================== */
+
+/* --- GIT MERGE EDITOR ---------------------------------------------------- */
+
+/* Merge editor header strips — Current / Incoming / Result pane labels. */
+.monaco-workbench .merge-editor .header {
+	font-family: 'Martian Mono', monospace;
+	font-size: 10px;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+/* Merge editor pane titles: warm green for Current, teal for Incoming. */
+.monaco-workbench .merge-editor .merge-editor-current .header {
+	border-bottom: 1px solid rgba(194, 217, 138, 0.25);
+}
+
+.monaco-workbench .merge-editor .merge-editor-incoming .header {
+	border-bottom: 1px solid rgba(127, 208, 192, 0.25);
+}
+
+/* Result pane header gets lime accent. */
+.monaco-workbench .merge-editor .merge-editor-result .header {
+	border-bottom: 1px solid rgba(194, 242, 77, 0.20);
+}
+
+/* Merge editor action buttons — ghost pattern. */
+.monaco-workbench .merge-editor .header .action-label {
+	opacity: 0.50;
+	transition: opacity 150ms ease;
+}
+.monaco-workbench .merge-editor .header .action-label:hover {
+	opacity: 0.90;
+}
+
+/* Merge editor checkbox/accept buttons — rounded, lime on checked. */
+.monaco-workbench .merge-editor .merge-accept-gutter-marker {
+	border-radius: 3px;
+}
+
+/* --- DEBUG CALL-STACK / WATCH / VARIABLES SUB-TYPOGRAPHY ----------------- */
+
+/* Call-stack frame labels: Hanken Grotesk for readability. */
+.monaco-workbench .debug-view-content .callstack-view .stack-frame .file-name {
+	font-family: 'Hanken Grotesk', sans-serif;
+	font-size: 12px;
+}
+
+/* Call-stack source file links: instrument voice. */
+.monaco-workbench .debug-view-content .callstack-view .stack-frame .file {
+	font-family: 'Martian Mono', monospace;
+	font-size: 9px;
+	letter-spacing: 0.03em;
+	opacity: 0.55;
+	transition: opacity 150ms ease;
+}
+.monaco-workbench .debug-view-content .callstack-view .stack-frame .file:hover {
+	opacity: 1.0;
+	color: #C2F24D;
+}
+
+/* Call-stack session labels. */
+.monaco-workbench .debug-view-content .callstack-view .session .name {
+	font-family: 'Martian Mono', monospace;
+	font-size: 10px;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+}
+
+/* Call-stack thread label. */
+.monaco-workbench .debug-view-content .callstack-view .thread > .name {
+	font-family: 'Hanken Grotesk', sans-serif;
+	font-size: 12px;
+	font-weight: 500;
+}
+
+/* Watch view: "Add Expression" placeholder. */
+.monaco-workbench .debug-view-content .watch-expressions .monaco-inputbox .input {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 12px;
+}
+
+/* Watch expressions: variable names + values consistent with variables view. */
+.monaco-workbench .debug-view-content .watch-expressions .expression .name {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 11.5px;
+	color: #C2D98A;
+}
+.monaco-workbench .debug-view-content .watch-expressions .expression .value {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 11.5px;
+}
+
+/* Variables view: type labels in teal. */
+.monaco-workbench .debug-view-content .variables-view .variable .type {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 10px;
+	color: #7FD0C0;
+	opacity: 0.72;
+}
+
+/* Debug REPL: rounded editor and output. */
+.monaco-workbench .debug-view-content .repl .repl-input-wrapper {
+	border-radius: 6px;
+}
+
+/* --- KEYBOARD SHORTCUT EDITOR: WHEN-CLAUSE + CONFLICTS ------------------- */
+
+/* When-clause column: code-style font for predicate strings. */
+.monaco-workbench .keybindings-editor .keybindings-table-container .monaco-table .keybinding-when .when {
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 10.5px;
+	opacity: 0.68;
+}
+
+/* Conflict row: subtle red-tinted background. */
+.monaco-workbench .keybindings-editor .keybindings-table-container .monaco-table .keybinding-item-conflict {
+	background-color: rgba(255, 59, 87, 0.06) !important;
+}
+
+/* Conflict indicator icon: brighter. */
+.monaco-workbench .keybindings-editor .keybindings-table-container .monaco-table .keybinding-item-conflict .codicon-warning {
+	opacity: 0.85;
+}
+
+/* Column resize handles: lime-tinted on hover. */
+.monaco-workbench .keybindings-editor .keybindings-table-container .monaco-split-view2 > .sash-container > .monaco-sash:hover {
+	background-color: rgba(194, 242, 77, 0.15);
+}
+
+/* Keybinding recording mode input: lime glow. */
+.monaco-workbench .keybindings-editor .define-keybinding-widget .monaco-inputbox.synthetic-focus {
+	box-shadow: 0 0 0 1px rgba(194, 242, 77, 0.50);
+	border-radius: 6px;
+}
+
+/* --- TERMINAL TAB STATUS DECORATIONS ------------------------------------- */
+
+/* Terminal tab status icons: ghost at rest, brighten on hover. */
+.monaco-workbench .terminal-tabs-entry .codicon.terminal-icon-status {
+	opacity: 0.45;
+	transition: opacity 150ms ease;
+}
+.monaco-workbench .terminal-tabs-entry:hover .codicon.terminal-icon-status {
+	opacity: 0.85;
+}
+
+/* Terminal tab list container: tighter layout. */
+.monaco-workbench .part.panel .terminal-tabs-list-container {
+	min-width: 0;
+}
+
+/* Terminal split pane sash: thin lime on hover. */
+.monaco-workbench .terminal-group .monaco-split-view2 > .sash-container > .monaco-sash:hover {
+	background-color: rgba(194, 242, 77, 0.20);
+}
+
+/* --- FOLDED RANGE BACKGROUND + INLINE ELLIPSIS --------------------------- */
+
+/* Folded line background: subtle lime tint for collapsed regions. */
+.monaco-editor .folded-background {
+	background-color: rgba(194, 242, 77, 0.04) !important;
+}
+
+/* Inline fold ellipsis: lime-tinted, readable. */
+.monaco-editor .inline-folded::after {
+	color: rgba(194, 242, 77, 0.50);
+	font-family: 'JetBrains Mono', monospace;
+	font-size: 10px;
+}
+
+/* Manual fold icon: include in ghost pattern. */
+.monaco-workbench .monaco-editor .codicon-folding-manual-expanded,
+.monaco-workbench .monaco-editor .codicon-folding-manual-collapsed {
+	opacity: 0.30;
+	transition: opacity 150ms ease;
+}
+.monaco-workbench .monaco-editor .margin:hover .codicon-folding-manual-expanded,
+.monaco-workbench .monaco-editor .margin:hover .codicon-folding-manual-collapsed {
+	opacity: 0.80;
+	color: #C2F24D;
+}
+
+/* --- COMMAND CENTER (if re-enabled via settings) ------------------------- */
+
+/* Command center container in title bar: glass treatment. */
+.monaco-workbench .part.titlebar .command-center {
+	backdrop-filter: blur(12px) saturate(1.3);
+	border-radius: 8px;
+	box-shadow: 0 2px 12px rgba(0, 0, 0, 0.30), inset 0 0 0 1px rgba(140, 147, 168, 0.10);
+}
+
+/* Command center input area. */
+.monaco-workbench .part.titlebar .command-center .action-item a {
+	font-family: 'Hanken Grotesk', sans-serif;
+	font-size: 12px;
+	opacity: 0.55;
+	transition: opacity 150ms ease;
+}
+.monaco-workbench .part.titlebar .command-center .action-item a:hover {
+	opacity: 0.90;
+}
+
+/* Command center search hint text. */
+.monaco-workbench .part.titlebar .command-center .action-item .search-label {
+	font-family: 'Hanken Grotesk', sans-serif;
+	font-size: 12px;
+	opacity: 0.45;
+}
+
+/* --- SETTINGS EDITOR: SYNC, EMPTY STATE, OVERRIDES ----------------------- */
+
+/* Settings "No results" empty state. */
+.monaco-workbench .settings-editor .settings-body .no-results-message {
+	font-family: 'Hanken Grotesk', sans-serif;
+	font-size: 13px;
+	opacity: 0.60;
+}
+
+/* Settings scope override indicator: instrument voice. */
+.monaco-workbench .settings-editor .setting-item .setting-item-overrides {
+	font-family: 'Martian Mono', monospace;
+	font-size: 9px;
+	letter-spacing: 0.03em;
+	opacity: 0.55;
+}
+.monaco-workbench .settings-editor .setting-item .setting-item-overrides a {
+	color: #C2F24D;
+	opacity: 0.75;
+}
+.monaco-workbench .settings-editor .setting-item .setting-item-overrides a:hover {
+	opacity: 1.0;
+}
+
+/* Settings Sync view in sidebar. */
+.monaco-workbench .userDataSyncView .list-row .label {
+	font-family: 'Hanken Grotesk', sans-serif;
+	font-size: 12px;
+}
+.monaco-workbench .userDataSyncView .list-row .description {
+	font-family: 'Martian Mono', monospace;
+	font-size: 9px;
+	letter-spacing: 0.03em;
+	opacity: 0.50;
+}
+
+/* Settings JSON editor link: lime. */
+.monaco-workbench .settings-editor .setting-item .edit-in-settings-button {
+	color: rgba(194, 242, 77, 0.75);
+}
+.monaco-workbench .settings-editor .setting-item .edit-in-settings-button:hover {
+	color: #C2F24D;
+}
+
+/* --- EXTENSION EDITOR: HEADINGS, CHANGELOG, RATINGS --------------------- */
+
+/* Extension detail page heading hierarchy: Hanken Grotesk. */
+.monaco-workbench .extension-editor > .body .extension-editor-body h1 {
+	font-family: 'Hanken Grotesk', sans-serif;
+	font-size: 22px;
+	font-weight: 600;
+	margin-bottom: 12px;
+	color: #EAF0FF;
+}
+.monaco-workbench .extension-editor > .body .extension-editor-body h2 {
+	font-family: 'Hanken Grotesk', sans-serif;
+	font-size: 17px;
+	font-weight: 600;
+	margin-top: 24px;
+	margin-bottom: 8px;
+	color: #E6ECF7;
+}
+.monaco-workbench .extension-editor > .body .extension-editor-body h3 {
+	font-family: 'Hanken Grotesk', sans-serif;
+	font-size: 14px;
+	font-weight: 600;
+	margin-top: 18px;
+	margin-bottom: 6px;
+	color: #C0C8D8;
+}
+
+/* Changelog container: readable prose. */
+.monaco-workbench .extension-editor > .body .extension-editor-body .changelog {
+	font-family: 'Hanken Grotesk', sans-serif;
+	font-size: 13px;
+	line-height: 1.6;
+}
+
+/* Ratings list rows in extension detail. */
+.monaco-workbench .extension-editor > .body .extension-ratings .rating {
+	font-family: 'Hanken Grotesk', sans-serif;
+	font-size: 12.5px;
+}
+.monaco-workbench .extension-editor > .body .extension-ratings .rating .date {
+	font-family: 'Martian Mono', monospace;
+	font-size: 9px;
+	letter-spacing: 0.03em;
+	opacity: 0.50;
+}
+
+/* Extension version tab content. */
+.monaco-workbench .extension-editor > .body .extension-editor-body table {
+	font-family: 'Hanken Grotesk', sans-serif;
+	font-size: 12.5px;
+}
+.monaco-workbench .extension-editor > .body .extension-editor-body table th {
+	font-family: 'Martian Mono', monospace;
+	font-size: 10px;
+	letter-spacing: 0.04em;
+	text-transform: uppercase;
+	opacity: 0.60;
+}
+
+/* --- MINIMAP SHADOW + VIEWPORT HIGHLIGHT --------------------------------- */
+
+/* Minimap left-edge shadow when scrolled right: subtle. */
+.monaco-editor .minimap-shadow-visible {
+	box-shadow: -4px 0 12px rgba(0, 0, 0, 0.35);
+}
+
+/* Minimap decorations layer: dim to avoid competing with code. */
+.monaco-editor .minimap .minimap-decorations-layer {
+	opacity: 0.70;
+}
+
+/* --- EDITOR FOLDING RANGE HOVER HIGHLIGHT (enhanced) --------------------- */
+
+/* Make fold hover more visible by targeting the fold icon + margin. */
+.monaco-workbench .monaco-editor .margin-view-overlays > div:hover .codicon-folding-expanded,
+.monaco-workbench .monaco-editor .margin-view-overlays > div:hover .codicon-folding-collapsed {
+	color: #C2F24D;
+}
+
+/* --- WORKSPACE/EDITOR DRAG FEEDBACK -------------------------------------- */
+
+/* Editor group drop overlay: lime tint with glass feel. */
+.monaco-workbench .editor-group-container > .editor-drop-target-overlay {
+	background-color: rgba(194, 242, 77, 0.06) !important;
+	border: 1px solid rgba(194, 242, 77, 0.25) !important;
+	border-radius: 8px;
+}
+
+/* Sidebar/panel drop overlay during drag. */
+.monaco-workbench .part > .drop-target-overlay {
+	background-color: rgba(194, 242, 77, 0.06) !important;
+	border-radius: 8px;
+}
+
+/* --- EDITOR WORD WRAP COLUMN INDICATOR ----------------------------------- */
+
+/* Word wrap column indicator (col 80/120): very subtle. */
+.monaco-workbench .monaco-editor .view-ruler {
+	opacity: 0.04;
+}
+
+/* --- DEBUG BREAKPOINT GLYPH MARGIN --------------------------------------- */
+
+/* Breakpoint icons: consistent red, brighter on hover. */
+.monaco-workbench .monaco-editor .cgmr .codicon-debug-breakpoint,
+.monaco-workbench .monaco-editor .cgmr .codicon-debug-breakpoint-conditional,
+.monaco-workbench .monaco-editor .cgmr .codicon-debug-breakpoint-log {
+	transition: opacity 150ms ease;
+}
+.monaco-workbench .monaco-editor .cgmr .codicon-debug-breakpoint:hover,
+.monaco-workbench .monaco-editor .cgmr .codicon-debug-breakpoint-conditional:hover,
+.monaco-workbench .monaco-editor .cgmr .codicon-debug-breakpoint-log:hover {
+	transform: scale(1.15);
+}
+
+/* --- DIFF EDITOR UNCHANGED REGION CONTROLS ------------------------------- */
+
+/* Diff editor "Show More" unchanged region controls: instrument voice. */
+.monaco-workbench .monaco-diff-editor .diff-hidden-lines .center {
+	font-family: 'Martian Mono', monospace;
+	font-size: 9.5px;
+	letter-spacing: 0.04em;
+	opacity: 0.55;
+}
+.monaco-workbench .monaco-diff-editor .diff-hidden-lines .center:hover {
+	opacity: 0.90;
+	color: #C2F24D;
+}
+
+/* Diff editor move indicator: lime-tinted. */
+.monaco-workbench .monaco-diff-editor .moved-code-block {
+	border-color: rgba(194, 242, 77, 0.30) !important;
+}
+
+/* --- OUTPUT CHANNEL PANEL: ENHANCED -------------------------------------- */
+
+/* Output panel filter input: rounded + glass. */
+.monaco-workbench .part.panel .output-view .monaco-inputbox {
+	border-radius: 6px;
+}
+
+/* Output channel content: consistent monospace. */
+.monaco-workbench .part.panel .output-view .view-lines {
+	font-family: 'JetBrains Mono', monospace;
+}
+
+/* --- EDITOR GROUP MAXIMIZED OVERLAY -------------------------------------- */
+
+/* When an editor group is maximized, other groups get subtle dim. */
+.monaco-workbench .editor-group-container.maximized ~ .editor-group-container {
+	opacity: 0.35;
+	transition: opacity 200ms ease;
+}
+
+/* --- SUGGEST WIDGET: STATUS BAR ------------------------------------------ */
+
+/* Suggest widget status bar (bottom): instrument voice. */
+.monaco-workbench .monaco-editor .suggest-widget > .suggest-status-bar {
+	font-family: 'Martian Mono', monospace;
+	font-size: 9px;
+	letter-spacing: 0.03em;
+	opacity: 0.50;
+}
+.monaco-workbench .monaco-editor .suggest-widget > .suggest-status-bar a {
+	color: rgba(194, 242, 77, 0.75);
+}
+.monaco-workbench .monaco-editor .suggest-widget > .suggest-status-bar a:hover {
+	color: #C2F24D;
+}

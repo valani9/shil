@@ -143,6 +143,10 @@
 		"scrollbarSlider.hoverBackground": "#8C93A833",
 		"scrollbarSlider.activeBackground": "#8C93A84D",
 		"minimap.background": "#05070C",
+		"minimap.foregroundOpacity": "#000000C0",
+		"minimapSlider.background": "#C2F24D14",
+		"minimapSlider.hoverBackground": "#C2F24D26",
+		"minimapSlider.activeBackground": "#C2F24D38",
 
 		"quickInput.background": "#080B12",
 		"quickInput.foreground": "#EAF0FF",
@@ -263,6 +267,7 @@
 		"editorCodeLens.foreground": "#585C6B",
 
 		"editor.foldBackground": "#C2F24D0A",
+		"editor.foldPlaceholderForeground": "#C2F24D80",
 
 		"editorGutter.addedBackground": "#C2D98A",
 		"editorGutter.modifiedBackground": "#F0B97A",
@@ -336,6 +341,18 @@
 		"merge.currentContentBackground": "#C2D98A1A",
 		"merge.incomingHeaderBackground": "#7FD0C033",
 		"merge.incomingContentBackground": "#7FD0C01A",
+		"merge.border": "#8C93A81F",
+		"merge.commonHeaderBackground": "#8C93A824",
+		"merge.commonContentBackground": "#8C93A814",
+		"mergeEditor.change.background": "#C2D98A14",
+		"mergeEditor.change.word.background": "#C2D98A26",
+		"mergeEditor.conflict.handledUnfocused.border": "#C2D98A33",
+		"mergeEditor.conflict.handledFocused.border": "#C2D98A66",
+		"mergeEditor.conflict.unhandledUnfocused.border": "#F0B97A33",
+		"mergeEditor.conflict.unhandledFocused.border": "#F0B97A66",
+		"mergeEditor.changeBase.background": "#8C93A814",
+		"mergeEditor.changeBase.word.background": "#8C93A824",
+		"mergeEditor.conflictingLines.background": "#F0B97A14",
 
 		"debugConsole.infoForeground": "#C0C8D8",
 		"debugConsole.warningForeground": "#F0B97A",
