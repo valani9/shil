@@ -1879,36 +1879,41 @@ configurationRegistry.registerConfiguration({
 		}
 	}
 });
-Registry.as<IEditorPaneRegistry>(EditorExtensions.EditorPane).registerEditorPane(
-	EditorPaneDescriptor.create(
-		ChatEditor,
-		ChatEditorInput.EditorID,
-		nls.localize('chat', "Chat")
-	),
-	[
-		new SyncDescriptor(ChatEditorInput)
-	]
-);
-Registry.as<IEditorPaneRegistry>(EditorExtensions.EditorPane).registerEditorPane(
-	EditorPaneDescriptor.create(
-		ChatDebugEditor,
-		ChatDebugEditorInput.ID,
-		nls.localize('chatDebug', "Debug View")
-	),
-	[
-		new SyncDescriptor(ChatDebugEditorInput)
-	]
-);
-Registry.as<IEditorPaneRegistry>(EditorExtensions.EditorPane).registerEditorPane(
-	EditorPaneDescriptor.create(
-		AgentPluginEditor,
-		AgentPluginEditor.ID,
-		nls.localize('agentPlugin', "Agent Plugin")
-	),
-	[
-		new SyncDescriptor(AgentPluginEditorInput)
-	]
-);
+// Shil: suppress chat/agent editor pane registrations — no chat editors
+// should be openable in Shil. The editor infrastructure is available
+// for Shil's own agent once it gets its own editor pane.
+if (product.nameShort === 'Code - OSS') {
+	Registry.as<IEditorPaneRegistry>(EditorExtensions.EditorPane).registerEditorPane(
+		EditorPaneDescriptor.create(
+			ChatEditor,
+			ChatEditorInput.EditorID,
+			nls.localize('chat', "Chat")
+		),
+		[
+			new SyncDescriptor(ChatEditorInput)
+		]
+	);
+	Registry.as<IEditorPaneRegistry>(EditorExtensions.EditorPane).registerEditorPane(
+		EditorPaneDescriptor.create(
+			ChatDebugEditor,
+			ChatDebugEditorInput.ID,
+			nls.localize('chatDebug', "Debug View")
+		),
+		[
+			new SyncDescriptor(ChatDebugEditorInput)
+		]
+	);
+	Registry.as<IEditorPaneRegistry>(EditorExtensions.EditorPane).registerEditorPane(
+		EditorPaneDescriptor.create(
+			AgentPluginEditor,
+			AgentPluginEditor.ID,
+			nls.localize('agentPlugin', "Agent Plugin")
+		),
+		[
+			new SyncDescriptor(AgentPluginEditorInput)
+		]
+	);
+}
 Registry.as<IConfigurationMigrationRegistry>(Extensions.ConfigurationMigration).registerConfigurationMigrations([
 	{
 		key: 'chat.agentSessions.defaultConfiguration',
@@ -2440,13 +2445,16 @@ AccessibleViewRegistry.register(new QuickChatAccessibilityHelp());
 AccessibleViewRegistry.register(new EditsChatAccessibilityHelp());
 AccessibleViewRegistry.register(new AgentChatAccessibilityHelp());
 
-registerEditorFeature(ChatInputBoxContentProvider);
-Registry.as<IEditorFactoryRegistry>(EditorExtensions.EditorFactory).registerEditorSerializer(ChatEditorInput.TypeID, ChatEditorInputSerializer);
-Registry.as<IEditorFactoryRegistry>(EditorExtensions.EditorFactory).registerEditorSerializer(ChatDebugEditorInput.ID, ChatDebugEditorInputSerializer);
+// Shil: suppress chat editor serializers, resolvers, and Copilot telemetry.
+if (product.nameShort === 'Code - OSS') {
+	registerEditorFeature(ChatInputBoxContentProvider);
+	Registry.as<IEditorFactoryRegistry>(EditorExtensions.EditorFactory).registerEditorSerializer(ChatEditorInput.TypeID, ChatEditorInputSerializer);
+	Registry.as<IEditorFactoryRegistry>(EditorExtensions.EditorFactory).registerEditorSerializer(ChatDebugEditorInput.ID, ChatDebugEditorInputSerializer);
 
-registerWorkbenchContribution2(CopilotTelemetryContribution.ID, CopilotTelemetryContribution, WorkbenchPhase.BlockRestore);
-registerWorkbenchContribution2(ChatResolverContribution.ID, ChatResolverContribution, WorkbenchPhase.BlockStartup);
-registerWorkbenchContribution2(ChatDebugResolverContribution.ID, ChatDebugResolverContribution, WorkbenchPhase.BlockStartup);
+	registerWorkbenchContribution2(CopilotTelemetryContribution.ID, CopilotTelemetryContribution, WorkbenchPhase.BlockRestore);
+	registerWorkbenchContribution2(ChatResolverContribution.ID, ChatResolverContribution, WorkbenchPhase.BlockStartup);
+	registerWorkbenchContribution2(ChatDebugResolverContribution.ID, ChatDebugResolverContribution, WorkbenchPhase.BlockStartup);
+}
 registerWorkbenchContribution2(PromptsDebugContribution.ID, PromptsDebugContribution, WorkbenchPhase.BlockRestore);
 registerWorkbenchContribution2(AgentHostChatDebugContribution.ID, AgentHostChatDebugContribution, WorkbenchPhase.BlockRestore);
 registerWorkbenchContribution2(ChatLanguageModelsDataContribution.ID, ChatLanguageModelsDataContribution, WorkbenchPhase.BlockRestore);
@@ -2456,18 +2464,23 @@ registerWorkbenchContribution2(ChatSessionOptionSlashCommandsContribution.ID, Ch
 registerWorkbenchContribution2(ChatExtensionPointHandler.ID, ChatExtensionPointHandler, WorkbenchPhase.BlockStartup);
 registerWorkbenchContribution2(LanguageModelToolsExtensionPointHandler.ID, LanguageModelToolsExtensionPointHandler, WorkbenchPhase.BlockRestore);
 registerWorkbenchContribution2(ChatPromptFilesExtensionPointHandler.ID, ChatPromptFilesExtensionPointHandler, WorkbenchPhase.BlockRestore);
-registerWorkbenchContribution2(ChatCompatibilityNotifier.ID, ChatCompatibilityNotifier, WorkbenchPhase.Eventually);
-registerWorkbenchContribution2(CodeBlockActionRendering.ID, CodeBlockActionRendering, WorkbenchPhase.BlockRestore);
-registerWorkbenchContribution2(ChatCopyActionRendering.ID, ChatCopyActionRendering, WorkbenchPhase.BlockRestore);
-registerWorkbenchContribution2(ChatImplicitContextContribution.ID, ChatImplicitContextContribution, WorkbenchPhase.Eventually);
-registerWorkbenchContribution2(ChatViewsWelcomeHandler.ID, ChatViewsWelcomeHandler, WorkbenchPhase.BlockStartup);
-registerWorkbenchContribution2(ChatGettingStartedContribution.ID, ChatGettingStartedContribution, WorkbenchPhase.Eventually);
-registerWorkbenchContribution2(ChatSetupContribution.ID, ChatSetupContribution, WorkbenchPhase.BlockRestore);
-registerWorkbenchContribution2(ChatQuotaNotificationContribution.ID, ChatQuotaNotificationContribution, WorkbenchPhase.AfterRestored);
-registerWorkbenchContribution2(LocalAgentDisabledInputTipContribution.ID, LocalAgentDisabledInputTipContribution, WorkbenchPhase.AfterRestored);
-registerWorkbenchContribution2(HasByokModelsContribution.ID, HasByokModelsContribution, WorkbenchPhase.BlockRestore);
-registerWorkbenchContribution2(ChatTeardownContribution.ID, ChatTeardownContribution, WorkbenchPhase.AfterRestored);
-registerWorkbenchContribution2(ChatStatusBarEntry.ID, ChatStatusBarEntry, WorkbenchPhase.BlockRestore);
+// Shil: suppress chat UI contributions (compatibility notifier, welcome
+// handler, getting started, setup modal, quota notifications, status bar
+// entry, etc.). These are all user-facing chat chrome.
+if (product.nameShort === 'Code - OSS') {
+	registerWorkbenchContribution2(ChatCompatibilityNotifier.ID, ChatCompatibilityNotifier, WorkbenchPhase.Eventually);
+	registerWorkbenchContribution2(CodeBlockActionRendering.ID, CodeBlockActionRendering, WorkbenchPhase.BlockRestore);
+	registerWorkbenchContribution2(ChatCopyActionRendering.ID, ChatCopyActionRendering, WorkbenchPhase.BlockRestore);
+	registerWorkbenchContribution2(ChatImplicitContextContribution.ID, ChatImplicitContextContribution, WorkbenchPhase.Eventually);
+	registerWorkbenchContribution2(ChatViewsWelcomeHandler.ID, ChatViewsWelcomeHandler, WorkbenchPhase.BlockStartup);
+	registerWorkbenchContribution2(ChatGettingStartedContribution.ID, ChatGettingStartedContribution, WorkbenchPhase.Eventually);
+	registerWorkbenchContribution2(ChatSetupContribution.ID, ChatSetupContribution, WorkbenchPhase.BlockRestore);
+	registerWorkbenchContribution2(ChatQuotaNotificationContribution.ID, ChatQuotaNotificationContribution, WorkbenchPhase.AfterRestored);
+	registerWorkbenchContribution2(LocalAgentDisabledInputTipContribution.ID, LocalAgentDisabledInputTipContribution, WorkbenchPhase.AfterRestored);
+	registerWorkbenchContribution2(HasByokModelsContribution.ID, HasByokModelsContribution, WorkbenchPhase.BlockRestore);
+	registerWorkbenchContribution2(ChatTeardownContribution.ID, ChatTeardownContribution, WorkbenchPhase.AfterRestored);
+	registerWorkbenchContribution2(ChatStatusBarEntry.ID, ChatStatusBarEntry, WorkbenchPhase.BlockRestore);
+}
 registerWorkbenchContribution2(BuiltinToolsContribution.ID, BuiltinToolsContribution, WorkbenchPhase.Eventually);
 registerWorkbenchContribution2(ClientToolSetsContribution.ID, ClientToolSetsContribution, WorkbenchPhase.Eventually);
 registerWorkbenchContribution2(UsagesToolContribution.ID, UsagesToolContribution, WorkbenchPhase.BlockRestore);
@@ -2495,36 +2508,41 @@ registerWorkbenchContribution2(ChatRepoInfoContribution.ID, ChatRepoInfoContribu
 registerWorkbenchContribution2(AgentPluginRecommendations.ID, AgentPluginRecommendations, WorkbenchPhase.Eventually);
 registerWorkbenchContribution2(PluginAutoUpdate.ID, PluginAutoUpdate, WorkbenchPhase.Eventually);
 
-registerChatActions();
-registerChatAccessibilityActions();
-registerChatCopyActions();
-registerChatOpenAgentDebugPanelAction();
-registerChatCodeBlockActions();
-registerChatCodeCompareBlockActions();
-registerChatFileTreeActions();
-registerChatPromptNavigationActions();
-registerChatTitleActions();
-registerChatExecuteActions();
-registerChatQueueActions();
-registerQuickChatActions();
-registerChatExportActions();
-registerMoveActions();
-registerNewChatActions();
-registerChatContextActions();
-registerChatDeveloperActions();
-registerChatEditorActions();
-registerChatElicitationActions();
-registerChatToolActions();
-registerLanguageModelActions();
-registerChatPluginActions();
-registerPlanReviewFeedbackEditorActions();
-registerAction2(ConfigureToolSets);
-registerEditorFeature(ChatPasteProvidersFeature);
+// Shil: suppress all chat/agent action registrations (keybindings, menus,
+// commands, editor features) so no VS Code chat UI is invocable. Service
+// singletons below are kept — Shil's own agent will use them later.
+if (product.nameShort === 'Code - OSS') {
+	registerChatActions();
+	registerChatAccessibilityActions();
+	registerChatCopyActions();
+	registerChatOpenAgentDebugPanelAction();
+	registerChatCodeBlockActions();
+	registerChatCodeCompareBlockActions();
+	registerChatFileTreeActions();
+	registerChatPromptNavigationActions();
+	registerChatTitleActions();
+	registerChatExecuteActions();
+	registerChatQueueActions();
+	registerQuickChatActions();
+	registerChatExportActions();
+	registerMoveActions();
+	registerNewChatActions();
+	registerChatContextActions();
+	registerChatDeveloperActions();
+	registerChatEditorActions();
+	registerChatElicitationActions();
+	registerChatToolActions();
+	registerLanguageModelActions();
+	registerChatPluginActions();
+	registerPlanReviewFeedbackEditorActions();
+	registerAction2(ConfigureToolSets);
+	registerEditorFeature(ChatPasteProvidersFeature);
 
-agentPluginDiscoveryRegistry.register(new SyncDescriptor(ConfiguredAgentPluginDiscovery), AgentPluginDiscoveryPriority.Configured);
-agentPluginDiscoveryRegistry.register(new SyncDescriptor(MarketplaceAgentPluginDiscovery), AgentPluginDiscoveryPriority.Marketplace);
-agentPluginDiscoveryRegistry.register(new SyncDescriptor(ExtensionAgentPluginDiscovery), AgentPluginDiscoveryPriority.Extension);
-agentPluginDiscoveryRegistry.register(new SyncDescriptor(CopilotCliAgentPluginDiscovery), AgentPluginDiscoveryPriority.CopilotCli);
+	agentPluginDiscoveryRegistry.register(new SyncDescriptor(ConfiguredAgentPluginDiscovery), AgentPluginDiscoveryPriority.Configured);
+	agentPluginDiscoveryRegistry.register(new SyncDescriptor(MarketplaceAgentPluginDiscovery), AgentPluginDiscoveryPriority.Marketplace);
+	agentPluginDiscoveryRegistry.register(new SyncDescriptor(ExtensionAgentPluginDiscovery), AgentPluginDiscoveryPriority.Extension);
+	agentPluginDiscoveryRegistry.register(new SyncDescriptor(CopilotCliAgentPluginDiscovery), AgentPluginDiscoveryPriority.CopilotCli);
+}
 
 registerSingleton(IChatResponseResourceFileSystemProvider, ChatResponseResourceFileSystemProvider, InstantiationType.Delayed);
 registerSingleton(IChatTransferService, ChatTransferService, InstantiationType.Delayed);

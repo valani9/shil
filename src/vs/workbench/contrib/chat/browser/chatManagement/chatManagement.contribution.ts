@@ -47,16 +47,21 @@ const LANGUAGE_MODELS_ENTITLEMENT_PRECONDITION = ContextKeyExpr.and(ChatContextK
 	ChatEntitlementContextKeys.clientByokEnabled
 ));
 
-Registry.as<IEditorPaneRegistry>(EditorExtensions.EditorPane).registerEditorPane(
-	EditorPaneDescriptor.create(
-		ModelsManagementEditor,
-		ModelsManagementEditor.ID,
-		localize('modelsManagementEditor', "Models Management Editor")
-	),
-	[
-		new SyncDescriptor(ModelsManagementEditorInput)
-	]
-);
+// Shil: suppress the models management editor — no Copilot model
+// management UI needed. Shil will have its own model configuration.
+import product from '../../../../../platform/product/common/product.js';
+if (product.nameShort === 'Code - OSS') {
+	Registry.as<IEditorPaneRegistry>(EditorExtensions.EditorPane).registerEditorPane(
+		EditorPaneDescriptor.create(
+			ModelsManagementEditor,
+			ModelsManagementEditor.ID,
+			localize('modelsManagementEditor', "Models Management Editor")
+		),
+		[
+			new SyncDescriptor(ModelsManagementEditorInput)
+		]
+	);
+}
 
 class ModelsManagementEditorInputSerializer implements IEditorSerializer {
 
@@ -73,7 +78,9 @@ class ModelsManagementEditorInputSerializer implements IEditorSerializer {
 	}
 }
 
-Registry.as<IEditorFactoryRegistry>(EditorExtensions.EditorFactory).registerEditorSerializer(ModelsManagementEditorInput.ID, ModelsManagementEditorInputSerializer);
+if (product.nameShort === 'Code - OSS') {
+	Registry.as<IEditorFactoryRegistry>(EditorExtensions.EditorFactory).registerEditorSerializer(ModelsManagementEditorInput.ID, ModelsManagementEditorInputSerializer);
+}
 
 /**
  * Enable + activate the Copilot Chat extension if installed but disabled.
@@ -212,4 +219,6 @@ class ChatManagementActionsContribution extends Disposable implements IWorkbench
 	}
 }
 
-registerWorkbenchContribution2(ChatManagementActionsContribution.ID, ChatManagementActionsContribution, WorkbenchPhase.AfterRestored);
+if (product.nameShort === 'Code - OSS') {
+	registerWorkbenchContribution2(ChatManagementActionsContribution.ID, ChatManagementActionsContribution, WorkbenchPhase.AfterRestored);
+}
