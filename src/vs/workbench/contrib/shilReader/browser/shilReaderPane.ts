@@ -1006,6 +1006,9 @@ export class ShilReaderPane extends EditorPane {
 		spanEl.classList.add('shil-reader-span--streaming-in');
 		this.spansContainerElement.appendChild(spanEl);
 		this.spanElements.push(spanEl);
+
+		// Auto-scroll to keep the latest span visible during streaming
+		spanEl.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
 	}
 
 	/**
