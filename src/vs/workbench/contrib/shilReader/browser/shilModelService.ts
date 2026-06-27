@@ -34,6 +34,11 @@ export interface IShilModelService {
 	 * Return cached spans for this file+content, or `undefined` if not cached.
 	 */
 	getCached(filePath: string, source: string): ReaderSpan[] | undefined;
+
+	/**
+	 * Reset CLI availability flag so the next generation attempt re-probes the CLI.
+	 */
+	resetCliAvailability(): void;
 }
 
 const SYSTEM_PROMPT = `You are a code reader that explains source code in plain English. Given a source file, produce a JSON array of "spans" where each span explains a contiguous block of code.
@@ -96,6 +101,10 @@ export class ShilModelService implements IShilModelService {
 		return this.cache.get(this.cacheKey(filePath, source));
 	}
 
+	resetCliAvailability(): void {
+		this.cliAvailable = undefined;
+	}
+
 	isConfigured(): boolean {
 		// CLI delegation is the default keyless path — always considered "configured"
 		// if we haven't proven it unavailable yet
@@ -113,6 +122,14 @@ export class ShilModelService implements IShilModelService {
 		const cached = this.cache.get(key);
 		if (cached) {
 			return cached;
+		}
+
+		// Guard: skip generation for very large files (>500 lines / >50KB)
+		// to avoid overwhelming the CLI or API with excessive input
+		const lineCount = source.split('\n').length;
+		if (lineCount > 500 || source.length > 50_000) {
+			this.logService.info(`[ShilModel] File too large for generation (${lineCount} lines, ${source.length} chars): ${filePath}`);
+			return undefined;
 		}
 
 		// Try CLI delegation first (keyless, uses user's subscription)
@@ -171,9 +188,14 @@ export class ShilModelService implements IShilModelService {
 			this.logService.info(`[ShilModel] Parsed ${parsed?.length ?? 0} spans from CLI output`);
 			return parsed;
 		} catch (err) {
-			this.logService.warn(`[ShilModel] CLI delegation failed: ${err instanceof Error ? err.message : String(err)}`);
-			// Mark CLI as unavailable on hard errors (e.g., IPC failure in web builds)
-			this.cliAvailable = false;
+			const msg = err instanceof Error ? err.message : String(err);
+			this.logService.warn(`[ShilModel] CLI delegation failed: ${msg}`);
+			// Only mark CLI as permanently unavailable on IPC-level failures
+			// (e.g., web builds where nativeHostService is unavailable).
+			// Transient errors (timeouts, crashes) should allow retry.
+			if (msg.includes('not implemented') || msg.includes('not available')) {
+				this.cliAvailable = false;
+			}
 			return undefined;
 		}
 	}

@@ -65,6 +65,8 @@ export class ShilReaderPane extends EditorPane {
 	private shortcutLegend: HTMLElement | undefined;
 	/** Search match count element. */
 	private searchCountElement: HTMLElement | undefined;
+	/** Saved context for retry after generation failure. */
+	private retryContext: { source: string; filePath: string; languageId: string; doc: ReaderDoc } | undefined;
 
 
 	constructor(
@@ -136,12 +138,16 @@ export class ShilReaderPane extends EditorPane {
 			if (cached && cached.length > 0) {
 				doc.spans = cached;
 				this.currentDoc = doc;
+				this.retryContext = undefined;
 				this.renderDoc(doc);
 			} else if (this.modelService.isConfigured()) {
 				// Show regex-parsed doc immediately with loading indicator
 				this.currentDoc = doc;
 				this.renderDoc(doc);
 				this.showLoadingOverlay();
+
+				// Save context for potential retry
+				this.retryContext = { source, filePath, languageId, doc };
 
 				// Generate spans via CLI (default, keyless) or API key fallback
 				const llmSpans = await this.modelService.generateReaderSpans(source, filePath, languageId, token);
@@ -151,14 +157,17 @@ export class ShilReaderPane extends EditorPane {
 				if (llmSpans && llmSpans.length > 0) {
 					doc.spans = llmSpans;
 					this.currentDoc = doc;
+					this.retryContext = undefined;
 					this.renderDoc(doc);
 				} else {
-					// Generation failed — remove loading overlay, keep regex doc
+					// Generation failed — show failure banner with retry option
 					this.hideLoadingOverlay();
+					this.showFailureBanner();
 				}
 			} else {
 				// Neither CLI nor API key available — regex parser only
 				this.currentDoc = doc;
+				this.retryContext = undefined;
 				this.renderDoc(doc);
 			}
 
@@ -881,6 +890,73 @@ export class ShilReaderPane extends EditorPane {
 		this.contentElement?.querySelector('.shil-reader-loading')?.remove();
 	}
 
+	private showFailureBanner(): void {
+		if (!this.contentElement) {
+			return;
+		}
+		// Remove existing banner if any
+		this.hideFailureBanner();
+
+		const banner = document.createElement('div');
+		banner.className = 'shil-reader-failure';
+
+		const icon = document.createElement('span');
+		icon.className = 'shil-reader-failure-icon';
+		icon.textContent = '\u26A0'; // ⚠
+		banner.appendChild(icon);
+
+		const text = document.createElement('span');
+		text.className = 'shil-reader-failure-text';
+		text.textContent = 'Could not generate plain English \u2014 showing regex-parsed spans.';
+		banner.appendChild(text);
+
+		const retryBtn = document.createElement('button');
+		retryBtn.className = 'shil-reader-failure-retry';
+		retryBtn.textContent = 'Retry';
+		retryBtn.addEventListener('click', (e) => {
+			e.stopPropagation();
+			this.retryGeneration();
+		});
+		banner.appendChild(retryBtn);
+
+		// Insert after header, before spans
+		const spansContainer = this.contentElement.querySelector('.shil-reader-spans');
+		if (spansContainer) {
+			this.contentElement.insertBefore(banner, spansContainer);
+		} else {
+			this.contentElement.appendChild(banner);
+		}
+	}
+
+	private hideFailureBanner(): void {
+		this.contentElement?.querySelector('.shil-reader-failure')?.remove();
+	}
+
+	private async retryGeneration(): Promise<void> {
+		if (!this.retryContext || !this.contentElement) {
+			return;
+		}
+		const { source, filePath, languageId, doc } = this.retryContext;
+
+		// Reset CLI availability so it tries again
+		this.modelService.resetCliAvailability();
+
+		this.hideFailureBanner();
+		this.showLoadingOverlay();
+
+		const token = CancellationToken.None;
+		const llmSpans = await this.modelService.generateReaderSpans(source, filePath, languageId, token);
+		if (llmSpans && llmSpans.length > 0) {
+			doc.spans = llmSpans;
+			this.currentDoc = doc;
+			this.retryContext = undefined;
+			this.renderDoc(doc);
+		} else {
+			this.hideLoadingOverlay();
+			this.showFailureBanner();
+		}
+	}
+
 	private renderError(detail?: string): void {
 		if (!this.contentElement) {
 			return;
@@ -1065,6 +1141,7 @@ export class ShilReaderPane extends EditorPane {
 		this.focusModeActive = false;
 		this.activeKindFilter = null;
 		this.searchFilter = '';
+		this.retryContext = undefined;
 		if (this.searchDebounceTimer !== undefined) {
 			clearTimeout(this.searchDebounceTimer);
 			this.searchDebounceTimer = undefined;
