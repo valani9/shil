@@ -65,6 +65,8 @@ export class ShilReaderPane extends EditorPane {
 	private searchDebounceTimer: ReturnType<typeof setTimeout> | undefined;
 	/** Keyboard shortcut legend overlay element. */
 	private shortcutLegend: HTMLElement | undefined;
+	/** Search match count element. */
+	private searchCountElement: HTMLElement | undefined;
 	/** Whether the API key notification has been shown this session (avoid nagging). */
 	private static apiKeyNotifShown = false;
 
@@ -264,11 +266,19 @@ export class ShilReaderPane extends EditorPane {
 		const filterBar = document.createElement('div');
 		filterBar.className = 'shil-reader-filter-bar';
 
+		const searchWrapper = document.createElement('div');
+		searchWrapper.className = 'shil-reader-search-wrapper';
+
 		const searchInput = document.createElement('input');
 		searchInput.className = 'shil-reader-search';
 		searchInput.type = 'text';
 		searchInput.placeholder = 'Search spans\u2026';
 		searchInput.setAttribute('aria-label', 'Search spans by text');
+
+		const searchCount = document.createElement('span');
+		searchCount.className = 'shil-reader-search-count';
+		this.searchCountElement = searchCount;
+
 		searchInput.addEventListener('input', () => {
 			if (this.searchDebounceTimer !== undefined) {
 				clearTimeout(this.searchDebounceTimer);
@@ -289,7 +299,9 @@ export class ShilReaderPane extends EditorPane {
 			}
 			e.stopPropagation();
 		});
-		filterBar.appendChild(searchInput);
+		searchWrapper.appendChild(searchInput);
+		searchWrapper.appendChild(searchCount);
+		filterBar.appendChild(searchWrapper);
 
 		// Kind filter pills
 		const kindPills = document.createElement('div');
@@ -440,7 +452,14 @@ export class ShilReaderPane extends EditorPane {
 		el.appendChild(detail);
 
 		// Click-through: clicking anywhere on the span (except chevron) navigates to code
-		el.addEventListener('click', () => this.navigateToCode(span));
+		// Flash animation on click for visual feedback before navigation
+		el.addEventListener('click', () => {
+			el.classList.add('shil-reader-span--clicked');
+			el.addEventListener('animationend', () => {
+				el.classList.remove('shil-reader-span--clicked');
+			}, { once: true });
+			this.navigateToCode(span);
+		});
 
 		// Hover: highlight related connections in the rail
 		el.addEventListener('mouseenter', () => this.highlightConnections(span, doc));
@@ -778,10 +797,73 @@ export class ShilReaderPane extends EditorPane {
 			if (visible) {
 				visibleCount++;
 			}
+
+			// Highlight matching text in English prose when searching
+			this.highlightProseMatch(el, span, visible);
 		}
+
+		// Update the search match count badge
+		this.updateSearchCount(visibleCount, doc.spans.length);
 
 		// Update the search results count in the meta area (via aria-live region)
 		this.updateFilterStatus(visibleCount, doc.spans.length);
+	}
+
+	/** Highlight matching text in the English prose of a span. */
+	private highlightProseMatch(el: HTMLElement, span: ReaderSpan, visible: boolean): void {
+		const proseEl = el.querySelector('.shil-reader-span-english') as HTMLElement | null;
+		if (!proseEl) {
+			return;
+		}
+		if (!this.searchFilter || !visible) {
+			// Reset to plain text
+			proseEl.textContent = span.english;
+			return;
+		}
+		// Find all matches and wrap in <mark>
+		const text = span.english;
+		const lower = text.toLowerCase();
+		const query = this.searchFilter;
+		const fragments: string[] = [];
+		let lastIdx = 0;
+		let pos = lower.indexOf(query, 0);
+		while (pos !== -1) {
+			if (pos > lastIdx) {
+				fragments.push(this.escapeHtml(text.slice(lastIdx, pos)));
+			}
+			fragments.push(`<mark class="shil-reader-highlight">${this.escapeHtml(text.slice(pos, pos + query.length))}</mark>`);
+			lastIdx = pos + query.length;
+			pos = lower.indexOf(query, lastIdx);
+		}
+		if (lastIdx < text.length) {
+			fragments.push(this.escapeHtml(text.slice(lastIdx)));
+		}
+		if (fragments.length > 0) {
+			const html = fragments.join('');
+			if (readerTrustedTypes) {
+				proseEl.innerHTML = readerTrustedTypes.createHTML(html) as unknown as string;
+			} else {
+				proseEl.textContent = span.english;
+			}
+		}
+	}
+
+	private escapeHtml(s: string): string {
+		return s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+	}
+
+	/** Update the search match count badge next to the search input. */
+	private updateSearchCount(visible: number, total: number): void {
+		if (!this.searchCountElement) {
+			return;
+		}
+		if (this.searchFilter) {
+			this.searchCountElement.textContent = `${visible}`;
+			this.searchCountElement.style.display = '';
+			this.searchCountElement.classList.toggle('shil-reader-search-count--zero', visible === 0);
+		} else {
+			this.searchCountElement.style.display = 'none';
+		}
 	}
 
 	/** Update filter status for screen readers. */
@@ -1051,6 +1133,7 @@ export class ShilReaderPane extends EditorPane {
 			this.searchDebounceTimer = undefined;
 		}
 		this.dismissShortcutLegend();
+		this.searchCountElement = undefined;
 		this.currentDoc = undefined;
 		this.currentResource = undefined;
 		if (this.contentElement) {

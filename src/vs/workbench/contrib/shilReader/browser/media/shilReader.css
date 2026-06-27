@@ -910,6 +910,68 @@
 }
 
 /* ==========================================================================
+ *  SEARCH WRAPPER — input + match count badge.
+ * ========================================================================== */
+
+.shil-reader-search-wrapper {
+	position: relative;
+	display: flex;
+	align-items: center;
+}
+
+.shil-reader-search-wrapper .shil-reader-search {
+	width: 100%;
+	padding-right: 40px;
+}
+
+.shil-reader-search-count {
+	position: absolute;
+	right: 8px;
+	top: 50%;
+	transform: translateY(-50%);
+	font-family: 'Martian Mono', 'JetBrains Mono', monospace;
+	font-size: 8.5px;
+	font-weight: 500;
+	letter-spacing: 0.04em;
+	color: rgba(194, 242, 77, 0.55);
+	background: rgba(194, 242, 77, 0.06);
+	border-radius: 4px;
+	padding: 1px 5px;
+	pointer-events: none;
+	transition: color 150ms ease, background 150ms ease;
+}
+
+.shil-reader-search-count--zero {
+	color: rgba(255, 100, 100, 0.55);
+	background: rgba(255, 100, 100, 0.06);
+}
+
+/* ==========================================================================
+ *  SEARCH TEXT HIGHLIGHTING — <mark> inside English prose.
+ * ========================================================================== */
+
+.shil-reader-highlight {
+	background: rgba(194, 242, 77, 0.18);
+	color: rgba(255, 255, 255, 0.95);
+	border-radius: 2px;
+	padding: 0 1px;
+	box-shadow: 0 0 0 1px rgba(194, 242, 77, 0.10);
+}
+
+/* ==========================================================================
+ *  CLICK FLASH — brief lime pulse on span click before navigation.
+ * ========================================================================== */
+
+.shil-reader-span--clicked {
+	animation: shil-span-click-flash 300ms ease-out;
+}
+
+@keyframes shil-span-click-flash {
+	0%   { background: rgba(194, 242, 77, 0.12); box-shadow: 0 0 12px rgba(194, 242, 77, 0.08); }
+	100% { background: transparent; box-shadow: none; }
+}
+
+/* ==========================================================================
  *  RESPONSIVE — collapse rail on narrow widths.
  * ========================================================================== */
 
