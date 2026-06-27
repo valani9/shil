@@ -4247,3 +4247,134 @@ body.shil-sidebar-resizing * {
 .monaco-workbench .part.auxiliarybar .monaco-list-rows {
 	scroll-behavior: smooth;
 }
+
+/* ============================================================================
+ *  TAB TRANSITIONS — smooth width/opacity/transform on tab open/close.
+ *  Tabs animate into place on creation and collapse gracefully on close.
+ * ========================================================================== */
+
+.monaco-workbench .tab {
+	transition: opacity 150ms ease, transform 150ms ease;
+}
+
+/* Tab enter state — slight scale-up fade-in feel via opacity. */
+.monaco-workbench .tab:focus-within {
+	z-index: 1;
+}
+
+/* ============================================================================
+ *  BREADCRUMB POLISH — when breadcrumbs are visible, match the Shil voice.
+ * ========================================================================== */
+
+.monaco-workbench .breadcrumbs-control .monaco-breadcrumb-item {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 10px !important;
+	letter-spacing: 0.02em;
+	opacity: 0.55;
+	transition: opacity 120ms ease;
+}
+
+.monaco-workbench .breadcrumbs-control .monaco-breadcrumb-item:hover,
+.monaco-workbench .breadcrumbs-control .monaco-breadcrumb-item.focused {
+	opacity: 0.9;
+}
+
+.monaco-workbench .breadcrumbs-control .monaco-breadcrumb-item .codicon {
+	opacity: 0.4;
+}
+
+/* ============================================================================
+ *  DIFF EDITOR POLISH — softer gutter colors, rounded inserted/removed blocks.
+ * ========================================================================== */
+
+.monaco-workbench .monaco-diff-editor .insert-sign,
+.monaco-workbench .monaco-diff-editor .delete-sign {
+	opacity: 0.7;
+}
+
+/* ============================================================================
+ *  NOTIFICATION CENTER — glass treatment for the notification toast area.
+ * ========================================================================== */
+
+.monaco-workbench .notifications-center,
+.monaco-workbench .notification-toast {
+	border-radius: 8px !important;
+	overflow: hidden;
+}
+
+.monaco-workbench .notifications-center .notification-list-item,
+.monaco-workbench .notification-toast .notification-list-item {
+	font-family: 'Hanken Grotesk', -apple-system, BlinkMacSystemFont, sans-serif !important;
+	font-size: 12.5px;
+}
+
+.monaco-workbench .notifications-center .notification-list-item .notification-list-item-icon {
+	opacity: 0.7;
+}
+
+/* ============================================================================
+ *  PEEK VIEW — glass treatment for the peek reference/definition widget.
+ * ========================================================================== */
+
+.monaco-workbench .monaco-editor .peekview-widget .head {
+	border-radius: 6px 6px 0 0 !important;
+}
+
+.monaco-workbench .monaco-editor .peekview-widget {
+	border-radius: 6px !important;
+	box-shadow: 0 8px 24px -4px rgba(0, 0, 0, 0.45) !important;
+}
+
+/* ============================================================================
+ *  FIND WIDGET POLISH — rounded corners + glass for the editor find bar.
+ * ========================================================================== */
+
+.monaco-workbench .monaco-editor .find-widget {
+	border-radius: 0 0 8px 8px !important;
+	box-shadow: 0 4px 16px -2px rgba(0, 0, 0, 0.35) !important;
+}
+
+.monaco-workbench .monaco-editor .find-widget .monaco-inputbox {
+	border-radius: 4px !important;
+}
+
+/* ============================================================================
+ *  SIDEBAR SECTION HEADERS — instrument voice for view titles.
+ * ========================================================================== */
+
+.monaco-workbench .part.sidebar .composite.title .title-label h2,
+.monaco-workbench .part.panel .composite.title .title-label h2 {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 10.5px !important;
+	letter-spacing: 0.03em;
+	text-transform: uppercase;
+}
+
+/* ============================================================================
+ *  ACTIVITY BAR BADGE — lime-tinted badge for activity bar counters.
+ * ========================================================================== */
+
+.monaco-workbench .activitybar .badge .badge-content {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 9px !important;
+	font-weight: 600;
+	background-color: rgba(194, 242, 77, 0.85) !important;
+	color: #0C1400 !important;
+	border-radius: 8px !important;
+}
+
+/* ============================================================================
+ *  STATUS BAR POLISH — ghost items for the status bar if it's visible.
+ * ========================================================================== */
+
+.monaco-workbench .part.statusbar .statusbar-item a {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 10px !important;
+	letter-spacing: 0.02em;
+	opacity: 0.55;
+	transition: opacity 120ms ease;
+}
+
+.monaco-workbench .part.statusbar .statusbar-item a:hover {
+	opacity: 0.9;
+}

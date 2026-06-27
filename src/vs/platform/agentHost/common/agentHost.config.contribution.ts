@@ -52,7 +52,7 @@ configurationRegistry.registerConfiguration({
 			type: 'string',
 			enum: ['local', 'copilotEh', 'copilotAh'],
 			enumDescriptions: [
-				nls.localize('chat.editor.defaultProvider.local', "Use the built-in VS Code local chat harness"),
+				nls.localize('chat.editor.defaultProvider.local', "Use the built-in local chat harness"),
 				nls.localize('chat.editor.defaultProvider.copilotEh', "Use the Extension Host Copilot CLI"),
 				nls.localize('chat.editor.defaultProvider.copilotAh', "Use the Agent Host Copilot CLI"),
 			],
@@ -63,7 +63,7 @@ configurationRegistry.registerConfiguration({
 		},
 		'chat.editor.localAgent.enabled': {
 			type: 'boolean',
-			description: nls.localize('chat.editor.localAgent.enabled', "When enabled, shows the VS Code local chat harness in the chat picker."),
+			description: nls.localize('chat.editor.localAgent.enabled', "When enabled, shows the local chat harness in the chat picker."),
 			default: true,
 			tags: ['experimental'],
 			experiment: { mode: 'startup' },
