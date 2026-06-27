@@ -137,17 +137,23 @@ export class ShilModelService implements IShilModelService {
 
 	private async generateViaCli(source: string, filePath: string, languageId: string, token: CancellationToken): Promise<ReaderSpan[] | undefined> {
 		if (this.cliAvailable === false) {
+			this.logService.info('[ShilModel] CLI previously marked unavailable, skipping');
 			return undefined;
 		}
 
 		try {
 			const cliCommand = this.configService.getValue<string>('shil.model.cliCommand') || this.defaultCliCommand();
 			const prompt = buildCliPrompt(source, filePath, languageId);
-			const result = await this.nativeHostService.shilRunCli(cliCommand, ['-p', prompt, '--output-format', 'text'], 120_000);
+			this.logService.info(`[ShilModel] Invoking CLI: "${cliCommand}" with ${prompt.length} char prompt via stdin`);
+			// Pass prompt via stdin to avoid OS arg-size limits on large files
+			const result = await this.nativeHostService.shilRunCli(cliCommand, ['-p', '--output-format', 'text'], 120_000, prompt);
 
 			if (token.isCancellationRequested) {
+				this.logService.info('[ShilModel] Cancelled after CLI returned');
 				return undefined;
 			}
+
+			this.logService.info(`[ShilModel] CLI exit=${result.exitCode}, stdout=${result.stdout.length} chars, stderr=${result.stderr.substring(0, 300)}`);
 
 			if (result.exitCode !== 0) {
 				// Check if CLI is not found
@@ -161,7 +167,9 @@ export class ShilModelService implements IShilModelService {
 			}
 
 			this.cliAvailable = true;
-			return this.parseRawSpans(result.stdout);
+			const parsed = this.parseRawSpans(result.stdout);
+			this.logService.info(`[ShilModel] Parsed ${parsed?.length ?? 0} spans from CLI output`);
+			return parsed;
 		} catch (err) {
 			this.logService.warn(`[ShilModel] CLI delegation failed: ${err instanceof Error ? err.message : String(err)}`);
 			// Mark CLI as unavailable on hard errors (e.g., IPC failure in web builds)

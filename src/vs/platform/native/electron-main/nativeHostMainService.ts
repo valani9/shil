@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as fs from 'fs';
-import { exec, execFile } from 'child_process';
+import { exec, spawn } from 'child_process';
 import { app, BrowserWindow, clipboard, contentTracing, Display, Menu, MessageBoxOptions, MessageBoxReturnValue, Notification, OpenDevToolsOptions, OpenDialogOptions, OpenDialogReturnValue, powerMonitor, powerSaveBlocker, SaveDialogOptions, SaveDialogReturnValue, screen, shell, systemPreferences, webContents } from 'electron';
 import { arch, cpus, freemem, loadavg, platform, release, totalmem, type } from 'os';
 import { promisify } from 'util';
@@ -1439,19 +1439,41 @@ export class NativeHostMainService extends Disposable implements INativeHostMain
 
 	//#region Shil CLI
 
-	async shilRunCli(_windowId: number | undefined, command: string, args: string[], timeoutMs?: number): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+	async shilRunCli(_windowId: number | undefined, command: string, args: string[], timeoutMs?: number, stdin?: string): Promise<{ stdout: string; stderr: string; exitCode: number }> {
 		const timeout = timeoutMs ?? 120_000;
 		const env = { ...process.env };
 		delete env['ELECTRON_RUN_AS_NODE'];
+		// Strip VSCODE_* env vars so the child process does not think it is inside VS Code
+		for (const key of Object.keys(env)) {
+			if (key.startsWith('VSCODE_')) {
+				delete env[key];
+			}
+		}
+		// Augment PATH with common binary locations (Electron GUI apps often lack the user's shell PATH)
+		const home = env['HOME'] || '';
+		const extraPaths = ['/usr/local/bin', '/opt/homebrew/bin', `${home}/.local/bin`, `${home}/.npm/bin`];
+		env['PATH'] = [...extraPaths, env['PATH'] || ''].join(':');
+
 		return new Promise<{ stdout: string; stderr: string; exitCode: number }>((resolve) => {
-			execFile(command, args, { timeout, maxBuffer: 10 * 1024 * 1024, env }, (error, stdout, stderr) => {
-				const exitCode = error ? (typeof (error as { code?: unknown }).code === 'number' ? (error as { code: number }).code : 1) : 0;
-				resolve({
-					stdout: typeof stdout === 'string' ? stdout : '',
-					stderr: typeof stderr === 'string' ? stderr : '',
-					exitCode,
-				});
+			const child = spawn(command, args, { env, stdio: ['pipe', 'pipe', 'pipe'] });
+			let stdout = '';
+			let stderr = '';
+			let killed = false;
+			const timer = setTimeout(() => { killed = true; child.kill('SIGTERM'); }, timeout);
+			child.stdout.on('data', (data: Buffer) => { stdout += data.toString(); });
+			child.stderr.on('data', (data: Buffer) => { stderr += data.toString(); });
+			child.on('close', (code: number | null) => {
+				clearTimeout(timer);
+				resolve({ stdout, stderr, exitCode: killed ? 1 : (code ?? 1) });
 			});
+			child.on('error', (err: Error) => {
+				clearTimeout(timer);
+				resolve({ stdout, stderr: err.message, exitCode: 1 });
+			});
+			if (stdin) {
+				child.stdin.write(stdin);
+			}
+			child.stdin.end();
 		});
 	}
 
