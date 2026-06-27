@@ -61,6 +61,10 @@ export class ShilReaderPane extends EditorPane {
 	private activeKindFilter: SpanKind | null = null;
 	/** Current search text filter. */
 	private searchFilter = '';
+	/** Debounce timer for search input. */
+	private searchDebounceTimer: ReturnType<typeof setTimeout> | undefined;
+	/** Keyboard shortcut legend overlay element. */
+	private shortcutLegend: HTMLElement | undefined;
 	/** Whether the API key notification has been shown this session (avoid nagging). */
 	private static apiKeyNotifShown = false;
 
@@ -89,12 +93,16 @@ export class ShilReaderPane extends EditorPane {
 		this.contentElement = document.createElement('div');
 		this.contentElement.className = 'shil-reader-content';
 		this.contentElement.tabIndex = 0;
+		this.contentElement.setAttribute('role', 'main');
+		this.contentElement.setAttribute('aria-label', 'Reader pane: plain-English code breakdown');
 		this.contentElement.addEventListener('keydown', (e) => this.handleKeydown(e));
 		this.mainColumn.appendChild(this.contentElement);
 		this.container.appendChild(this.mainColumn);
 
 		this.railElement = document.createElement('aside');
 		this.railElement.className = 'shil-reader-rail';
+		this.railElement.setAttribute('role', 'complementary');
+		this.railElement.setAttribute('aria-label', 'Connections: what breaks if you change this');
 		this.container.appendChild(this.railElement);
 
 		parent.appendChild(this.container);
@@ -262,8 +270,14 @@ export class ShilReaderPane extends EditorPane {
 		searchInput.placeholder = 'Search spans\u2026';
 		searchInput.setAttribute('aria-label', 'Search spans by text');
 		searchInput.addEventListener('input', () => {
-			this.searchFilter = searchInput.value.toLowerCase();
-			this.applyFilters();
+			if (this.searchDebounceTimer !== undefined) {
+				clearTimeout(this.searchDebounceTimer);
+			}
+			this.searchDebounceTimer = setTimeout(() => {
+				this.searchFilter = searchInput.value.toLowerCase();
+				this.applyFilters();
+				this.searchDebounceTimer = undefined;
+			}, 200);
 		});
 		// Prevent keyboard nav from stealing search keystrokes; Escape returns focus to content
 		searchInput.addEventListener('keydown', (e) => {
@@ -291,19 +305,23 @@ export class ShilReaderPane extends EditorPane {
 			pill.className = `shil-reader-kind-pill shil-reader-kind-pill--${k}`;
 			pill.textContent = kindLabel(k);
 			pill.dataset.kind = k;
+			pill.setAttribute('aria-pressed', 'false');
 			pill.addEventListener('click', (e) => {
 				e.stopPropagation();
 				if (this.activeKindFilter === k) {
 					this.activeKindFilter = null;
 					pill.classList.remove('shil-reader-kind-pill--active');
+					pill.setAttribute('aria-pressed', 'false');
 				} else {
 					// Deactivate previous
 					const prev = kindPills.querySelector('.shil-reader-kind-pill--active');
 					if (prev) {
 						prev.classList.remove('shil-reader-kind-pill--active');
+						prev.setAttribute('aria-pressed', 'false');
 					}
 					this.activeKindFilter = k;
 					pill.classList.add('shil-reader-kind-pill--active');
+					pill.setAttribute('aria-pressed', 'true');
 				}
 				this.applyFilters();
 			});
@@ -333,6 +351,9 @@ export class ShilReaderPane extends EditorPane {
 		const el = document.createElement('div');
 		el.className = `shil-reader-span shil-reader-span--${span.kind}`;
 		el.dataset.spanId = span.id;
+		el.setAttribute('role', 'article');
+		el.setAttribute('aria-expanded', 'true');
+		el.setAttribute('aria-label', `${kindLabel(span.kind)}: ${span.english.slice(0, 80)}`);
 
 		// Top row: badge + chevron toggle
 		const topRow = document.createElement('div');
@@ -348,10 +369,12 @@ export class ShilReaderPane extends EditorPane {
 		chevron.className = 'shil-reader-span-chevron';
 		chevron.textContent = '\u25BE'; // ▾ down = expanded
 		chevron.title = 'Collapse/expand';
+		chevron.setAttribute('aria-label', 'Toggle span detail');
 		chevron.addEventListener('click', (e) => {
 			e.stopPropagation();
 			const collapsed = el.classList.toggle('shil-reader-span--collapsed');
 			chevron.textContent = collapsed ? '\u25B8' : '\u25BE'; // ▸ right / ▾ down
+			el.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
 		});
 		topRow.appendChild(chevron);
 
@@ -504,8 +527,15 @@ export class ShilReaderPane extends EditorPane {
 			if (search) {
 				search.focus();
 			}
+		} else if (e.key === '?') {
+			e.preventDefault();
+			this.toggleShortcutLegend();
 		} else if (e.key === 'Escape') {
-			this.clearSpanFocus();
+			if (this.shortcutLegend) {
+				this.dismissShortcutLegend();
+			} else {
+				this.clearSpanFocus();
+			}
 		}
 	}
 
@@ -519,12 +549,29 @@ export class ShilReaderPane extends EditorPane {
 			this.spanElements[this.focusedSpanIdx].classList.remove('shil-reader-span--focused');
 		}
 
-		// Compute new index
-		if (this.focusedSpanIdx < 0) {
-			this.focusedSpanIdx = delta > 0 ? 0 : this.spanElements.length - 1;
-		} else {
-			this.focusedSpanIdx = Math.max(0, Math.min(this.spanElements.length - 1, this.focusedSpanIdx + delta));
+		// Find next visible span (skip filtered-out spans)
+		const start = this.focusedSpanIdx < 0
+			? (delta > 0 ? 0 : this.spanElements.length - 1)
+			: this.focusedSpanIdx + delta;
+
+		let next = start;
+		const len = this.spanElements.length;
+		while (next >= 0 && next < len) {
+			if (this.spanElements[next].style.display !== 'none') {
+				break;
+			}
+			next += delta;
 		}
+
+		if (next < 0 || next >= len) {
+			// No visible span found in that direction — stay put
+			if (this.focusedSpanIdx >= 0) {
+				this.spanElements[this.focusedSpanIdx].classList.add('shil-reader-span--focused');
+			}
+			return;
+		}
+
+		this.focusedSpanIdx = next;
 
 		// Apply focus
 		const el = this.spanElements[this.focusedSpanIdx];
@@ -630,6 +677,7 @@ export class ShilReaderPane extends EditorPane {
 	/** Toggle collapse/expand for a single span element. */
 	private toggleSpanCollapse(el: HTMLElement): void {
 		const collapsed = el.classList.toggle('shil-reader-span--collapsed');
+		el.setAttribute('aria-expanded', collapsed ? 'false' : 'true');
 		const chevron = el.querySelector('.shil-reader-span-chevron');
 		if (chevron) {
 			chevron.textContent = collapsed ? '\u25B8' : '\u25BE';
@@ -645,6 +693,7 @@ export class ShilReaderPane extends EditorPane {
 			} else {
 				el.classList.remove('shil-reader-span--collapsed');
 			}
+			el.setAttribute('aria-expanded', this.allCollapsed ? 'false' : 'true');
 			const chevron = el.querySelector('.shil-reader-span-chevron');
 			if (chevron) {
 				chevron.textContent = this.allCollapsed ? '\u25B8' : '\u25BE';
@@ -690,6 +739,7 @@ export class ShilReaderPane extends EditorPane {
 			} else {
 				el.classList.remove('shil-reader-span--collapsed');
 			}
+			el.setAttribute('aria-expanded', shouldCollapse ? 'false' : 'true');
 			const chevron = el.querySelector('.shil-reader-span-chevron');
 			if (chevron) {
 				chevron.textContent = shouldCollapse ? '\u25B8' : '\u25BE';
@@ -702,8 +752,12 @@ export class ShilReaderPane extends EditorPane {
 		if (!this.currentDoc) {
 			return;
 		}
+		const doc = this.currentDoc;
+		const sourceLines = doc.source.split('\n');
+		let visibleCount = 0;
+
 		for (let i = 0; i < this.spanElements.length; i++) {
-			const span = this.currentDoc.spans[i];
+			const span = doc.spans[i];
 			const el = this.spanElements[i];
 			let visible = true;
 
@@ -712,13 +766,43 @@ export class ShilReaderPane extends EditorPane {
 			}
 
 			if (visible && this.searchFilter) {
-				const haystack = span.english.toLowerCase();
-				if (!haystack.includes(this.searchFilter)) {
+				// Search both English prose and code content
+				const englishHaystack = span.english.toLowerCase();
+				const codeHaystack = sourceLines.slice(span.lineStart - 1, span.lineEnd).join('\n').toLowerCase();
+				if (!englishHaystack.includes(this.searchFilter) && !codeHaystack.includes(this.searchFilter)) {
 					visible = false;
 				}
 			}
 
 			el.style.display = visible ? '' : 'none';
+			if (visible) {
+				visibleCount++;
+			}
+		}
+
+		// Update the search results count in the meta area (via aria-live region)
+		this.updateFilterStatus(visibleCount, doc.spans.length);
+	}
+
+	/** Update filter status for screen readers. */
+	private updateFilterStatus(visible: number, total: number): void {
+		let status = this.contentElement?.querySelector('.shil-reader-filter-status') as HTMLElement | null;
+		if (!status && this.contentElement) {
+			status = document.createElement('div');
+			status.className = 'shil-reader-filter-status';
+			status.setAttribute('role', 'status');
+			status.setAttribute('aria-live', 'polite');
+			const filterBar = this.contentElement.querySelector('.shil-reader-filter-bar');
+			if (filterBar) {
+				filterBar.appendChild(status);
+			}
+		}
+		if (status) {
+			if (this.searchFilter || this.activeKindFilter) {
+				status.textContent = `${visible} of ${total} spans`;
+			} else {
+				status.textContent = '';
+			}
 		}
 	}
 
@@ -836,7 +920,17 @@ export class ShilReaderPane extends EditorPane {
 
 			const heading = document.createElement('div');
 			heading.className = 'shil-rail-section-heading';
-			heading.textContent = roleHeading(role);
+
+			const headingText = document.createElement('span');
+			headingText.textContent = roleHeading(role);
+			heading.appendChild(headingText);
+
+			const countBadge = document.createElement('span');
+			countBadge.className = 'shil-rail-count-badge';
+			countBadge.textContent = String(conns.length);
+			countBadge.setAttribute('aria-label', `${conns.length} connections`);
+			heading.appendChild(countBadge);
+
 			section.appendChild(heading);
 
 			for (const conn of conns) {
@@ -870,6 +964,77 @@ export class ShilReaderPane extends EditorPane {
 		}
 	}
 
+	/** Toggle keyboard shortcut legend overlay. */
+	private toggleShortcutLegend(): void {
+		if (this.shortcutLegend) {
+			this.dismissShortcutLegend();
+			return;
+		}
+		if (!this.container) {
+			return;
+		}
+
+		const overlay = document.createElement('div');
+		overlay.className = 'shil-reader-shortcut-legend';
+		overlay.setAttribute('role', 'dialog');
+		overlay.setAttribute('aria-label', 'Keyboard shortcuts');
+
+		const card = document.createElement('div');
+		card.className = 'shil-reader-shortcut-card';
+
+		const title = document.createElement('div');
+		title.className = 'shil-reader-shortcut-title';
+		title.textContent = 'KEYBOARD SHORTCUTS';
+		card.appendChild(title);
+
+		const shortcuts: [string, string][] = [
+			['j / \u2193', 'Next span'],
+			['k / \u2191', 'Previous span'],
+			['Enter', 'Jump to code'],
+			['c', 'Collapse/expand span'],
+			['f', 'Toggle focus mode'],
+			['/', 'Search spans'],
+			['?', 'Toggle this legend'],
+			['Esc', 'Clear focus / close'],
+		];
+
+		for (const [key, desc] of shortcuts) {
+			const row = document.createElement('div');
+			row.className = 'shil-reader-shortcut-row';
+
+			const keyEl = document.createElement('kbd');
+			keyEl.className = 'shil-reader-shortcut-key';
+			keyEl.textContent = key;
+			row.appendChild(keyEl);
+
+			const descEl = document.createElement('span');
+			descEl.className = 'shil-reader-shortcut-desc';
+			descEl.textContent = desc;
+			row.appendChild(descEl);
+
+			card.appendChild(row);
+		}
+
+		overlay.appendChild(card);
+		overlay.addEventListener('click', (e) => {
+			if (e.target === overlay) {
+				this.dismissShortcutLegend();
+			}
+		});
+
+		this.container.appendChild(overlay);
+		this.shortcutLegend = overlay;
+	}
+
+	/** Dismiss keyboard shortcut legend overlay. */
+	private dismissShortcutLegend(): void {
+		if (this.shortcutLegend) {
+			this.shortcutLegend.remove();
+			this.shortcutLegend = undefined;
+			this.contentElement?.focus();
+		}
+	}
+
 	override clearInput(): void {
 		super.clearInput();
 		this.paneDisposables.clear();
@@ -881,6 +1046,11 @@ export class ShilReaderPane extends EditorPane {
 		this.focusModeActive = false;
 		this.activeKindFilter = null;
 		this.searchFilter = '';
+		if (this.searchDebounceTimer !== undefined) {
+			clearTimeout(this.searchDebounceTimer);
+			this.searchDebounceTimer = undefined;
+		}
+		this.dismissShortcutLegend();
 		this.currentDoc = undefined;
 		this.currentResource = undefined;
 		if (this.contentElement) {
