@@ -107,7 +107,11 @@
       "editor.smoothScrolling": true,
       "workbench.list.smoothScrolling": true,
       "terminal.integrated.smoothScrolling": true,
-      "editor.cursorBlinking": "smooth"
+      "editor.cursorBlinking": "smooth",
+      "git.enableSmartCommit": true,
+      "git.confirmSync": false,
+      "workbench.welcomePage.walkthroughs.openOnInstall": false,
+      "update.showReleaseNotes": false
     }
   },
   "repository": {

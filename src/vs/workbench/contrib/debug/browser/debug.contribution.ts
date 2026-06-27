@@ -462,6 +462,7 @@ const viewContainer = Registry.as<IViewContainersRegistry>(ViewExtensions.ViewCo
 	ctorDescriptor: new SyncDescriptor(DebugViewPaneContainer),
 	icon: icons.runViewIcon,
 	alwaysUseContainerInfo: true,
+	hideIfEmpty: true,
 	order: 3,
 }, ViewContainerLocation.Sidebar);
 
