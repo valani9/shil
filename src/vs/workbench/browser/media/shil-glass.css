@@ -4586,3 +4586,88 @@ body.shil-sidebar-resizing * {
 .monaco-workbench.sidebar-hidden .shil-sidebar-scrim {
 	transition: opacity 180ms ease, backdrop-filter 180ms ease, -webkit-backdrop-filter 180ms ease;
 }
+
+/* ============================================================================
+ *  UI REINVENTION v36 — tab close spin, notification toast spring entrance,
+ *  status bar item hover glow, editor group split entrance.
+ * ========================================================================== */
+
+/* ---- TAB CLOSE SPIN — micro-rotation on close button click ---- */
+/* The close button icon spins 90deg when clicked, giving tactile feedback
+   that the action registered. Pairs with the existing red bg flash. */
+.monaco-workbench .tab .tab-close .codicon {
+	transition: transform 120ms ease, opacity 120ms ease;
+}
+.monaco-workbench .tab .tab-close:active .codicon {
+	transform: rotate(90deg) scale(0.85);
+}
+
+/* ---- NOTIFICATION TOAST SPRING ENTRANCE — override stock linear slide ---- */
+/* VS Code uses a 300ms ease-out translate. We override with a spring curve
+   that overshoots slightly, giving toasts a physical, snappy entrance.
+   The notification-fade-in class is added by JS to trigger the animation. */
+.monaco-workbench > .notifications-toasts .notification-toast-container > .notification-toast {
+	transition: transform 340ms cubic-bezier(0.22, 1.15, 0.36, 1),
+	            opacity 220ms ease-out !important;
+}
+/* Slide-in distance: shorten from 100% to ~40px for a subtler entrance. */
+.monaco-workbench > .notifications-toasts:not(.top-right) .notification-toast-container > .notification-toast {
+	transform: translate3d(0px, 40px, 0px) !important;
+	opacity: 0;
+}
+.monaco-workbench > .notifications-toasts:not(.top-right) .notification-toast-container > .notification-toast.notification-fade-in,
+.monaco-workbench > .notifications-toasts:not(.top-right) .notification-toast-container > .notification-toast.notification-fade-in-done {
+	transform: translate3d(0, 0, 0) !important;
+	opacity: 1;
+}
+/* Toast lime accent border: thin left-side lime line on active toasts. */
+.monaco-workbench .notification-toast.notification-fade-in .notification-list-item,
+.monaco-workbench .notification-toast.notification-fade-in-done .notification-list-item {
+	border-left: 2px solid rgba(194, 242, 77, 0.25) !important;
+}
+
+/* ---- STATUS BAR ITEM MICRO-INTERACTIONS — enhanced hover/active ---- */
+/* Individual items: smooth transition on text color + subtle glow. */
+.monaco-workbench .part.statusbar > .items-container > .statusbar-item > a {
+	transition: color 150ms ease, background-color 150ms ease, text-shadow 150ms ease;
+}
+/* Hover: lime text glow on interactive items. */
+.monaco-workbench .part.statusbar > .items-container > .statusbar-item > a:hover:not(.disabled) {
+	text-shadow: 0 0 6px rgba(194, 242, 77, 0.15);
+}
+/* Active: brief scale pulse for click registration. */
+.monaco-workbench .part.statusbar > .items-container > .statusbar-item > a:active:not(.disabled) {
+	transform: scale(0.96);
+	transition: transform 60ms ease;
+}
+
+/* ---- EDITOR GROUP SPLIT ENTRANCE — new groups slide in ---- */
+/* When a new editor group is created (split), it fades in with a subtle
+   scale-up from 98% for a smooth reveal rather than an instant pop. */
+@keyframes shil-editor-group-enter {
+	0% { opacity: 0; transform: scale(0.98); }
+	100% { opacity: 1; transform: scale(1); }
+}
+.monaco-workbench .part.editor > .content .editor-group-container {
+	animation: shil-editor-group-enter 200ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+/* ---- QUICK INPUT (COMMAND PALETTE) ENTRANCE — scale spring ---- */
+/* The command palette pops from 97% scale with slight overshoot. */
+.monaco-workbench .quick-input-widget {
+	animation: shil-quick-input-enter 180ms cubic-bezier(0.22, 1.05, 0.36, 1) both;
+}
+@keyframes shil-quick-input-enter {
+	0% { opacity: 0; transform: translateY(-8px) scale(0.97); }
+	100% { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ---- CONTEXT MENU ENTRANCE — subtle scale-in ---- */
+/* Context menus pop from 96% scale with a quick spring. */
+.monaco-workbench .context-view .monaco-menu {
+	animation: shil-context-menu-enter 140ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+@keyframes shil-context-menu-enter {
+	0% { opacity: 0; transform: scale(0.96); }
+	100% { opacity: 1; transform: scale(1); }
+}
