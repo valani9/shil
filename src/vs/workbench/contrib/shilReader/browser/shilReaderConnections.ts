@@ -408,6 +408,56 @@ function resolveRustImport(importerPath: string, specifier: string): string {
 	return specifier.replace(/::/g, '/');
 }
 
+// ── File existence resolution ────────────────────────────────────────
+
+/**
+ * Try to resolve a base path to an actual file by appending language-specific
+ * extensions and checking for package index files (e.g. __init__.py, mod.rs).
+ * Returns the first existing path, or the base path as a fallback.
+ */
+async function resolveToExistingFile(
+	basePath: string,
+	fileService: IFileService,
+	lang: string,
+): Promise<string> {
+	// If the path already has a recognized extension, check it directly
+	if (/\.\w+$/.test(basePath)) {
+		try {
+			if (await fileService.exists(URI.file(basePath))) {
+				return basePath;
+			}
+		} catch { /* skip */ }
+		return basePath;
+	}
+
+	// Language-specific extension candidates, ordered by likelihood
+	const candidates: string[] = [];
+	switch (lang) {
+		case 'python':
+			candidates.push('.py', '/__init__.py');
+			break;
+		case 'go':
+			candidates.push('.go');
+			break;
+		case 'rust':
+			candidates.push('.rs', '/mod.rs');
+			break;
+		default:
+			candidates.push('.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs', '/index.ts', '/index.js');
+			break;
+	}
+
+	for (const ext of candidates) {
+		try {
+			const uri = URI.file(basePath + ext);
+			if (await fileService.exists(uri)) {
+				return basePath + ext;
+			}
+		} catch { /* skip */ }
+	}
+	return basePath;
+}
+
 // ── Main scanner ─────────────────────────────────────────────────────
 
 /**
@@ -447,6 +497,9 @@ export async function scanConnections(
 				resolvedPath = resolveRelativeImport(filePath, imp.specifier);
 				break;
 		}
+
+		// Resolve to an actual file path (with correct extension)
+		resolvedPath = await resolveToExistingFile(resolvedPath, fileService, lang);
 
 		const namesList = imp.names.length > 0 ? imp.names.join(', ') : 'module';
 		const displaySpecifier = imp.specifier.replace(/::/g, '/');

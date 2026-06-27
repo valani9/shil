@@ -639,25 +639,38 @@ export class ShilReaderPane extends EditorPane {
 	 * file path, navigates to that file. For database/pattern connections
 	 * (no path), this is a no-op.
 	 */
-	private navigateToConnection(conn: Connection): void {
+	private async navigateToConnection(conn: Connection): Promise<void> {
 		if (!conn.path) {
 			return;
 		}
-		// Try the path as-is first, then with common extensions
-		const extensions = ['', '.ts', '.tsx', '.js', '.jsx', '.mjs'];
+		// Language-aware extension resolution — try the path as-is first, then
+		// with common extensions for all supported languages
+		const extensions = [
+			'', '.ts', '.tsx', '.js', '.jsx', '.mjs', '.cjs',
+			'.py', '.go', '.rs',
+			// Python package patterns
+			'/__init__.py', '/mod.rs', '/index.ts', '/index.js',
+		];
+
+		// If the path already has a recognized extension, only try the bare path
+		const hasExtension = /\.\w+$/.test(conn.path);
+
 		for (const ext of extensions) {
+			if (hasExtension && ext !== '') {
+				continue;
+			}
 			const uri = URI.file(conn.path + ext);
-			this.fileService.exists(uri).then(exists => {
+			try {
+				const exists = await this.fileService.exists(uri);
 				if (exists) {
 					this.editorService.openEditor({
 						resource: uri,
 						options: { pinned: true, revealIfOpened: true },
 					});
+					return;
 				}
-			});
-			// If the path already has an extension, only try the bare path
-			if (/\.\w+$/.test(conn.path)) {
-				break;
+			} catch {
+				// Skip inaccessible paths
 			}
 		}
 	}
@@ -1003,13 +1016,18 @@ export class ShilReaderPane extends EditorPane {
 			}
 		}
 
-		// Rail header
+		// Rail header with total count
 		const header = document.createElement('div');
 		header.className = 'shil-rail-header';
 		const kickerSpan = document.createElement('span');
 		kickerSpan.className = 'shil-rail-kicker';
 		kickerSpan.textContent = 'WHAT BREAKS';
 		header.appendChild(kickerSpan);
+		const totalBadge = document.createElement('span');
+		totalBadge.className = 'shil-rail-total-badge';
+		totalBadge.textContent = String(connections.length);
+		totalBadge.setAttribute('aria-label', `${connections.length} total connections`);
+		header.appendChild(totalBadge);
 		this.railElement.appendChild(header);
 
 		for (const role of roleOrder) {
