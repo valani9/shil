@@ -172,7 +172,7 @@ export class ShilReaderPane extends EditorPane {
 			}
 
 			// Scan connections in background (non-blocking)
-			scanConnections(filePath, source, this.fileService).then(connections => {
+			scanConnections(filePath, source, this.fileService, languageId).then(connections => {
 				if (token.isCancellationRequested) {
 					return;
 				}
