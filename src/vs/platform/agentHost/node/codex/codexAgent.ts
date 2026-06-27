@@ -86,7 +86,7 @@ import type { McpServerElicitationRequestResponse } from './protocol/generated/v
 
 const CLIENT_INFO = {
 	name: 'vscode_agent_host',
-	title: 'VS Code Agent Host',
+	title: 'Agent Host',
 	// The codex `clientInfo.version` is informational. Hardcoded to a
 	// non-empty placeholder; bumping it isn't required when our code
 	// changes.
@@ -908,7 +908,7 @@ export class CodexAgent extends Disposable implements IAgent {
 		// other settings (model, MCP servers, etc.) still apply.
 		const providerOverrides = [
 			`model_provider="vscode-proxy"`,
-			`model_providers.vscode-proxy.name="VS Code Proxy"`,
+			`model_providers.vscode-proxy.name="Editor Proxy"`,
 			`model_providers.vscode-proxy.base_url="${proxyHandle.baseUrl}/v1"`,
 			`model_providers.vscode-proxy.wire_api="responses"`,
 			`model_providers.vscode-proxy.env_key="OPENAI_API_KEY"`,

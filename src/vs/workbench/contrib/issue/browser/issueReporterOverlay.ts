@@ -1563,7 +1563,7 @@ export class IssueReporterOverlay {
 				renderContent: (container) => {
 					const sysTable = append(container, $('table.review-diag-table'));
 					if (modelData.versionInfo) {
-						this.addDiagRow(sysTable, 'VS Code', modelData.versionInfo.vscodeVersion);
+						this.addDiagRow(sysTable, 'Version', modelData.versionInfo.vscodeVersion);
 						this.addDiagRow(sysTable, 'OS', modelData.versionInfo.os);
 					}
 					if (modelData.systemInfo) {
@@ -2220,7 +2220,7 @@ export class IssueReporterOverlay {
 		const rows: [string, string | undefined][] = [
 			['Issue Category', this.getIssueTypeTitle(this.selectedIssueType ?? IssueType.Bug)],
 			['Target', this.getIssueSourceLabel()],
-			['VS Code Version', modelData.versionInfo?.vscodeVersion ?? product.version],
+			['Version', modelData.versionInfo?.vscodeVersion ?? product.version],
 			['OS Version', modelData.versionInfo?.os ?? modelData.systemInfo?.os],
 		];
 
@@ -2241,7 +2241,7 @@ export class IssueReporterOverlay {
 
 		if (modelData.versionInfo) {
 			rows.push(
-				['VS Code Version', modelData.versionInfo.vscodeVersion],
+				['Version', modelData.versionInfo.vscodeVersion],
 				['OS Version', modelData.versionInfo.os],
 			);
 		}
