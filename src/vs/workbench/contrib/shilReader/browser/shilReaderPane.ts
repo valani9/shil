@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import './media/shilReader.css';
-import { CancellationToken } from '../../../../base/common/cancellation.js';
+import { CancellationToken, CancellationTokenSource } from '../../../../base/common/cancellation.js';
 import { Dimension } from '../../../../base/browser/dom.js';
 import { EditorPane } from '../../../browser/parts/editor/editorPane.js';
 import { ITelemetryService } from '../../../../platform/telemetry/common/telemetry.js';
@@ -67,7 +67,10 @@ export class ShilReaderPane extends EditorPane {
 	private searchCountElement: HTMLElement | undefined;
 	/** Saved context for retry after generation failure. */
 	private retryContext: { source: string; filePath: string; languageId: string; doc: ReaderDoc } | undefined;
-
+	/** Active generation cancellation source (cancelled on input change / dispose). */
+	private pendingGenerationCts: CancellationTokenSource | undefined;
+	/** Interval timer for elapsed-time counter in loading overlay. */
+	private loadingTimerInterval: ReturnType<typeof setInterval> | undefined;
 
 	constructor(
 		group: IEditorGroup,
@@ -117,6 +120,7 @@ export class ShilReaderPane extends EditorPane {
 		this.paneDisposables.clear();
 		this.railItemElements.clear();
 		this.highlightedConnIds.clear();
+		this.cancelPendingGeneration();
 
 		this.currentResource = input.fileResource;
 
@@ -149,11 +153,18 @@ export class ShilReaderPane extends EditorPane {
 				// Save context for potential retry
 				this.retryContext = { source, filePath, languageId, doc };
 
+				// Create a cancellation source linked to the editor's token
+				const cts = new CancellationTokenSource(token);
+				this.pendingGenerationCts = cts;
+
 				// Generate spans via CLI (default, keyless) or API key fallback
-				const llmSpans = await this.modelService.generateReaderSpans(source, filePath, languageId, token);
-				if (token.isCancellationRequested) {
+				const llmSpans = await this.modelService.generateReaderSpans(source, filePath, languageId, cts.token);
+				if (cts.token.isCancellationRequested) {
+					cts.dispose();
 					return;
 				}
+				this.pendingGenerationCts = undefined;
+				cts.dispose();
 				if (llmSpans && llmSpans.length > 0) {
 					doc.spans = llmSpans;
 					this.currentDoc = doc;
@@ -902,13 +913,51 @@ export class ShilReaderPane extends EditorPane {
 		overlay.appendChild(bar);
 		const label = document.createElement('div');
 		label.className = 'shil-reader-loading-label';
-		label.textContent = 'Generating English\u2026';
+
+		const labelText = document.createElement('span');
+		labelText.className = 'shil-reader-loading-text';
+		labelText.textContent = 'Generating English';
+		label.appendChild(labelText);
+
+		const dots = document.createElement('span');
+		dots.className = 'shil-reader-loading-dots';
+		label.appendChild(dots);
+
+		const timer = document.createElement('span');
+		timer.className = 'shil-reader-loading-timer';
+		timer.textContent = '0s';
+		label.appendChild(timer);
+
 		overlay.appendChild(label);
 		this.contentElement.prepend(overlay);
+
+		// Start elapsed timer + dots animation
+		const startTime = Date.now();
+		const dotFrames = ['', '.', '..', '...'];
+		let dotIdx = 0;
+		this.loadingTimerInterval = setInterval(() => {
+			const elapsed = Math.floor((Date.now() - startTime) / 1000);
+			timer.textContent = `${elapsed}s`;
+			dotIdx = (dotIdx + 1) % dotFrames.length;
+			dots.textContent = dotFrames[dotIdx];
+		}, 400);
 	}
 
 	private hideLoadingOverlay(): void {
+		if (this.loadingTimerInterval !== undefined) {
+			clearInterval(this.loadingTimerInterval);
+			this.loadingTimerInterval = undefined;
+		}
 		this.contentElement?.querySelector('.shil-reader-loading')?.remove();
+	}
+
+	private cancelPendingGeneration(): void {
+		if (this.pendingGenerationCts) {
+			this.pendingGenerationCts.cancel();
+			this.pendingGenerationCts.dispose();
+			this.pendingGenerationCts = undefined;
+		}
+		this.hideLoadingOverlay();
 	}
 
 	private showFailureBanner(): void {
@@ -965,8 +1014,15 @@ export class ShilReaderPane extends EditorPane {
 		this.hideFailureBanner();
 		this.showLoadingOverlay();
 
-		const token = CancellationToken.None;
-		const llmSpans = await this.modelService.generateReaderSpans(source, filePath, languageId, token);
+		const cts = new CancellationTokenSource();
+		this.pendingGenerationCts = cts;
+		const llmSpans = await this.modelService.generateReaderSpans(source, filePath, languageId, cts.token);
+		if (cts.token.isCancellationRequested) {
+			cts.dispose();
+			return;
+		}
+		this.pendingGenerationCts = undefined;
+		cts.dispose();
 		if (llmSpans && llmSpans.length > 0) {
 			doc.spans = llmSpans;
 			this.currentDoc = doc;
@@ -1158,6 +1214,7 @@ export class ShilReaderPane extends EditorPane {
 
 	override clearInput(): void {
 		super.clearInput();
+		this.cancelPendingGeneration();
 		this.paneDisposables.clear();
 		this.railItemElements.clear();
 		this.highlightedConnIds.clear();
