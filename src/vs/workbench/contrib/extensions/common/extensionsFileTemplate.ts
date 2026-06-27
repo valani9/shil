@@ -46,7 +46,7 @@ export const ExtensionsConfigurationInitialContent: string = [
 	'\t"recommendations": [',
 	'\t\t',
 	'\t],',
-	'\t// List of extensions recommended by VS Code that should not be recommended for users of this workspace.',
+	'\t// List of extensions that should not be recommended for users of this workspace.',
 	'\t"unwantedRecommendations": [',
 	'\t\t',
 	'\t]',
