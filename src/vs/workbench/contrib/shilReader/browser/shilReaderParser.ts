@@ -106,8 +106,10 @@ function parseJsTsSpans(lines: string[]): ReaderSpan[] {
 				}
 			}
 
+			const classBodyLines = classEnd - classStart;
+			const classSizeNote = classBodyLines > 30 ? ` (${classBodyLines} lines)` : '';
 			spans.push(makeSpan(spanIdx++, classStart + 1, bodyStart, 'declaration',
-				`Defines ${exported ? 'an exported ' : ''}${abstract ? 'abstract ' : ''}class "${className}".`));
+				`Begins class "${className}"${classSizeNote}${abstract ? ' (abstract — must be extended)' : ''}.${exported ? ' Available to other files.' : ''}`));
 
 			const classIndent = (classMatch[1] || '').length;
 			let j = bodyStart;
@@ -135,7 +137,7 @@ function parseJsTsSpans(lines: string[]): ReaderSpan[] {
 					const pEnd = findStatementEnd(lines, j);
 					const propName = propMatch[4];
 					spans.push(makeSpan(spanIdx++, pStart + 1, pEnd + 1, 'narration',
-						`Property "${propName}" of class "${className}".`));
+						`Stores "${propName}" on each ${humanizeName(className)} instance.`));
 					j = pEnd + 1;
 					continue;
 				}
@@ -152,10 +154,12 @@ function parseJsTsSpans(lines: string[]): ReaderSpan[] {
 			const start = i;
 			const end = findBlockEnd(lines, i);
 			const exported = !!typeMatch[2];
-			const kind = typeMatch[3];
 			const name = typeMatch[4];
+			const fields = extractFieldNames(lines, start, end);
+			const fieldDesc = fields.length > 0 ? ` with fields ${fields.slice(0, 5).join(', ')}${fields.length > 5 ? ` and ${fields.length - 5} more` : ''}` : '';
+			const exportNote = exported ? ' Available to other files.' : '';
 			spans.push(makeSpan(spanIdx++, start + 1, end + 1, 'declaration',
-				`Defines ${exported ? 'an exported ' : ''}${kind} "${name}".`));
+				`Describes the shape of a ${humanizeName(name)}${fieldDesc}.${exportNote}`));
 			i = end + 1;
 			continue;
 		}
@@ -178,8 +182,10 @@ function parseJsTsSpans(lines: string[]): ReaderSpan[] {
 			const end = findBlockEnd(lines, i);
 			const exported = !!enumMatch[2];
 			const name = enumMatch[3];
+			const enumValues = extractFieldNames(lines, start, end);
+			const valDesc = enumValues.length > 0 ? `: ${enumValues.slice(0, 6).join(', ')}${enumValues.length > 6 ? ', ...' : ''}` : '';
 			spans.push(makeSpan(spanIdx++, start + 1, end + 1, 'declaration',
-				`Defines ${exported ? 'an exported ' : ''}enum "${name}".`));
+				`Lists the possible values of ${humanizeName(name)}${valDesc}.${exported ? ' Available to other files.' : ''}`));
 			i = end + 1;
 			continue;
 		}
@@ -194,7 +200,7 @@ function parseJsTsSpans(lines: string[]): ReaderSpan[] {
 				end--;
 			}
 			spans.push(makeSpan(spanIdx++, start + 1, end + 1, 'narration',
-				'Documentation and comments.'));
+				'Notes and documentation left by the developer.'));
 			continue;
 		}
 
@@ -319,7 +325,7 @@ function parsePythonSpans(lines: string[]): ReaderSpan[] {
 			while (end > start && lines[end].trim() === '') {
 				end--;
 			}
-			spans.push(makeSpan(spanIdx++, start + 1, end + 1, 'narration', 'Documentation and comments.'));
+			spans.push(makeSpan(spanIdx++, start + 1, end + 1, 'narration', 'Notes and documentation left by the developer.'));
 			continue;
 		}
 
@@ -528,7 +534,7 @@ function parseGoSpans(lines: string[]): ReaderSpan[] {
 				end--;
 			}
 			spans.push(makeSpan(spanIdx++, start + 1, end + 1, 'narration',
-				'Documentation and comments.'));
+				'Notes and documentation left by the developer.'));
 			continue;
 		}
 
@@ -674,7 +680,7 @@ function parseRustSpans(lines: string[]): ReaderSpan[] {
 				end--;
 			}
 			spans.push(makeSpan(spanIdx++, start + 1, end + 1, 'narration',
-				'Documentation and comments.'));
+				'Notes and documentation left by the developer.'));
 			continue;
 		}
 
@@ -707,6 +713,36 @@ interface RustFnMatch {
 function matchRustFn(line: string): RustFnMatch | null {
 	const m = line.match(/^\s*(pub(?:\([\w:]+\))?\s+)?(async\s+)?(?:unsafe\s+)?fn\s+(\w+)/);
 	return m ? { name: m[3], pub: !!m[1], async: !!m[2] } : null;
+}
+
+/**
+ * Extract property/field names from a type/interface/struct block.
+ */
+function extractFieldNames(lines: string[], start: number, end: number): string[] {
+	const fields: string[] = [];
+	for (let i = start + 1; i <= end; i++) {
+		const t = lines[i]?.trim();
+		if (!t || t === '{' || t === '}' || t.startsWith('//') || t.startsWith('/*') || t.startsWith('*')) {
+			continue;
+		}
+		// Match: fieldName: type or fieldName?: type or readonly fieldName
+		const m = t.match(/^(?:readonly\s+)?(\w+)\s*[?:]/) ?? t.match(/^(\w+)\s+\w/);
+		if (m && m[1] !== 'export' && m[1] !== 'extends' && m[1] !== 'implements') {
+			fields.push(m[1]);
+		}
+	}
+	return fields;
+}
+
+/**
+ * Turn a PascalCase/camelCase identifier into a human-readable phrase.
+ * "UserProfile" → "user profile", "HTTPResponse" → "HTTP response".
+ */
+function humanizeName(name: string): string {
+	// Insert spaces before uppercase runs: "UserProfile" → "User Profile"
+	const spaced = name.replace(/([a-z])([A-Z])/g, '$1 $2')
+		.replace(/([A-Z]+)([A-Z][a-z])/g, '$1 $2');
+	return spaced.toLowerCase();
 }
 
 function makeSpan(idx: number, lineStart: number, lineEnd: number, kind: SpanKind, english: string): ReaderSpan {
@@ -759,9 +795,20 @@ function enrichedEnglish(kind: SpanKind, name: string, params: string, exported:
 		return `Returns a response from ${location}.`;
 	}
 
-	// Default: action / export — keep the existing generic phrasing
-	const asyncLabel = isAsync ? 'async ' : '';
-	return `Defines ${exported ? 'an exported ' : ''}${asyncLabel}${isMethod && className ? `method "${name}" of class "${className}"` : `function "${name}"`}${paramDesc}.`;
+	// Default: action / export — describe what the function likely does based on name + body size
+	const bodyLines = body.split('\n').length;
+	const asyncNote = isAsync ? 'Runs asynchronously. ' : '';
+	const sizeNote = bodyLines > 30 ? ` Spans ${bodyLines} lines of logic.` : '';
+	const locationLabel = isMethod && className ? `Method "${name}" on "${className}"` : `Function "${name}"`;
+	const exportNote = exported ? ' Available to other files.' : '';
+
+	// Try to infer purpose from common naming patterns
+	const purposeHint = inferPurposeFromName(name);
+	if (purposeHint) {
+		return `${locationLabel}: ${purposeHint}${paramDesc ? ` using ${describeParams(params)}` : ''}. ${asyncNote}${exportNote}`.trim();
+	}
+
+	return `${locationLabel}${paramDesc ? `, taking ${describeParams(params)}` : ''}.${sizeNote} ${asyncNote}${exportNote}`.trim();
 }
 
 /**
@@ -910,6 +957,44 @@ function findClosingParen(lines: string[], start: number): number {
 		}
 	}
 	return start;
+}
+
+/**
+ * Infer a human-readable purpose hint from common function naming conventions.
+ * Returns `undefined` if no pattern matches.
+ */
+function inferPurposeFromName(name: string): string | undefined {
+	const lower = name.toLowerCase();
+
+	// CRUD / data operations
+	if (/^(get|fetch|load|read|find|query|retrieve|lookup)/.test(lower)) { return 'retrieves data'; }
+	if (/^(set|update|modify|change|patch|edit|put)/.test(lower)) { return 'updates data'; }
+	if (/^(create|add|insert|register|new|build|make|generate|produce)/.test(lower)) { return 'creates something new'; }
+	if (/^(delete|remove|destroy|drop|clear|purge|clean)/.test(lower)) { return 'removes data'; }
+
+	// Validation / guards
+	if (/^(validate|check|verify|assert|ensure|confirm|is[A-Z]|has[A-Z]|can[A-Z]|should[A-Z])/.test(name)) { return 'checks a condition'; }
+	if (/^(auth|login|signin|signIn|logout|signout|signOut)/.test(lower)) { return 'handles authentication'; }
+
+	// Event handling
+	if (/^(handle|on[A-Z])/.test(name)) { return 'responds to an event'; }
+	if (/^(emit|fire|trigger|dispatch|broadcast|publish|notify)/.test(lower)) { return 'triggers an event'; }
+	if (/^(listen|subscribe|watch|observe|monitor)/.test(lower)) { return 'watches for changes'; }
+
+	// Transformation
+	if (/^(parse|convert|transform|format|serialize|deserialize|encode|decode|normalize|map|reduce|filter|sort)/.test(lower)) { return 'transforms data'; }
+	if (/^(render|draw|paint|display|show)/.test(lower)) { return 'renders visual output'; }
+	if (/^(init|initialize|setup|setUp|configure|bootstrap|mount)/.test(lower)) { return 'sets things up'; }
+	if (/^(dispose|cleanup|teardown|tearDown|unmount|destroy|close|shutdown)/.test(lower)) { return 'cleans up resources'; }
+
+	// Communication
+	if (/^(send|post|submit|upload|push|write)/.test(lower)) { return 'sends data out'; }
+	if (/^(receive|download|pull|import|ingest)/.test(lower)) { return 'brings data in'; }
+
+	// Computation
+	if (/^(calc|compute|count|measure|estimate|sum|average|total)/.test(lower)) { return 'performs a calculation'; }
+
+	return undefined;
 }
 
 function describeParams(params: string): string {

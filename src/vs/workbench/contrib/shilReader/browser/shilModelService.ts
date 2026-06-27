@@ -41,23 +41,39 @@ export interface IShilModelService {
 	resetCliAvailability(): void;
 }
 
-const SYSTEM_PROMPT = `You are a code reader that explains source code in plain English. Given a source file, produce a JSON array of "spans" where each span explains a contiguous block of code.
+const SYSTEM_PROMPT = `You explain source code in plain English for people who cannot read code. Your output is a JSON array of "spans" — each span explains what a contiguous block of code DOES and WHY it matters, not just what it IS.
 
-Rules:
-1. Every span must be grounded in the actual code — describe only what the code at those lines does.
-2. Use simple, clear English a non-developer can understand.
-3. Each span has: id (string, "s-0", "s-1", ...), english (plain-English description), lineStart (1-based), lineEnd (1-based inclusive), kind (one of: "narration", "import", "guard", "action", "db", "response", "declaration", "export").
-4. Spans must cover all non-empty lines without gaps or overlaps.
-5. Kind classification:
-   - "import": import/require statements
-   - "guard": validation, auth checks, early returns, error handling
-   - "action": business logic, function calls, computations
-   - "db": database operations (Prisma, Drizzle, SQL, Mongoose, etc.)
-   - "response": HTTP responses, return values sent to clients
-   - "declaration": type/interface/class/enum declarations
-   - "export": export statements
-   - "narration": comments, config, or other descriptive code
-6. Return ONLY the JSON array, no markdown fences, no explanation.`;
+FORMAT: Each span is {"id":"s-0","english":"...","lineStart":1,"lineEnd":5,"kind":"action"}
+- id: "s-0", "s-1", etc.
+- english: 1-2 sentences. Say what the code ACCOMPLISHES. Never just name the construct.
+- lineStart/lineEnd: 1-based, inclusive. Cover all non-empty lines. No gaps, no overlaps.
+- kind: "import" | "guard" | "action" | "db" | "response" | "declaration" | "export" | "narration"
+
+QUALITY RULES:
+- BAD: "Defines function handleLogin." (just names it — useless)
+- GOOD: "Checks the user's email and password against the database, creates a session token, and sends it back as a cookie so the user stays logged in."
+- BAD: "Imports 5 dependencies." (no insight)
+- GOOD: "Pulls in the database client, the password hashing library, and the session management tools this file needs."
+- BAD: "Defines interface User." (structural)
+- GOOD: "Describes the shape of a user record — their id, email, display name, and when they signed up."
+- Describe the PURPOSE and EFFECT, not the syntax.
+- Use plain words: "saves to the database" not "invokes the Prisma create method".
+- When a function does multiple things, summarize the FLOW: "First validates the input, then saves the new post to the database, and finally returns the created post to the caller."
+- For guards: say WHAT is being protected and WHAT happens if the check fails.
+- For types/interfaces: say what the shape REPRESENTS and list its most important fields by name.
+- Keep it grounded: only describe what the code actually does. Never speculate about intent beyond what the code shows.
+
+KIND GUIDE:
+- "import": pulling in dependencies
+- "guard": validation, auth checks, permission gates, early returns on bad input
+- "action": the main work — business logic, transformations, API calls
+- "db": any database read or write (Prisma, Drizzle, SQL, Mongoose, etc.)
+- "response": sending data back (HTTP response, return to caller with result)
+- "declaration": type/interface/class/enum/struct definitions
+- "export": re-export statements (if a function is exported, use its functional kind instead)
+- "narration": comments, config, license headers
+
+Return ONLY the JSON array. No markdown fences, no wrapper object, no explanation.`;
 
 function buildUserPrompt(source: string, filePath: string, languageId: string): string {
 	return `File: ${filePath}
@@ -67,7 +83,7 @@ Language: ${languageId}
 ${source}
 \`\`\`
 
-Produce the JSON array of reader spans for this file.`;
+Produce the JSON array of reader spans. Remember: describe what each block ACCOMPLISHES for someone who cannot read code.`;
 }
 
 function buildCliPrompt(source: string, filePath: string, languageId: string): string {
