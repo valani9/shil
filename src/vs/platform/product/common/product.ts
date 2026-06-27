@@ -71,23 +71,25 @@ else {
 			licenseName: 'MIT',
 			licenseUrl: 'https://github.com/microsoft/vscode/blob/main/LICENSE.txt',
 			serverLicenseUrl: 'https://github.com/microsoft/vscode/blob/main/LICENSE.txt',
-			defaultChatAgent: {
-				extensionId: 'GitHub.copilot',
-				chatExtensionId: 'GitHub.copilot-chat',
-				provider: {
-					default: {
-						id: 'github',
-						name: 'GitHub',
-					},
-					enterprise: {
-						id: 'github-enterprise',
-						name: 'GitHub Enterprise',
-					}
-				},
-				providerScopes: []
-			}
 		});
 	}
+}
+
+// Forks that remove `defaultChatAgent` from product.json still need an inert
+// object so every downstream access (optional-chaining or direct) sees empty
+// strings / arrays instead of crashing on `undefined`.
+if (!product.defaultChatAgent) {
+	Object.assign(product, {
+		defaultChatAgent: {
+			extensionId: '',
+			chatExtensionId: '',
+			provider: {
+				default: { id: '', name: '' },
+				enterprise: { id: '', name: '' },
+			},
+			providerScopes: [],
+		}
+	});
 }
 
 export default product;
