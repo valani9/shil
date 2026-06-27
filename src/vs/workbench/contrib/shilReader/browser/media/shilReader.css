@@ -1067,6 +1067,19 @@
 }
 
 /* ==========================================================================
+ *  PROGRESSIVE RENDERING — spans fade in as they arrive from the stream.
+ * ========================================================================== */
+
+.shil-reader-span--streaming-in {
+	animation: shil-span-stream-in 350ms ease-out both;
+}
+
+@keyframes shil-span-stream-in {
+	0%   { opacity: 0; transform: translateY(6px); }
+	100% { opacity: 1; transform: translateY(0); }
+}
+
+/* ==========================================================================
  *  RESPONSIVE — collapse rail on narrow widths.
  * ========================================================================== */
 

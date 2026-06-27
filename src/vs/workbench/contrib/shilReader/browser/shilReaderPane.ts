@@ -71,6 +71,10 @@ export class ShilReaderPane extends EditorPane {
 	private pendingGenerationCts: CancellationTokenSource | undefined;
 	/** Interval timer for elapsed-time counter in loading overlay. */
 	private loadingTimerInterval: ReturnType<typeof setInterval> | undefined;
+	/** Reference to the spans container for progressive rendering. */
+	private spansContainerElement: HTMLElement | undefined;
+	/** Whether progressive rendering has started (first LLM span received). */
+	private progressiveRenderStarted = false;
 
 	constructor(
 		group: IEditorGroup,
@@ -157,13 +161,11 @@ export class ShilReaderPane extends EditorPane {
 				const cts = new CancellationTokenSource(token);
 				this.pendingGenerationCts = cts;
 
-				// Generate spans via streaming CLI — spans appear progressively
-				let streamedCount = 0;
+				// Generate spans via streaming CLI — render each span progressively
 				const llmSpans = await this.modelService.generateReaderSpansStreaming(
 					source, filePath, languageId, cts.token,
-					(_span, _index) => {
-						streamedCount++;
-						this.updateLoadingProgress(streamedCount);
+					(span, index) => {
+						this.onStreamedSpan(span, index, doc);
 					}
 				);
 				if (cts.token.isCancellationRequested) {
@@ -176,7 +178,7 @@ export class ShilReaderPane extends EditorPane {
 					doc.spans = llmSpans;
 					this.currentDoc = doc;
 					this.retryContext = undefined;
-					this.renderDoc(doc);
+					this.finalizeProgressiveRender(doc);
 				} else {
 					// Generation failed — show failure banner with retry option
 					this.hideLoadingOverlay();
@@ -345,8 +347,10 @@ export class ShilReaderPane extends EditorPane {
 		// Spans
 		const spansContainer = document.createElement('div');
 		spansContainer.className = 'shil-reader-spans';
+		this.spansContainerElement = spansContainer;
 		this.spanElements = [];
 		this.focusedSpanIdx = -1;
+		this.progressiveRenderStarted = false;
 
 		for (const span of doc.spans) {
 			const spanEl = this.createSpanElement(span, doc);
@@ -969,6 +973,69 @@ export class ShilReaderPane extends EditorPane {
 		}
 	}
 
+	/**
+	 * Called for each span as it arrives from the streaming CLI.
+	 * On the first span, clears the regex-parsed spans and transitions the
+	 * loading overlay to a streaming indicator. Each span is appended to the
+	 * DOM immediately with a fade-in animation.
+	 */
+	private onStreamedSpan(span: ReaderSpan, index: number, doc: ReaderDoc): void {
+		if (!this.spansContainerElement) {
+			return;
+		}
+
+		// First LLM span: clear the regex placeholder spans
+		if (!this.progressiveRenderStarted) {
+			this.progressiveRenderStarted = true;
+			this.spansContainerElement.textContent = '';
+			this.spanElements = [];
+			this.focusedSpanIdx = -1;
+
+			// Transition loading overlay to streaming mode
+			const loadingLabel = this.contentElement?.querySelector('.shil-reader-loading-text');
+			if (loadingLabel) {
+				loadingLabel.textContent = 'Reading';
+			}
+		}
+
+		// Update the progress counter
+		this.updateLoadingProgress(index + 1);
+
+		// Create and append the span element with entrance animation
+		const spanEl = this.createSpanElement(span, doc);
+		spanEl.classList.add('shil-reader-span--streaming-in');
+		this.spansContainerElement.appendChild(spanEl);
+		this.spanElements.push(spanEl);
+	}
+
+	/**
+	 * Called when streaming is complete. Updates the header meta text and
+	 * kind pills to reflect the final LLM spans, and hides the loading overlay.
+	 */
+	private finalizeProgressiveRender(doc: ReaderDoc): void {
+		this.hideLoadingOverlay();
+
+		// Update meta line with final span counts
+		const meta = this.contentElement?.querySelector('.shil-reader-meta');
+		if (meta) {
+			meta.textContent = this.buildMetaText(doc);
+		}
+
+		// Update kind pills: show/hide based on the actual LLM spans
+		const presentKinds = new Set(doc.spans.map(s => s.kind));
+		const pills = this.contentElement?.querySelectorAll('.shil-reader-kind-pill');
+		if (pills) {
+			for (const pill of pills) {
+				const kind = (pill as HTMLElement).dataset.kind as SpanKind;
+				if (kind && !presentKinds.has(kind)) {
+					(pill as HTMLElement).style.display = 'none';
+				} else {
+					(pill as HTMLElement).style.display = '';
+				}
+			}
+		}
+	}
+
 	private cancelPendingGeneration(): void {
 		if (this.pendingGenerationCts) {
 			this.pendingGenerationCts.cancel();
@@ -1034,12 +1101,10 @@ export class ShilReaderPane extends EditorPane {
 
 		const cts = new CancellationTokenSource();
 		this.pendingGenerationCts = cts;
-		let streamedCount = 0;
 		const llmSpans = await this.modelService.generateReaderSpansStreaming(
 			source, filePath, languageId, cts.token,
-			(_span, _index) => {
-				streamedCount++;
-				this.updateLoadingProgress(streamedCount);
+			(span, index) => {
+				this.onStreamedSpan(span, index, doc);
 			}
 		);
 		if (cts.token.isCancellationRequested) {
@@ -1052,7 +1117,7 @@ export class ShilReaderPane extends EditorPane {
 			doc.spans = llmSpans;
 			this.currentDoc = doc;
 			this.retryContext = undefined;
-			this.renderDoc(doc);
+			this.finalizeProgressiveRender(doc);
 		} else {
 			this.hideLoadingOverlay();
 			this.showFailureBanner();
