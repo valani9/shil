@@ -9,40 +9,72 @@ import type { ReaderDoc, ReaderSpan, SpanKind } from './shilReaderTypes.js';
 /**
  * v0 structural parser: regex-based detection of code blocks (imports,
  * functions, classes, exports, etc.) with grounded plain-English descriptions.
+ * Dispatches to language-specific parsers for Python, Go, and Rust.
  * Future versions will use tree-sitter for precise AST analysis and LLM
  * phrasing for richer prose.
  */
 export function parseToReaderDoc(source: string, filePath: string, languageId: string): ReaderDoc {
 	const lines = source.split('\n');
+	let spans: ReaderSpan[];
+
+	switch (languageId) {
+		case 'python':
+			spans = parsePythonSpans(lines);
+			break;
+		case 'go':
+			spans = parseGoSpans(lines);
+			break;
+		case 'rust':
+			spans = parseRustSpans(lines);
+			break;
+		default:
+			spans = parseJsTsSpans(lines);
+			break;
+	}
+
+	if (spans.length === 0 && lines.length > 0) {
+		spans.push(makeSpan(0, 1, lines.length, 'narration',
+			`This file contains ${lines.length} lines of ${languageId} code.`));
+	}
+
+	return {
+		title: basename(filePath),
+		path: filePath,
+		language: languageId,
+		source,
+		spans,
+		connections: [],
+	};
+}
+
+// ── JS/TS parser (original) ──────────────────────────────────────────
+
+function parseJsTsSpans(lines: string[]): ReaderSpan[] {
 	const spans: ReaderSpan[] = [];
 	let spanIdx = 0;
 
 	let i = 0;
 	while (i < lines.length) {
-		// Skip blank lines
 		if (lines[i].trim() === '') {
 			i++;
 			continue;
 		}
 
-		// Detect import blocks
-		if (isImportLine(lines[i])) {
+		if (isJsImportLine(lines[i])) {
 			const start = i;
-			while (i < lines.length && (isImportLine(lines[i]) || lines[i].trim() === '')) {
+			while (i < lines.length && (isJsImportLine(lines[i]) || lines[i].trim() === '')) {
 				i++;
 			}
-			// Trim trailing blank lines
 			let end = i - 1;
 			while (end > start && lines[end].trim() === '') {
 				end--;
 			}
-			const importCount = countImports(lines, start, end);
+			const importCount = countJsImports(lines, start, end);
 			spans.push(makeSpan(spanIdx++, start + 1, end + 1, 'import',
 				`Brings in ${importCount} ${importCount === 1 ? 'dependency' : 'dependencies'} this file needs.`));
 			continue;
 		}
 
-		// Detect function/method declarations (including multi-line signatures)
 		const funcMatch = matchFunction(lines, i);
 		if (funcMatch) {
 			const start = i;
@@ -58,7 +90,6 @@ export function parseToReaderDoc(source: string, filePath: string, languageId: s
 			continue;
 		}
 
-		// Detect class declarations — parse methods inside
 		const classMatch = lines[i].match(/^(\s*)(export\s+)?(abstract\s+)?class\s+(\w+)/);
 		if (classMatch) {
 			const classStart = i;
@@ -67,7 +98,6 @@ export function parseToReaderDoc(source: string, filePath: string, languageId: s
 			const abstract = !!classMatch[3];
 			const className = classMatch[4];
 
-			// Find the opening brace of the class body
 			let bodyStart = classStart;
 			for (let b = classStart; b <= classEnd; b++) {
 				if (lines[b].includes('{')) {
@@ -76,11 +106,9 @@ export function parseToReaderDoc(source: string, filePath: string, languageId: s
 				}
 			}
 
-			// Class header span (declaration line + extends/implements)
 			spans.push(makeSpan(spanIdx++, classStart + 1, bodyStart, 'declaration',
 				`Defines ${exported ? 'an exported ' : ''}${abstract ? 'abstract ' : ''}class "${className}".`));
 
-			// Parse methods/properties inside the class body
 			const classIndent = (classMatch[1] || '').length;
 			let j = bodyStart;
 			while (j < classEnd) {
@@ -101,7 +129,6 @@ export function parseToReaderDoc(source: string, filePath: string, languageId: s
 					continue;
 				}
 
-				// Property/field declarations inside class
 				const propMatch = lines[j].match(/^(\s+)(private|protected|public|readonly|static|abstract|override|\s)*(readonly\s+)?(\w+)\s*[=:;?]/);
 				if (propMatch && (propMatch[1] || '').length > classIndent) {
 					const pStart = j;
@@ -120,7 +147,6 @@ export function parseToReaderDoc(source: string, filePath: string, languageId: s
 			continue;
 		}
 
-		// Detect interface/type declarations
 		const typeMatch = lines[i].match(/^(\s*)(export\s+)?(interface|type)\s+(\w+)/);
 		if (typeMatch) {
 			const start = i;
@@ -134,7 +160,6 @@ export function parseToReaderDoc(source: string, filePath: string, languageId: s
 			continue;
 		}
 
-		// Detect const/let/var declarations (especially exported ones)
 		const varMatch = lines[i].match(/^(\s*)(export\s+)?(const|let|var)\s+(\w+)/);
 		if (varMatch) {
 			const start = i;
@@ -147,7 +172,6 @@ export function parseToReaderDoc(source: string, filePath: string, languageId: s
 			continue;
 		}
 
-		// Detect enum declarations
 		const enumMatch = lines[i].match(/^(\s*)(export\s+)?enum\s+(\w+)/);
 		if (enumMatch) {
 			const start = i;
@@ -160,7 +184,6 @@ export function parseToReaderDoc(source: string, filePath: string, languageId: s
 			continue;
 		}
 
-		// Catch-all: comment blocks and other lines
 		if (isCommentLine(lines[i])) {
 			const start = i;
 			while (i < lines.length && (isCommentLine(lines[i]) || lines[i].trim() === '')) {
@@ -175,24 +198,515 @@ export function parseToReaderDoc(source: string, filePath: string, languageId: s
 			continue;
 		}
 
-		// Unknown line — skip
 		i++;
 	}
 
-	// If no spans were detected, create one that covers the whole file
-	if (spans.length === 0 && lines.length > 0) {
-		spans.push(makeSpan(0, 1, lines.length, 'narration',
-			`This file contains ${lines.length} lines of ${languageId} code.`));
+	return spans;
+}
+
+// ── Python parser ────────────────────────────────────────────────────
+
+function parsePythonSpans(lines: string[]): ReaderSpan[] {
+	const spans: ReaderSpan[] = [];
+	let spanIdx = 0;
+
+	let i = 0;
+	while (i < lines.length) {
+		if (lines[i].trim() === '') {
+			i++;
+			continue;
+		}
+
+		// Import blocks: import X / from X import Y
+		if (isPythonImportLine(lines[i])) {
+			const start = i;
+			while (i < lines.length && (isPythonImportLine(lines[i]) || lines[i].trim() === '')) {
+				i++;
+			}
+			let end = i - 1;
+			while (end > start && lines[end].trim() === '') {
+				end--;
+			}
+			const count = countPythonImports(lines, start, end);
+			spans.push(makeSpan(spanIdx++, start + 1, end + 1, 'import',
+				`Brings in ${count} ${count === 1 ? 'dependency' : 'dependencies'} this file needs.`));
+			continue;
+		}
+
+		// Decorators: collect them and attach to the next def/class
+		if (lines[i].trimStart().startsWith('@')) {
+			const decoStart = i;
+			while (i < lines.length && lines[i].trimStart().startsWith('@')) {
+				i++;
+			}
+			// Fall through — the decorated def/class will be detected below
+			// with decoStart as the real start of the span
+			if (i < lines.length) {
+				const pyDef = matchPythonDef(lines, i);
+				if (pyDef) {
+					const defEnd = findPythonBlockEnd(lines, i);
+					const isAsync = pyDef.async;
+					spans.push(makeSpan(spanIdx++, decoStart + 1, defEnd + 1, 'action',
+						`Defines ${isAsync ? 'an async ' : ''}function "${pyDef.name}"${pyDef.params ? ` taking ${describeParams(pyDef.params)}` : ''}.`));
+					i = defEnd + 1;
+					continue;
+				}
+				const pyCls = matchPythonClass(lines[i]);
+				if (pyCls) {
+					const clsEnd = findPythonBlockEnd(lines, i);
+					spans.push(makeSpan(spanIdx++, decoStart + 1, clsEnd + 1, 'declaration',
+						`Defines class "${pyCls}".`));
+					i = clsEnd + 1;
+					continue;
+				}
+			}
+			// Stray decorator with no def/class — skip
+			continue;
+		}
+
+		// Function: def name(params):
+		const pyDef = matchPythonDef(lines, i);
+		if (pyDef) {
+			const start = i;
+			const end = findPythonBlockEnd(lines, i);
+			const isAsync = pyDef.async;
+			spans.push(makeSpan(spanIdx++, start + 1, end + 1, 'action',
+				`Defines ${isAsync ? 'an async ' : ''}function "${pyDef.name}"${pyDef.params ? ` taking ${describeParams(pyDef.params)}` : ''}.`));
+			i = end + 1;
+			continue;
+		}
+
+		// Class: class Name:
+		const pyCls = matchPythonClass(lines[i]);
+		if (pyCls) {
+			const start = i;
+			const end = findPythonBlockEnd(lines, i);
+			spans.push(makeSpan(spanIdx++, start + 1, end + 1, 'declaration',
+				`Defines class "${pyCls}".`));
+			i = end + 1;
+			continue;
+		}
+
+		// Comments: # lines or docstrings (triple-quoted)
+		if (isPythonCommentLine(lines[i])) {
+			const start = i;
+			// Triple-quote docstrings
+			const tq = lines[i].trimStart();
+			if (tq.startsWith('"""') || tq.startsWith("'''")) {
+				const quote = tq.slice(0, 3);
+				// Single-line docstring
+				if (tq.indexOf(quote, 3) >= 0) {
+					spans.push(makeSpan(spanIdx++, start + 1, start + 1, 'narration', 'Documentation.'));
+					i++;
+					continue;
+				}
+				// Multi-line docstring
+				i++;
+				while (i < lines.length && !lines[i].includes(quote)) {
+					i++;
+				}
+				if (i < lines.length) {
+					i++; // skip closing line
+				}
+				spans.push(makeSpan(spanIdx++, start + 1, i, 'narration', 'Documentation.'));
+				continue;
+			}
+			// Hash comments
+			while (i < lines.length && (lines[i].trimStart().startsWith('#') || lines[i].trim() === '')) {
+				i++;
+			}
+			let end = i - 1;
+			while (end > start && lines[end].trim() === '') {
+				end--;
+			}
+			spans.push(makeSpan(spanIdx++, start + 1, end + 1, 'narration', 'Documentation and comments.'));
+			continue;
+		}
+
+		// Variable assignment at module level: NAME = ...
+		const pyVar = lines[i].match(/^(\w+)\s*[:=]/);
+		if (pyVar && lines[i][0] !== ' ' && lines[i][0] !== '\t') {
+			const start = i;
+			const end = findPythonStatementEnd(lines, i);
+			spans.push(makeSpan(spanIdx++, start + 1, end + 1, 'narration',
+				`Declares "${pyVar[1]}".`));
+			i = end + 1;
+			continue;
+		}
+
+		i++;
 	}
 
-	return {
-		title: basename(filePath),
-		path: filePath,
-		language: languageId,
-		source,
-		spans,
-		connections: [],
-	};
+	return spans;
+}
+
+function isPythonImportLine(line: string): boolean {
+	const t = line.trimStart();
+	return t.startsWith('import ') || t.startsWith('from ');
+}
+
+function countPythonImports(lines: string[], start: number, end: number): number {
+	let count = 0;
+	for (let i = start; i <= end; i++) {
+		const t = lines[i].trimStart();
+		if (t.startsWith('import ') || t.startsWith('from ')) {
+			count++;
+		}
+	}
+	return Math.max(count, 1);
+}
+
+function isPythonCommentLine(line: string): boolean {
+	const t = line.trimStart();
+	return t.startsWith('#') || t.startsWith('"""') || t.startsWith("'''");
+}
+
+interface PyDefMatch {
+	name: string;
+	params: string;
+	async: boolean;
+}
+
+function matchPythonDef(lines: string[], idx: number): PyDefMatch | null {
+	const m = lines[idx].match(/^(\s*)(async\s+)?def\s+(\w+)\s*\(([^)]*)\)/);
+	if (m) {
+		return { name: m[3], params: m[4], async: !!m[2] };
+	}
+	// Multi-line signature: def name( without closing )
+	const multi = lines[idx].match(/^(\s*)(async\s+)?def\s+(\w+)\s*\(/);
+	if (multi && !lines[idx].includes(')')) {
+		const params = collectMultiLineParams(lines, idx);
+		return { name: multi[3], params, async: !!multi[2] };
+	}
+	return null;
+}
+
+function matchPythonClass(line: string): string | null {
+	const m = line.match(/^class\s+(\w+)/);
+	return m ? m[1] : null;
+}
+
+function findPythonBlockEnd(lines: string[], start: number): number {
+	const baseIndent = lines[start].length - lines[start].trimStart().length;
+	let end = start;
+	for (let i = start + 1; i < lines.length; i++) {
+		if (lines[i].trim() === '') {
+			continue;
+		}
+		const indent = lines[i].length - lines[i].trimStart().length;
+		if (indent <= baseIndent) {
+			break;
+		}
+		end = i;
+	}
+	return end;
+}
+
+function findPythonStatementEnd(lines: string[], start: number): number {
+	// Handles continuation lines (ending with \) and multi-line brackets
+	let depth = 0;
+	for (let i = start; i < lines.length; i++) {
+		for (const ch of lines[i]) {
+			if (ch === '(' || ch === '[' || ch === '{') { depth++; }
+			else if (ch === ')' || ch === ']' || ch === '}') { depth--; }
+		}
+		if (depth <= 0 && !lines[i].trimEnd().endsWith('\\')) {
+			return i;
+		}
+	}
+	return start;
+}
+
+// ── Go parser ────────────────────────────────────────────────────────
+
+function parseGoSpans(lines: string[]): ReaderSpan[] {
+	const spans: ReaderSpan[] = [];
+	let spanIdx = 0;
+
+	let i = 0;
+	while (i < lines.length) {
+		if (lines[i].trim() === '') {
+			i++;
+			continue;
+		}
+
+		// Package declaration
+		const pkgMatch = lines[i].match(/^package\s+(\w+)/);
+		if (pkgMatch) {
+			spans.push(makeSpan(spanIdx++, i + 1, i + 1, 'declaration',
+				`Package "${pkgMatch[1]}".`));
+			i++;
+			continue;
+		}
+
+		// Import block: import "pkg" or import ( ... )
+		if (lines[i].trimStart().startsWith('import ') || lines[i].trimStart() === 'import (') {
+			const start = i;
+			if (lines[i].includes('(')) {
+				// Multi-line import block
+				while (i < lines.length && !lines[i].includes(')')) {
+					i++;
+				}
+				i++; // skip closing )
+			} else {
+				i++; // single import line
+			}
+			const count = Math.max(1, i - start - (lines[start].includes('(') ? 2 : 0));
+			spans.push(makeSpan(spanIdx++, start + 1, i, 'import',
+				`Brings in ${count} ${count === 1 ? 'dependency' : 'dependencies'} this file needs.`));
+			continue;
+		}
+
+		// Function: func name(params) [returnType] {
+		const goFunc = lines[i].match(/^func\s+(\w+)\s*\(([^)]*)\)/);
+		if (goFunc) {
+			const start = i;
+			const end = findBlockEnd(lines, i);
+			spans.push(makeSpan(spanIdx++, start + 1, end + 1, 'action',
+				`Defines function "${goFunc[1]}"${goFunc[2] ? ` taking ${describeParams(goFunc[2])}` : ''}.`));
+			i = end + 1;
+			continue;
+		}
+
+		// Method: func (r *Receiver) name(params) {
+		const goMethod = lines[i].match(/^func\s+\(\s*\w+\s+\*?(\w+)\s*\)\s+(\w+)\s*\(([^)]*)\)/);
+		if (goMethod) {
+			const start = i;
+			const end = findBlockEnd(lines, i);
+			spans.push(makeSpan(spanIdx++, start + 1, end + 1, 'action',
+				`Defines method "${goMethod[2]}" on "${goMethod[1]}".`));
+			i = end + 1;
+			continue;
+		}
+
+		// Type declaration: type Name struct/interface { ... }
+		const goType = lines[i].match(/^type\s+(\w+)\s+(struct|interface)\b/);
+		if (goType) {
+			const start = i;
+			const end = findBlockEnd(lines, i);
+			spans.push(makeSpan(spanIdx++, start + 1, end + 1, 'declaration',
+				`Defines ${goType[2]} "${goType[1]}".`));
+			i = end + 1;
+			continue;
+		}
+
+		// Type alias: type Name = ... or type Name sometype
+		const goAlias = lines[i].match(/^type\s+(\w+)\s+/);
+		if (goAlias) {
+			spans.push(makeSpan(spanIdx++, i + 1, i + 1, 'declaration',
+				`Defines type "${goAlias[1]}".`));
+			i++;
+			continue;
+		}
+
+		// Const/var blocks
+		const goConst = lines[i].match(/^(const|var)\s/);
+		if (goConst) {
+			const start = i;
+			if (lines[i].includes('(')) {
+				while (i < lines.length && !lines[i].includes(')')) {
+					i++;
+				}
+				i++;
+			} else {
+				i++;
+			}
+			const declKind = goConst[1] === 'const' ? 'constants' : 'variables';
+			spans.push(makeSpan(spanIdx++, start + 1, i, 'narration',
+				`Declares ${declKind}.`));
+			continue;
+		}
+
+		// Comments: // or /* */
+		if (isCommentLine(lines[i])) {
+			const start = i;
+			while (i < lines.length && (isCommentLine(lines[i]) || lines[i].trim() === '')) {
+				i++;
+			}
+			let end = i - 1;
+			while (end > start && lines[end].trim() === '') {
+				end--;
+			}
+			spans.push(makeSpan(spanIdx++, start + 1, end + 1, 'narration',
+				'Documentation and comments.'));
+			continue;
+		}
+
+		i++;
+	}
+
+	return spans;
+}
+
+// ── Rust parser ──────────────────────────────────────────────────────
+
+function parseRustSpans(lines: string[]): ReaderSpan[] {
+	const spans: ReaderSpan[] = [];
+	let spanIdx = 0;
+
+	let i = 0;
+	while (i < lines.length) {
+		if (lines[i].trim() === '') {
+			i++;
+			continue;
+		}
+
+		// Use declarations: use crate::...; / use std::...;
+		if (isRustUseLine(lines[i])) {
+			const start = i;
+			while (i < lines.length && (isRustUseLine(lines[i]) || lines[i].trim() === '')) {
+				i++;
+			}
+			let end = i - 1;
+			while (end > start && lines[end].trim() === '') {
+				end--;
+			}
+			const count = countRustUses(lines, start, end);
+			spans.push(makeSpan(spanIdx++, start + 1, end + 1, 'import',
+				`Brings in ${count} ${count === 1 ? 'dependency' : 'dependencies'} this file needs.`));
+			continue;
+		}
+
+		// Attribute lines: #[...] or #![...] — collect and attach to next item
+		if (lines[i].trimStart().startsWith('#[') || lines[i].trimStart().startsWith('#![')) {
+			const attrStart = i;
+			while (i < lines.length && (lines[i].trimStart().startsWith('#[') || lines[i].trimStart().startsWith('#!['))) {
+				i++;
+			}
+			// Fall through to let the next item pick up from attrStart
+			if (i < lines.length) {
+				const rustFn = matchRustFn(lines[i]);
+				if (rustFn) {
+					const end = findBlockEnd(lines, i);
+					spans.push(makeSpan(spanIdx++, attrStart + 1, end + 1, 'action',
+						`Defines ${rustFn.pub ? 'a public ' : ''}${rustFn.async ? 'async ' : ''}function "${rustFn.name}".`));
+					i = end + 1;
+					continue;
+				}
+			}
+			continue;
+		}
+
+		// Function: [pub] [async] fn name(params) [-> ReturnType] {
+		const rustFn = matchRustFn(lines[i]);
+		if (rustFn) {
+			const start = i;
+			const end = findBlockEnd(lines, i);
+			spans.push(makeSpan(spanIdx++, start + 1, end + 1, 'action',
+				`Defines ${rustFn.pub ? 'a public ' : ''}${rustFn.async ? 'async ' : ''}function "${rustFn.name}".`));
+			i = end + 1;
+			continue;
+		}
+
+		// Struct: [pub] struct Name { ... }
+		const rustStruct = lines[i].match(/^\s*(pub\s+)?struct\s+(\w+)/);
+		if (rustStruct) {
+			const start = i;
+			const end = lines[i].includes(';') ? i : findBlockEnd(lines, i);
+			spans.push(makeSpan(spanIdx++, start + 1, end + 1, 'declaration',
+				`Defines ${rustStruct[1] ? 'a public ' : ''}struct "${rustStruct[2]}".`));
+			i = end + 1;
+			continue;
+		}
+
+		// Enum: [pub] enum Name { ... }
+		const rustEnum = lines[i].match(/^\s*(pub\s+)?enum\s+(\w+)/);
+		if (rustEnum) {
+			const start = i;
+			const end = findBlockEnd(lines, i);
+			spans.push(makeSpan(spanIdx++, start + 1, end + 1, 'declaration',
+				`Defines ${rustEnum[1] ? 'a public ' : ''}enum "${rustEnum[2]}".`));
+			i = end + 1;
+			continue;
+		}
+
+		// Trait: [pub] trait Name { ... }
+		const rustTrait = lines[i].match(/^\s*(pub\s+)?trait\s+(\w+)/);
+		if (rustTrait) {
+			const start = i;
+			const end = findBlockEnd(lines, i);
+			spans.push(makeSpan(spanIdx++, start + 1, end + 1, 'declaration',
+				`Defines ${rustTrait[1] ? 'a public ' : ''}trait "${rustTrait[2]}".`));
+			i = end + 1;
+			continue;
+		}
+
+		// Impl block: impl [Trait for] Type { ... }
+		const rustImpl = lines[i].match(/^\s*impl(?:<[^>]*>)?\s+(?:(\w+)\s+for\s+)?(\w+)/);
+		if (rustImpl) {
+			const start = i;
+			const end = findBlockEnd(lines, i);
+			const traitName = rustImpl[1];
+			const typeName = rustImpl[2];
+			const desc = traitName
+				? `Implements trait "${traitName}" for "${typeName}".`
+				: `Implements methods for "${typeName}".`;
+			spans.push(makeSpan(spanIdx++, start + 1, end + 1, 'declaration', desc));
+			i = end + 1;
+			continue;
+		}
+
+		// Mod declaration
+		const rustMod = lines[i].match(/^\s*(pub\s+)?mod\s+(\w+)/);
+		if (rustMod) {
+			const start = i;
+			if (lines[i].includes('{')) {
+				const end = findBlockEnd(lines, i);
+				spans.push(makeSpan(spanIdx++, start + 1, end + 1, 'declaration',
+					`Defines ${rustMod[1] ? 'a public ' : ''}module "${rustMod[2]}".`));
+				i = end + 1;
+			} else {
+				spans.push(makeSpan(spanIdx++, start + 1, start + 1, 'declaration',
+					`Declares ${rustMod[1] ? 'a public ' : ''}module "${rustMod[2]}".`));
+				i++;
+			}
+			continue;
+		}
+
+		// Comments: // or /// or /* */
+		if (isCommentLine(lines[i])) {
+			const start = i;
+			while (i < lines.length && (isCommentLine(lines[i]) || lines[i].trim() === '')) {
+				i++;
+			}
+			let end = i - 1;
+			while (end > start && lines[end].trim() === '') {
+				end--;
+			}
+			spans.push(makeSpan(spanIdx++, start + 1, end + 1, 'narration',
+				'Documentation and comments.'));
+			continue;
+		}
+
+		i++;
+	}
+
+	return spans;
+}
+
+function isRustUseLine(line: string): boolean {
+	return /^\s*(pub\s+)?use\s+/.test(line);
+}
+
+function countRustUses(lines: string[], start: number, end: number): number {
+	let count = 0;
+	for (let i = start; i <= end; i++) {
+		if (/^\s*(pub\s+)?use\s+/.test(lines[i])) {
+			count++;
+		}
+	}
+	return Math.max(count, 1);
+}
+
+interface RustFnMatch {
+	name: string;
+	pub: boolean;
+	async: boolean;
+}
+
+function matchRustFn(line: string): RustFnMatch | null {
+	const m = line.match(/^\s*(pub(?:\([\w:]+\))?\s+)?(async\s+)?(?:unsafe\s+)?fn\s+(\w+)/);
+	return m ? { name: m[3], pub: !!m[1], async: !!m[2] } : null;
 }
 
 function makeSpan(idx: number, lineStart: number, lineEnd: number, kind: SpanKind, english: string): ReaderSpan {
@@ -306,7 +820,7 @@ function classifyBodyKind(body: string, name: string): SpanKind {
 	return 'action';
 }
 
-function isImportLine(line: string): boolean {
+function isJsImportLine(line: string): boolean {
 	const t = line.trimStart();
 	return t.startsWith('import ') || t.startsWith('import{') ||
 		t.startsWith('from ') ||
@@ -314,7 +828,7 @@ function isImportLine(line: string): boolean {
 		(t.startsWith('import('));
 }
 
-function countImports(lines: string[], start: number, end: number): number {
+function countJsImports(lines: string[], start: number, end: number): number {
 	let count = 0;
 	for (let i = start; i <= end; i++) {
 		const t = lines[i].trimStart();

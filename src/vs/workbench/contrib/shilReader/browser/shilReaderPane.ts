@@ -610,11 +610,19 @@ export class ShilReaderPane extends EditorPane {
 		if (!this.currentResource) {
 			return;
 		}
+		// Compute actual end column from source so the full last line is selected
+		let endColumn = 1;
+		if (this.currentDoc) {
+			const sourceLines = this.currentDoc.source.split('\n');
+			if (span.lineEnd >= 1 && span.lineEnd <= sourceLines.length) {
+				endColumn = sourceLines[span.lineEnd - 1].length + 1;
+			}
+		}
 		const selection: IRange = {
 			startLineNumber: span.lineStart,
 			startColumn: 1,
 			endLineNumber: span.lineEnd,
-			endColumn: 1,
+			endColumn,
 		};
 		this.editorService.openEditor({
 			resource: this.currentResource,
