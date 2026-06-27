@@ -529,26 +529,22 @@ body {
 	border-radius: 0 10px 10px 0;
 }
 
-/* Visible state: slide in + drawer shadow + depth. */
+/* Visible state: slide in + drawer shadow + depth.
+   Animation-driven by shil-sidebar-spring-in (v34) for spring-in feel. */
 .monaco-workbench:not(.sidebar-hidden) .part.sidebar {
 	transform: translateX(0);
 	opacity: 1;
 	box-shadow: 8px 0 40px -4px rgba(0, 0, 0, 0.55),
 	            inset -1px 0 0 0 rgba(150, 158, 174, 0.08) !important;
-	transition: transform 220ms cubic-bezier(0.22, 1, 0.36, 1),
-	            opacity 220ms ease,
-	            box-shadow 220ms ease;
 }
 
-/* Hidden state: slide out to the left, invisible. */
+/* Hidden state: slide out to the left, invisible.
+   Animation-driven by shil-sidebar-spring-out (v35) for bounce-out feel. */
 .monaco-workbench.sidebar-hidden .part.sidebar {
 	transform: translateX(-110%);
 	opacity: 0;
 	box-shadow: none !important;
 	pointer-events: none;
-	transition: transform 180ms cubic-bezier(0.55, 0, 1, 0.45),
-	            opacity 180ms ease,
-	            box-shadow 180ms ease;
 }
 
 /* Keep the grid wrapper visible even when the grid marks it as not-visible,
@@ -4503,4 +4499,90 @@ body.shil-sidebar-resizing * {
 		rgba(0,0,0,0.4) 0%,
 		rgba(0,0,0,1) 30px,
 		rgba(0,0,0,1) 100%);
+}
+
+/* ============================================================================
+ *  UI REINVENTION v35 — sidebar close spring, panel open/close transitions,
+ *  centered layout sash styling, welcome page hover animations.
+ * ========================================================================== */
+
+/* ---- SIDEBAR CLOSE SPRING — matching the open spring with bounce-out ---- */
+/* The open spring (v34) overshoots 4px past the final position. The close
+   spring mirrors this: the sidebar briefly nudges right (+6px) before
+   accelerating left off-screen. Gives a physicality to the dismiss. */
+@keyframes shil-sidebar-spring-out {
+	0% { transform: translateX(0); opacity: 1; }
+	18% { transform: translateX(6px); opacity: 1; }
+	100% { transform: translateX(-110%); opacity: 0; }
+}
+.monaco-workbench.sidebar-hidden .part.sidebar {
+	animation: shil-sidebar-spring-out 240ms cubic-bezier(0.55, 0, 0.85, 0.36) both;
+}
+
+/* ---- PANEL OPEN/CLOSE TRANSITIONS — smooth reveal with spring timing ---- */
+/* Bottom panel: slides up from below with spring timing. */
+.monaco-workbench .part.panel.bottom {
+	transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+	            opacity 200ms ease;
+}
+/* Right panel: slides in from the right with matching timing. */
+.monaco-workbench .part.panel.right {
+	transition: transform 260ms cubic-bezier(0.22, 1, 0.36, 1),
+	            opacity 200ms ease;
+}
+
+/* ---- CENTERED LAYOUT SASH STYLING — premium drag handles ---- */
+/* The centered layout uses split-view sashes at the left/right margins.
+   Style them as subtle lime-accented drag rails instead of the default
+   invisible hit areas. Only show on hover for a clean resting state. */
+.monaco-workbench .part.editor .centered-view-sash .monaco-sash {
+	transition: opacity 180ms ease;
+}
+.monaco-workbench .part.editor .centered-view-sash .monaco-sash:hover {
+	background: rgba(194, 242, 77, 0.12);
+	border-radius: 2px;
+}
+/* Centered layout margin zones: very subtle radial depth like the empty editor
+   vignette, making the focused center column feel intentional. */
+.monaco-workbench .part.editor .centered-view-margin {
+	background: linear-gradient(90deg,
+		rgba(5, 7, 12, 0.25) 0%,
+		rgba(5, 7, 12, 0) 100%);
+}
+.monaco-workbench .part.editor .centered-view-margin:last-child {
+	background: linear-gradient(270deg,
+		rgba(5, 7, 12, 0.25) 0%,
+		rgba(5, 7, 12, 0) 100%);
+}
+
+/* ---- WELCOME PAGE HOVER ANIMATIONS — action rows lift on hover ---- */
+/* Recent folder/file items: scale + lift + lime glow on hover for tactile feel. */
+.monaco-workbench .gettingStartedContainer .recently-opened-list .recent-folder-item {
+	transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+.monaco-workbench .gettingStartedContainer .recently-opened-list .recent-folder-item:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 2px 12px -2px rgba(194, 242, 77, 0.08);
+	background-color: rgba(194, 242, 77, 0.03) !important;
+}
+/* Getting started step cards: lift + glow on hover. */
+.monaco-workbench .gettingStartedContainer .gettingStartedSlide .getting-started-step {
+	transition: transform 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+}
+.monaco-workbench .gettingStartedContainer .gettingStartedSlide .getting-started-step:hover {
+	transform: translateY(-1px);
+	box-shadow: 0 2px 12px -2px rgba(194, 242, 77, 0.08);
+	background-color: rgba(194, 242, 77, 0.02) !important;
+}
+/* Step action buttons: scale up subtly on hover for click invitation. */
+.monaco-workbench .gettingStartedContainer .gettingStartedSlide .getting-started-step .monaco-button:hover {
+	transform: scale(1.02);
+	transition: transform 120ms ease;
+}
+
+/* ---- SCRIM DISMISS SPRING — match sidebar close timing ---- */
+/* When the sidebar closes, the scrim should fade slightly faster than the
+   sidebar to reveal the editor cleanly. */
+.monaco-workbench.sidebar-hidden .shil-sidebar-scrim {
+	transition: opacity 180ms ease, backdrop-filter 180ms ease, -webkit-backdrop-filter 180ms ease;
 }
