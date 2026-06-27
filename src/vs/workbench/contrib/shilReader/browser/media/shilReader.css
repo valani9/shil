@@ -3,7 +3,16 @@
  *  Licensed under the MIT License. See License.txt in the project root for license information.
  *--------------------------------------------------------------------------------------------*/
 
-/* ── Shil Reader pane ───────────────────────────────────────────────────────── */
+/* ==========================================================================
+ *  SHIL READER PANE — the hero surface.
+ *
+ *  Design language v28: glass containers, ghost patterns, instrument voice,
+ *  depth shadows, grain texture, vignette, smooth transitions. The reader
+ *  is where non-developers spend most of their time — it should feel calm,
+ *  premium, and distinctly Shil.
+ * ========================================================================== */
+
+/* ── Container ─────────────────────────────────────────────────────────────── */
 
 .shil-reader-container {
 	display: flex;
@@ -12,6 +21,20 @@
 	color: var(--vscode-editor-foreground, #d4d4d4);
 	font-family: 'Hanken Grotesk', 'Segoe UI', system-ui, sans-serif;
 	padding: 0;
+	height: 100%;
+	position: relative;
+}
+
+/* Subtle grain texture overlay on the reader background (matches editor grain). */
+.shil-reader-container::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	z-index: 0;
+	background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.025'/%3E%3C/svg%3E");
+	background-repeat: repeat;
+	background-size: 256px 256px;
 }
 
 .shil-reader-main {
@@ -19,6 +42,17 @@
 	min-width: 0;
 	overflow-y: auto;
 	overflow-x: hidden;
+	position: relative;
+	z-index: 1;
+}
+
+/* Inner vignette on the main content — recessed depth, matching the editor vignette. */
+.shil-reader-main::after {
+	content: '';
+	position: absolute;
+	inset: 0;
+	pointer-events: none;
+	background: radial-gradient(ellipse 120% 100% at 50% 50%, transparent 50%, rgba(0, 0, 0, 0.06) 100%);
 }
 
 .shil-reader-content {
@@ -26,79 +60,110 @@
 	margin: 0 auto;
 	padding: 48px 32px 80px;
 	outline: none;
+	position: relative;
+	z-index: 1;
 }
+
+/* Scrollbar styling (matches workbench narrow/ghostly scrollbar pattern). */
+.shil-reader-main::-webkit-scrollbar { width: 6px; }
+.shil-reader-main::-webkit-scrollbar-track { background: transparent; }
+.shil-reader-main::-webkit-scrollbar-thumb {
+	background: rgba(255, 255, 255, 0.08);
+	border-radius: 3px;
+}
+.shil-reader-main::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.15); }
 
 /* ── Header ─────────────────────────────────────────────────────────────────── */
 
 .shil-reader-header {
 	margin-bottom: 40px;
 	padding-bottom: 24px;
-	border-bottom: 1px solid rgba(194, 242, 77, 0.15);
+	border-bottom: 1px solid rgba(194, 242, 77, 0.12);
+	position: relative;
+}
+
+/* Depth shadow beneath the header — floating-above effect. */
+.shil-reader-header::after {
+	content: '';
+	position: absolute;
+	left: -32px;
+	right: -32px;
+	bottom: -1px;
+	height: 16px;
+	pointer-events: none;
+	background: linear-gradient(to bottom, rgba(0, 0, 0, 0.20), transparent);
 }
 
 .shil-reader-kicker {
 	font-family: 'Martian Mono', 'JetBrains Mono', monospace;
-	font-size: 10px;
+	font-size: 9px;
 	font-weight: 600;
-	letter-spacing: 0.12em;
-	color: #C2F24D;
+	letter-spacing: 0.14em;
+	color: rgba(194, 242, 77, 0.65);
 	margin-bottom: 12px;
 	text-transform: uppercase;
 }
 
 .shil-reader-title {
-	font-size: 28px;
-	font-weight: 700;
-	color: #ffffff;
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
+	font-size: 26px;
+	font-weight: 600;
+	color: rgba(255, 255, 255, 0.95);
 	margin: 0 0 8px;
-	line-height: 1.2;
+	line-height: 1.25;
+	letter-spacing: -0.01em;
 }
 
 .shil-reader-meta {
-	font-size: 13px;
-	color: rgba(255, 255, 255, 0.45);
 	font-family: 'Martian Mono', 'JetBrains Mono', monospace;
-	font-size: 11px;
+	font-size: 10px;
+	color: rgba(255, 255, 255, 0.35);
+	letter-spacing: 0.02em;
 }
 
-/* ── Header controls ────────────────────────────────────────────────────────── */
+/* ── Header controls — ghost pattern: dim at rest, brighten on hover ─────── */
 
 .shil-reader-controls {
 	display: flex;
-	gap: 8px;
+	gap: 6px;
 	margin-top: 14px;
 }
 
 .shil-reader-control-btn {
 	font-family: 'Martian Mono', 'JetBrains Mono', monospace;
-	font-size: 10px;
+	font-size: 9px;
 	font-weight: 500;
-	letter-spacing: 0.04em;
-	color: rgba(255, 255, 255, 0.4);
-	background: rgba(255, 255, 255, 0.04);
-	border: 1px solid rgba(255, 255, 255, 0.08);
-	border-radius: 4px;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: rgba(255, 255, 255, 0.35);
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: 6px;
 	padding: 4px 10px;
 	cursor: pointer;
-	transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+	transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
 }
 
 .shil-reader-control-btn:hover {
-	color: rgba(255, 255, 255, 0.7);
+	color: rgba(255, 255, 255, 0.75);
 	background: rgba(255, 255, 255, 0.06);
 	border-color: rgba(255, 255, 255, 0.12);
 }
 
+.shil-reader-control-btn:active {
+	background: rgba(255, 255, 255, 0.08);
+}
+
 .shil-reader-control-btn--active {
 	color: #C2F24D;
-	background: rgba(194, 242, 77, 0.08);
-	border-color: rgba(194, 242, 77, 0.25);
+	background: rgba(194, 242, 77, 0.06);
+	border-color: rgba(194, 242, 77, 0.20);
 }
 
 .shil-reader-control-btn--active:hover {
 	color: #C2F24D;
-	background: rgba(194, 242, 77, 0.12);
-	border-color: rgba(194, 242, 77, 0.35);
+	background: rgba(194, 242, 77, 0.10);
+	border-color: rgba(194, 242, 77, 0.30);
 }
 
 /* ── Search / filter bar ────────────────────────────────────────────────────── */
@@ -112,24 +177,28 @@
 
 .shil-reader-search {
 	font-family: 'Martian Mono', 'JetBrains Mono', monospace;
-	font-size: 11px;
-	color: rgba(255, 255, 255, 0.75);
-	background: rgba(255, 255, 255, 0.04);
-	border: 1px solid rgba(255, 255, 255, 0.08);
-	border-radius: 4px;
-	padding: 5px 10px;
+	font-size: 10px;
+	letter-spacing: 0.02em;
+	color: rgba(255, 255, 255, 0.70);
+	background: rgba(255, 255, 255, 0.03);
+	border: 1px solid rgba(255, 255, 255, 0.06);
+	border-radius: 6px;
+	padding: 6px 10px;
 	outline: none;
-	transition: border-color 0.15s ease;
+	transition: border-color 150ms ease, background 150ms ease, box-shadow 150ms ease;
 	width: 100%;
 	box-sizing: border-box;
 }
 
 .shil-reader-search::placeholder {
-	color: rgba(255, 255, 255, 0.25);
+	color: rgba(255, 255, 255, 0.20);
+	letter-spacing: 0.04em;
 }
 
 .shil-reader-search:focus {
-	border-color: rgba(194, 242, 77, 0.35);
+	border-color: rgba(194, 242, 77, 0.30);
+	background: rgba(255, 255, 255, 0.04);
+	box-shadow: 0 0 0 1px rgba(194, 242, 77, 0.08);
 }
 
 .shil-reader-kind-pills {
@@ -140,32 +209,35 @@
 
 .shil-reader-kind-pill {
 	font-family: 'Martian Mono', 'JetBrains Mono', monospace;
-	font-size: 9px;
+	font-size: 8.5px;
 	font-weight: 500;
 	letter-spacing: 0.06em;
-	color: rgba(255, 255, 255, 0.3);
-	background: rgba(255, 255, 255, 0.03);
-	border: 1px solid rgba(255, 255, 255, 0.06);
-	border-radius: 3px;
+	text-transform: uppercase;
+	color: rgba(255, 255, 255, 0.25);
+	background: rgba(255, 255, 255, 0.02);
+	border: 1px solid rgba(255, 255, 255, 0.05);
+	border-radius: 4px;
 	padding: 2px 7px;
 	cursor: pointer;
-	transition: color 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+	transition: color 150ms ease, background 150ms ease, border-color 150ms ease;
 }
 
 .shil-reader-kind-pill:hover {
-	color: rgba(255, 255, 255, 0.55);
-	background: rgba(255, 255, 255, 0.05);
+	color: rgba(255, 255, 255, 0.50);
+	background: rgba(255, 255, 255, 0.04);
+	border-color: rgba(255, 255, 255, 0.08);
 }
 
 .shil-reader-kind-pill--active {
 	color: #C2F24D;
-	background: rgba(194, 242, 77, 0.08);
-	border-color: rgba(194, 242, 77, 0.25);
+	background: rgba(194, 242, 77, 0.06);
+	border-color: rgba(194, 242, 77, 0.20);
 }
 
 .shil-reader-kind-pill--active:hover {
 	color: #C2F24D;
-	background: rgba(194, 242, 77, 0.12);
+	background: rgba(194, 242, 77, 0.10);
+	border-color: rgba(194, 242, 77, 0.28);
 }
 
 /* ── Spans ──────────────────────────────────────────────────────────────────── */
@@ -173,79 +245,119 @@
 .shil-reader-spans {
 	display: flex;
 	flex-direction: column;
-	gap: 2px;
+	gap: 1px;
 }
 
 .shil-reader-span {
-	padding: 16px 20px;
-	border-radius: 6px;
-	border-left: 3px solid transparent;
-	transition: background 0.15s ease, border-color 0.15s ease;
+	padding: 14px 18px;
+	border-radius: 8px;
+	border-left: 2px solid transparent;
+	transition: background 150ms ease, border-color 150ms ease, box-shadow 150ms ease;
 	cursor: pointer;
+	position: relative;
 }
 
 .shil-reader-span:hover {
-	background: rgba(255, 255, 255, 0.04);
+	background: rgba(255, 255, 255, 0.025);
+	box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
 }
 
 .shil-reader-span:active {
-	background: rgba(194, 242, 77, 0.06);
+	background: rgba(194, 242, 77, 0.04);
 }
 
-/* Kind-specific left border colors */
-.shil-reader-span--import   { border-left-color: rgba(194, 242, 77, 0.35); }
-.shil-reader-span--guard    { border-left-color: rgba(255, 180, 70, 0.45); }
-.shil-reader-span--action   { border-left-color: rgba(100, 200, 255, 0.45); }
-.shil-reader-span--db       { border-left-color: rgba(255, 100, 100, 0.5); }
-.shil-reader-span--response { border-left-color: rgba(160, 140, 255, 0.4); }
-.shil-reader-span--narration { border-left-color: rgba(255, 255, 255, 0.1); }
-.shil-reader-span--declaration { border-left-color: rgba(194, 242, 77, 0.25); }
-.shil-reader-span--export   { border-left-color: rgba(194, 242, 77, 0.5); }
+/* Kind-specific left border colors — dimmed at rest, like gutter marks. */
+.shil-reader-span--import     { border-left-color: rgba(194, 242, 77, 0.30); }
+.shil-reader-span--guard      { border-left-color: rgba(255, 180, 70, 0.35); }
+.shil-reader-span--action     { border-left-color: rgba(100, 200, 255, 0.35); }
+.shil-reader-span--db         { border-left-color: rgba(255, 100, 100, 0.40); }
+.shil-reader-span--response   { border-left-color: rgba(160, 140, 255, 0.35); }
+.shil-reader-span--narration  { border-left-color: rgba(255, 255, 255, 0.07); }
+.shil-reader-span--declaration { border-left-color: rgba(194, 242, 77, 0.20); }
+.shil-reader-span--export     { border-left-color: rgba(194, 242, 77, 0.40); }
+
+/* Brighten left border on hover (ghost pattern). */
+.shil-reader-span--import:hover     { border-left-color: rgba(194, 242, 77, 0.55); }
+.shil-reader-span--guard:hover      { border-left-color: rgba(255, 180, 70, 0.60); }
+.shil-reader-span--action:hover     { border-left-color: rgba(100, 200, 255, 0.60); }
+.shil-reader-span--db:hover         { border-left-color: rgba(255, 100, 100, 0.65); }
+.shil-reader-span--response:hover   { border-left-color: rgba(160, 140, 255, 0.55); }
+.shil-reader-span--narration:hover  { border-left-color: rgba(255, 255, 255, 0.15); }
+.shil-reader-span--declaration:hover { border-left-color: rgba(194, 242, 77, 0.40); }
+.shil-reader-span--export:hover     { border-left-color: rgba(194, 242, 77, 0.65); }
 
 /* Top row: badge + chevron */
 .shil-reader-span-top {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	margin-bottom: 6px;
+	margin-bottom: 5px;
 }
 
-/* Kind badge */
+/* Kind badge — instrument voice, wide-tracked. */
 .shil-reader-span-kind {
 	display: inline-block;
 	font-family: 'Martian Mono', 'JetBrains Mono', monospace;
-	font-size: 9px;
+	font-size: 8.5px;
 	font-weight: 600;
-	letter-spacing: 0.1em;
-	color: rgba(255, 255, 255, 0.35);
+	letter-spacing: 0.12em;
+	text-transform: uppercase;
+	color: rgba(255, 255, 255, 0.28);
+	transition: color 150ms ease;
 }
 
-/* Chevron toggle */
+/* Kind badge colors by type — ghost: dim at rest, inherits brighter on span hover. */
+.shil-reader-span--import .shil-reader-span-kind     { color: rgba(194, 242, 77, 0.45); }
+.shil-reader-span--guard .shil-reader-span-kind       { color: rgba(255, 180, 70, 0.50); }
+.shil-reader-span--action .shil-reader-span-kind      { color: rgba(100, 200, 255, 0.50); }
+.shil-reader-span--db .shil-reader-span-kind          { color: rgba(255, 100, 100, 0.55); }
+.shil-reader-span--response .shil-reader-span-kind    { color: rgba(160, 140, 255, 0.50); }
+.shil-reader-span--export .shil-reader-span-kind      { color: rgba(194, 242, 77, 0.50); }
+
+/* Ghost in on hover. */
+.shil-reader-span:hover .shil-reader-span-kind { opacity: 1; }
+.shil-reader-span--import:hover .shil-reader-span-kind     { color: rgba(194, 242, 77, 0.75); }
+.shil-reader-span--guard:hover .shil-reader-span-kind       { color: rgba(255, 180, 70, 0.80); }
+.shil-reader-span--action:hover .shil-reader-span-kind      { color: rgba(100, 200, 255, 0.80); }
+.shil-reader-span--db:hover .shil-reader-span-kind          { color: rgba(255, 100, 100, 0.85); }
+.shil-reader-span--response:hover .shil-reader-span-kind    { color: rgba(160, 140, 255, 0.75); }
+.shil-reader-span--export:hover .shil-reader-span-kind      { color: rgba(194, 242, 77, 0.80); }
+
+/* Chevron toggle — ghost pattern. */
 .shil-reader-span-chevron {
-	font-size: 12px;
-	color: rgba(255, 255, 255, 0.2);
+	font-size: 11px;
+	color: rgba(255, 255, 255, 0.15);
 	cursor: pointer;
 	padding: 2px 6px;
-	border-radius: 3px;
-	transition: color 0.15s ease, background 0.15s ease;
+	border-radius: 4px;
+	transition: color 150ms ease, background 150ms ease, transform 200ms ease;
 	user-select: none;
 }
 
+.shil-reader-span:hover .shil-reader-span-chevron {
+	color: rgba(255, 255, 255, 0.35);
+}
+
 .shil-reader-span-chevron:hover {
-	color: rgba(194, 242, 77, 0.7);
+	color: rgba(194, 242, 77, 0.7) !important;
 	background: rgba(255, 255, 255, 0.04);
 }
 
-/* Collapsible detail */
+/* ── Collapsible detail — smooth animation ─────────────────────────────────── */
+
 .shil-reader-span-detail {
-	overflow: hidden;
-	max-height: 500px;
-	transition: max-height 0.2s ease, opacity 0.15s ease;
+	display: grid;
+	grid-template-rows: 1fr;
+	transition: grid-template-rows 250ms ease, opacity 200ms ease;
 	opacity: 1;
 }
 
+.shil-reader-span-detail > * {
+	overflow: hidden;
+}
+
 .shil-reader-span--collapsed .shil-reader-span-detail {
-	max-height: 0;
+	grid-template-rows: 0fr;
 	opacity: 0;
 }
 
@@ -253,27 +365,23 @@
 	margin-bottom: 0;
 }
 
-.shil-reader-span--import .shil-reader-span-kind   { color: rgba(194, 242, 77, 0.6); }
-.shil-reader-span--guard .shil-reader-span-kind     { color: rgba(255, 180, 70, 0.7); }
-.shil-reader-span--action .shil-reader-span-kind    { color: rgba(100, 200, 255, 0.7); }
-.shil-reader-span--db .shil-reader-span-kind        { color: rgba(255, 100, 100, 0.7); }
-.shil-reader-span--response .shil-reader-span-kind  { color: rgba(160, 140, 255, 0.65); }
-.shil-reader-span--export .shil-reader-span-kind    { color: rgba(194, 242, 77, 0.7); }
-
-/* English prose */
+/* English prose — the hero content. */
 .shil-reader-span-english {
-	font-size: 15px;
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
+	font-size: 14.5px;
 	line-height: 1.65;
-	color: rgba(255, 255, 255, 0.88);
-	margin: 0 0 8px;
+	color: rgba(255, 255, 255, 0.85);
+	margin: 0 0 6px;
+	letter-spacing: 0.005em;
 }
 
-/* Line reference */
+/* Line reference — instrument voice. */
 .shil-reader-span-lines {
 	font-family: 'Martian Mono', 'JetBrains Mono', monospace;
-	font-size: 10px;
-	color: rgba(255, 255, 255, 0.25);
-	transition: color 0.15s ease;
+	font-size: 9px;
+	letter-spacing: 0.04em;
+	color: rgba(255, 255, 255, 0.20);
+	transition: color 150ms ease;
 }
 
 /* Clickable affordance */
@@ -282,22 +390,41 @@
 }
 
 .shil-reader-span:hover .shil-reader-span-lines {
-	color: rgba(194, 242, 77, 0.6);
+	color: rgba(194, 242, 77, 0.50);
 }
 
-/* Code excerpt */
+/* ── Code excerpt — glass container treatment ──────────────────────────────── */
+
 .shil-reader-span-code {
-	margin: 10px 0 0;
-	padding: 6px 0;
-	background: rgba(255, 255, 255, 0.03);
-	border: 1px solid rgba(255, 255, 255, 0.06);
-	border-radius: 4px;
+	margin: 8px 0 0;
+	padding: 8px 0;
+	background: rgba(255, 255, 255, 0.02);
+	border: 1px solid rgba(255, 255, 255, 0.05);
+	border-radius: 6px;
 	overflow-x: auto;
 	font-family: 'JetBrains Mono', 'Cascadia Code', 'Fira Code', monospace;
-	font-size: 12px;
-	line-height: 1.5;
-	color: rgba(255, 255, 255, 0.55);
+	font-size: 11.5px;
+	line-height: 1.55;
+	color: rgba(255, 255, 255, 0.50);
 	tab-size: 4;
+	position: relative;
+}
+
+/* Subtle depth inset on code blocks. */
+.shil-reader-span-code::before {
+	content: '';
+	position: absolute;
+	inset: 0;
+	border-radius: 6px;
+	box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.15);
+	pointer-events: none;
+}
+
+/* Brighten code on span hover. */
+.shil-reader-span:hover .shil-reader-span-code {
+	background: rgba(255, 255, 255, 0.03);
+	border-color: rgba(255, 255, 255, 0.07);
+	color: rgba(255, 255, 255, 0.60);
 }
 
 /* Line-numbered code table */
@@ -309,196 +436,246 @@
 .shil-reader-code-gutter {
 	width: 1px;
 	white-space: nowrap;
-	padding: 0 12px 0 14px;
+	padding: 0 10px 0 12px;
 	text-align: right;
-	color: rgba(255, 255, 255, 0.18);
-	font-size: 10px;
+	color: rgba(255, 255, 255, 0.12);
+	font-size: 9px;
 	user-select: none;
 	vertical-align: top;
-	border-right: 1px solid rgba(255, 255, 255, 0.06);
+	border-right: 1px solid rgba(255, 255, 255, 0.04);
+	transition: color 150ms ease;
 }
 
 .shil-reader-code-line {
-	padding: 0 14px;
+	padding: 0 12px;
 	white-space: pre;
 }
 
 .shil-reader-span:hover .shil-reader-code-gutter {
-	color: rgba(255, 255, 255, 0.28);
+	color: rgba(255, 255, 255, 0.22);
 }
 
 /* ── Loading state ──────────────────────────────────────────────────────────── */
 
 .shil-reader-loading {
-	padding: 16px 24px;
+	padding: 20px 24px;
 	display: flex;
 	align-items: center;
-	gap: 12px;
-	border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+	gap: 14px;
+	background: rgba(194, 242, 77, 0.02);
+	border: 1px solid rgba(194, 242, 77, 0.06);
+	border-radius: 8px;
+	margin-bottom: 16px;
 }
 
 .shil-reader-loading-bar {
-	width: 48px;
-	height: 3px;
-	border-radius: 2px;
-	background: rgba(194, 242, 77, 0.25);
+	width: 40px;
+	height: 2px;
+	border-radius: 1px;
+	background: rgba(194, 242, 77, 0.15);
 	overflow: hidden;
 	position: relative;
+	flex-shrink: 0;
 }
 
 .shil-reader-loading-bar::after {
 	content: '';
 	position: absolute;
 	inset: 0;
-	width: 50%;
-	border-radius: 2px;
-	background: #C2F24D;
-	animation: shil-loading-sweep 1.6s ease-in-out infinite;
+	width: 40%;
+	border-radius: 1px;
+	background: rgba(194, 242, 77, 0.80);
+	animation: shil-loading-sweep 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
 }
 
 @keyframes shil-loading-sweep {
 	0% { transform: translateX(-100%); }
-	50% { transform: translateX(200%); }
+	50% { transform: translateX(300%); }
 	100% { transform: translateX(-100%); }
 }
 
 .shil-reader-loading-label {
 	font-family: 'Martian Mono', monospace;
 	font-size: 9px;
+	font-weight: 500;
 	letter-spacing: 0.06em;
 	text-transform: uppercase;
-	color: rgba(194, 242, 77, 0.6);
+	color: rgba(194, 242, 77, 0.50);
 }
 
 /* ── Error state ────────────────────────────────────────────────────────────── */
 
 .shil-reader-error {
-	padding: 40px;
+	padding: 48px 32px;
 	text-align: center;
-	color: rgba(255, 255, 255, 0.4);
+	color: rgba(255, 255, 255, 0.30);
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
 	font-size: 14px;
+	line-height: 1.6;
 }
 
-/* ── Connections rail ──────────────────────────────────────────────────────── */
+/* ==========================================================================
+ *  CONNECTIONS RAIL — glass sidebar with depth.
+ * ========================================================================== */
 
 .shil-reader-rail {
 	width: 260px;
 	min-width: 260px;
 	overflow-y: auto;
 	overflow-x: hidden;
-	border-left: 1px solid rgba(255, 255, 255, 0.06);
-	padding: 24px 16px;
-	background: rgba(5, 7, 12, 0.6);
+	border-left: 1px solid rgba(255, 255, 255, 0.05);
+	padding: 24px 14px;
+	background: rgba(5, 7, 12, 0.55);
+	-webkit-backdrop-filter: saturate(1.2);
+	backdrop-filter: saturate(1.2);
+	position: relative;
+	z-index: 1;
 }
+
+/* Rail inner shadow — recessed from the main content. */
+.shil-reader-rail::before {
+	content: '';
+	position: absolute;
+	top: 0;
+	left: 0;
+	bottom: 0;
+	width: 12px;
+	pointer-events: none;
+	background: linear-gradient(to right, rgba(0, 0, 0, 0.15), transparent);
+}
+
+/* Rail scrollbar. */
+.shil-reader-rail::-webkit-scrollbar { width: 4px; }
+.shil-reader-rail::-webkit-scrollbar-track { background: transparent; }
+.shil-reader-rail::-webkit-scrollbar-thumb {
+	background: rgba(255, 255, 255, 0.06);
+	border-radius: 2px;
+}
+.shil-reader-rail::-webkit-scrollbar-thumb:hover { background: rgba(255, 255, 255, 0.12); }
 
 .shil-rail-header {
 	margin-bottom: 20px;
-	padding-bottom: 12px;
-	border-bottom: 1px solid rgba(194, 242, 77, 0.12);
+	padding-bottom: 10px;
+	border-bottom: 1px solid rgba(194, 242, 77, 0.10);
 }
 
 .shil-rail-kicker {
 	font-family: 'Martian Mono', 'JetBrains Mono', monospace;
-	font-size: 9px;
+	font-size: 8.5px;
 	font-weight: 600;
 	letter-spacing: 0.14em;
-	color: #C2F24D;
+	color: rgba(194, 242, 77, 0.55);
 	text-transform: uppercase;
 }
 
 .shil-rail-empty {
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
 	font-size: 12px;
-	color: rgba(255, 255, 255, 0.3);
+	color: rgba(255, 255, 255, 0.25);
 	padding: 16px 0;
+	line-height: 1.5;
 }
 
 .shil-rail-section {
-	margin-bottom: 20px;
+	margin-bottom: 18px;
 }
 
 .shil-rail-section-heading {
 	font-family: 'Martian Mono', 'JetBrains Mono', monospace;
-	font-size: 10px;
+	font-size: 9px;
 	font-weight: 500;
-	letter-spacing: 0.04em;
-	color: rgba(255, 255, 255, 0.4);
-	margin-bottom: 8px;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+	color: rgba(255, 255, 255, 0.35);
+	margin-bottom: 6px;
 	line-height: 1.4;
+	padding-left: 2px;
 }
 
-/* Section heading color by role */
-.shil-rail-section--calledBy .shil-rail-section-heading { color: rgba(255, 120, 100, 0.8); }
-.shil-rail-section--reads .shil-rail-section-heading    { color: rgba(255, 180, 70, 0.75); }
-.shil-rail-section--writes .shil-rail-section-heading   { color: rgba(160, 140, 255, 0.7); }
-.shil-rail-section--imports .shil-rail-section-heading  { color: rgba(100, 200, 255, 0.6); }
+/* Section heading color by role — calmer, more muted than before. */
+.shil-rail-section--calledBy .shil-rail-section-heading { color: rgba(255, 120, 100, 0.65); }
+.shil-rail-section--reads .shil-rail-section-heading    { color: rgba(255, 180, 70, 0.60); }
+.shil-rail-section--writes .shil-rail-section-heading   { color: rgba(160, 140, 255, 0.55); }
+.shil-rail-section--imports .shil-rail-section-heading  { color: rgba(100, 200, 255, 0.50); }
+
+/* ── Rail items — ghost pattern ────────────────────────────────────────────── */
 
 .shil-rail-item {
-	padding: 8px 10px;
-	border-radius: 4px;
+	padding: 7px 8px;
+	border-radius: 5px;
 	border-left: 2px solid transparent;
-	margin-bottom: 4px;
-	transition: background 0.15s ease;
+	margin-bottom: 2px;
+	transition: background 150ms ease, border-left-color 150ms ease;
 }
 
 .shil-rail-item:hover {
-	background: rgba(255, 255, 255, 0.04);
+	background: rgba(255, 255, 255, 0.035);
 }
 
-/* Tone-based border colors */
-.shil-rail-item--breaks { border-left-color: rgba(255, 100, 100, 0.5); }
-.shil-rail-item--data   { border-left-color: rgba(160, 140, 255, 0.4); }
-.shil-rail-item--safe   { border-left-color: rgba(100, 200, 255, 0.3); }
+/* Tone-based border colors — dimmed at rest. */
+.shil-rail-item--breaks { border-left-color: rgba(255, 100, 100, 0.35); }
+.shil-rail-item--data   { border-left-color: rgba(160, 140, 255, 0.30); }
+.shil-rail-item--safe   { border-left-color: rgba(100, 200, 255, 0.25); }
+
+/* Ghost in on hover. */
+.shil-rail-item--breaks:hover { border-left-color: rgba(255, 100, 100, 0.60); }
+.shil-rail-item--data:hover   { border-left-color: rgba(160, 140, 255, 0.50); }
+.shil-rail-item--safe:hover   { border-left-color: rgba(100, 200, 255, 0.45); }
 
 .shil-rail-item-title {
-	font-size: 12px;
-	font-weight: 600;
-	color: rgba(255, 255, 255, 0.85);
-	margin-bottom: 3px;
 	font-family: 'Martian Mono', 'JetBrains Mono', monospace;
+	font-size: 10px;
+	font-weight: 500;
+	color: rgba(255, 255, 255, 0.65);
+	margin-bottom: 2px;
+	letter-spacing: 0.01em;
+	transition: color 150ms ease;
 }
 
 .shil-rail-item-breaks {
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
 	font-size: 11px;
-	line-height: 1.5;
-	color: rgba(255, 255, 255, 0.45);
+	line-height: 1.45;
+	color: rgba(255, 255, 255, 0.35);
+	transition: color 150ms ease;
 }
 
 /* ── Span-focus ↔ rail sync highlight ─────────────────────────────────────── */
 
 .shil-rail-item--highlighted {
-	background: rgba(194, 242, 77, 0.08);
-	border-left-color: rgba(194, 242, 77, 0.6) !important;
-	transition: background 0.2s ease, border-left-color 0.2s ease;
+	background: rgba(194, 242, 77, 0.06);
+	border-left-color: rgba(194, 242, 77, 0.50) !important;
+	transition: background 200ms ease, border-left-color 200ms ease;
 }
 
 .shil-rail-item--highlighted .shil-rail-item-title {
-	color: #C2F24D;
+	color: rgba(194, 242, 77, 0.90);
 }
 
 .shil-rail-item--highlighted .shil-rail-item-breaks {
-	color: rgba(255, 255, 255, 0.65);
+	color: rgba(255, 255, 255, 0.55);
 }
 
 /* Pulse animation for highlighted "breaks" items (calledBy/reads) */
 .shil-rail-item--breaks.shil-rail-item--highlighted {
-	animation: shil-rail-pulse 1.2s ease-in-out 1;
+	animation: shil-rail-pulse 1s ease-in-out 1;
 }
 
 @keyframes shil-rail-pulse {
-	0%   { background: rgba(194, 242, 77, 0.08); }
-	40%  { background: rgba(255, 100, 100, 0.12); }
-	100% { background: rgba(194, 242, 77, 0.08); }
+	0%   { background: rgba(194, 242, 77, 0.06); }
+	35%  { background: rgba(255, 100, 100, 0.08); }
+	100% { background: rgba(194, 242, 77, 0.06); }
 }
 
 /* Pulse for data (writes) items */
 .shil-rail-item--data.shil-rail-item--highlighted {
-	animation: shil-rail-pulse-data 1.2s ease-in-out 1;
+	animation: shil-rail-pulse-data 1s ease-in-out 1;
 }
 
 @keyframes shil-rail-pulse-data {
-	0%   { background: rgba(194, 242, 77, 0.08); }
-	40%  { background: rgba(160, 140, 255, 0.12); }
-	100% { background: rgba(194, 242, 77, 0.08); }
+	0%   { background: rgba(194, 242, 77, 0.06); }
+	35%  { background: rgba(160, 140, 255, 0.08); }
+	100% { background: rgba(194, 242, 77, 0.06); }
 }
 
 /* ── Clickable rail items ──────────────────────────────────────────────────── */
@@ -510,193 +687,127 @@
 .shil-rail-item--clickable:hover .shil-rail-item-title {
 	color: #C2F24D;
 	text-decoration: underline;
-	text-decoration-color: rgba(194, 242, 77, 0.35);
+	text-decoration-color: rgba(194, 242, 77, 0.25);
 	text-underline-offset: 2px;
 }
 
 .shil-rail-item--clickable:active {
-	background: rgba(194, 242, 77, 0.06);
+	background: rgba(194, 242, 77, 0.05);
 }
 
 /* ── Keyboard navigation focus ring ──────────────────────────────────────── */
 
 .shil-reader-span--focused {
-	outline: 1px solid rgba(194, 242, 77, 0.35);
+	outline: 1px solid rgba(194, 242, 77, 0.30);
 	outline-offset: -1px;
-	background: rgba(194, 242, 77, 0.04);
+	background: rgba(194, 242, 77, 0.03);
 }
 
 .shil-reader-span--focused .shil-reader-span-kind {
-	color: #C2F24D;
+	color: #C2F24D !important;
+}
+
+.shil-reader-span--focused .shil-reader-span-english {
+	color: rgba(255, 255, 255, 0.92);
 }
 
 .shil-reader-content:focus {
 	outline: none;
 }
 
-/* ── Syntax highlighting (matches Shil Dark tokenColors) ─────────────────── */
+/* ==========================================================================
+ *  SYNTAX HIGHLIGHTING — matches Shil Dark tokenColors.
+ *  Dimmed inside code excerpts; brightens on span hover (ghost pattern).
+ * ========================================================================== */
 
-.shil-hl-keyword {
-	color: #9FD17A;
-}
+.shil-hl-keyword  { color: #9FD17A; }
+.shil-hl-string   { color: #D8C68C; }
+.shil-hl-comment  { color: #545B6B; font-style: italic; }
+.shil-hl-number   { color: #F0B97A; }
+.shil-hl-type     { color: #7FD0C0; }
+.shil-hl-punct    { color: #6B7488; }
+.shil-hl-fn       { color: #C2F24D; }
+.shil-hl-tag      { color: #9FD17A; }
+.shil-hl-attr     { color: #C2D98A; }
+.shil-hl-prop     { color: #A8B2C1; }
+.shil-hl-interp   { color: #C2F24D; font-weight: 500; }
+.shil-hl-regex    { color: #E08A6F; }
+.shil-hl-optchain { color: #C2F24D; font-weight: 500; }
+.shil-hl-destr    { color: #D4E8A0; }
+.shil-hl-nullish  { color: #C2F24D; font-weight: 500; }
+.shil-hl-ternary  { color: #C2F24D; font-weight: 500; }
+.shil-hl-spread   { color: #C2F24D; font-weight: 500; }
+.shil-hl-opkw     { color: #9FD17A; font-style: italic; }
+.shil-hl-async    { color: #9FD17A; font-style: italic; }
 
-.shil-hl-string {
-	color: #D8C68C;
-}
+.shil-hl-methoddef   { color: #C2F24D; font-weight: 600; }
+.shil-hl-classdef    { color: #7FD0C0; font-weight: 600; }
+.shil-hl-private     { color: #B09ED8; font-style: italic; }
+.shil-hl-privatefn   { color: #B09ED8; font-style: italic; font-weight: 500; }
+.shil-hl-computed    { font-style: italic; }
+.shil-hl-abstractdef { color: #7FD0C0; font-weight: 600; font-style: italic; }
+.shil-hl-enumdef     { color: #D4A8E0; font-weight: 600; }
+.shil-hl-enummember  { color: #D4A8E0; }
+.shil-hl-decorator   { color: #E08A6F; font-style: italic; }
+.shil-hl-declare     { color: #9FD17A; font-style: italic; opacity: 0.7; }
+.shil-hl-readonly    { color: #9FD17A; font-style: italic; }
 
-.shil-hl-comment {
-	color: #545B6B;
-	font-style: italic;
-}
+/* ── Config hint banner — glass container ──────────────────────────────────── */
 
-.shil-hl-number {
-	color: #F0B97A;
-}
-
-.shil-hl-type {
-	color: #7FD0C0;
-}
-
-.shil-hl-punct {
-	color: #6B7488;
-}
-
-.shil-hl-fn {
-	color: #C2F24D;
-}
-
-.shil-hl-tag {
-	color: #9FD17A;
-}
-
-.shil-hl-attr {
-	color: #C2D98A;
-}
-
-.shil-hl-prop {
-	color: #A8B2C1;
-}
-
-.shil-hl-interp {
-	color: #C2F24D;
-	font-weight: 500;
-}
-
-.shil-hl-regex {
-	color: #E08A6F;
-}
-
-.shil-hl-optchain {
-	color: #C2F24D;
-	font-weight: 500;
-}
-
-.shil-hl-destr {
-	color: #D4E8A0;
-}
-
-.shil-hl-nullish {
-	color: #C2F24D;
-	font-weight: 500;
-}
-
-.shil-hl-ternary {
-	color: #C2F24D;
-	font-weight: 500;
-}
-
-.shil-hl-spread {
-	color: #C2F24D;
-	font-weight: 500;
-}
-
-.shil-hl-opkw {
-	color: #9FD17A;
-	font-style: italic;
-}
-
-.shil-hl-async {
-	color: #9FD17A;
-	font-style: italic;
-}
-
-.shil-hl-methoddef {
-	color: #C2F24D;
-	font-weight: 600;
-}
-
-.shil-hl-classdef {
-	color: #7FD0C0;
-	font-weight: 600;
-}
-
-.shil-hl-private {
-	color: #B09ED8;
-	font-style: italic;
-}
-
-.shil-hl-privatefn {
-	color: #B09ED8;
-	font-style: italic;
-	font-weight: 500;
-}
-
-.shil-hl-computed {
-	font-style: italic;
-}
-
-.shil-hl-abstractdef {
-	color: #7FD0C0;
-	font-weight: 600;
-	font-style: italic;
-}
-
-.shil-hl-enumdef {
-	color: #D4A8E0;
-	font-weight: 600;
-}
-
-.shil-hl-enummember {
-	color: #D4A8E0;
-}
-
-.shil-hl-decorator {
-	color: #E08A6F;
-	font-style: italic;
-}
-
-.shil-hl-declare {
-	color: #9FD17A;
-	font-style: italic;
-	opacity: 0.7;
-}
-
-.shil-hl-readonly {
-	color: #9FD17A;
-	font-style: italic;
-}
-
-/* ── Config hint banner ── */
 .shil-reader-config-hint {
 	font-family: 'Hanken Grotesk', system-ui, sans-serif;
 	font-size: 11.5px;
-	color: rgba(138, 143, 152, 0.7);
-	background: rgba(194, 242, 77, 0.04);
-	border: 1px solid rgba(194, 242, 77, 0.10);
-	border-radius: 6px;
-	padding: 6px 12px;
-	margin: 0 0 12px 0;
+	line-height: 1.5;
+	color: rgba(138, 143, 152, 0.60);
+	background: rgba(194, 242, 77, 0.03);
+	border: 1px solid rgba(194, 242, 77, 0.08);
+	border-radius: 8px;
+	padding: 8px 14px;
+	margin: 0 0 14px 0;
 }
 
 .shil-reader-config-link {
-	color: #C2F24D;
+	color: rgba(194, 242, 77, 0.70);
 	cursor: pointer;
 	text-decoration: none;
-	opacity: 0.8;
-	transition: opacity 150ms ease;
+	transition: color 150ms ease;
 }
 
 .shil-reader-config-link:hover {
-	opacity: 1;
+	color: #C2F24D;
 	text-decoration: underline;
+	text-decoration-color: rgba(194, 242, 77, 0.30);
+	text-underline-offset: 2px;
+}
+
+/* ==========================================================================
+ *  EMPTY STATE — shown when file has no parseable spans.
+ * ========================================================================== */
+
+.shil-reader-empty-state {
+	padding: 64px 32px;
+	text-align: center;
+}
+
+.shil-reader-empty-state-icon {
+	font-size: 32px;
+	opacity: 0.15;
+	margin-bottom: 16px;
+}
+
+.shil-reader-empty-state-text {
+	font-family: 'Hanken Grotesk', system-ui, sans-serif;
+	font-size: 14px;
+	color: rgba(255, 255, 255, 0.25);
+	line-height: 1.6;
+}
+
+/* ==========================================================================
+ *  RESPONSIVE — collapse rail on narrow widths.
+ * ========================================================================== */
+
+@media (max-width: 900px) {
+	.shil-reader-rail {
+		display: none;
+	}
 }
