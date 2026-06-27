@@ -244,7 +244,7 @@ function createCopilotSetupStep(id: string, button: string, when: string, includ
 		description,
 		when: `${when} && !chatSetupHidden && !chatSetupDisabledInWorkspace`,
 		media: {
-			type: 'svg', altText: 'VS Code Copilot multi file edits', path: 'multi-file-edits.svg'
+			type: 'svg', altText: 'Multi file edits', path: 'multi-file-edits.svg'
 		},
 	};
 }
@@ -252,12 +252,12 @@ function createCopilotSetupStep(id: string, button: string, when: string, includ
 export const walkthroughs: GettingStartedWalkthroughContent = [
 	{
 		id: 'Setup',
-		title: localize('gettingStarted.setup.title', "Get started with VS Code"),
+		title: localize('gettingStarted.setup.title', "Get Started"),
 		description: localize('gettingStarted.setup.description', "Customize your editor, learn the basics, and start coding"),
 		isFeatured: true,
 		icon: setupIcon,
 		when: '!isWeb',
-		walkthroughPageTitle: localize('gettingStarted.setup.walkthroughPageTitle', 'Setup VS Code'),
+		walkthroughPageTitle: localize('gettingStarted.setup.walkthroughPageTitle', 'Setup'),
 		next: 'Beginner',
 		content: {
 			type: 'steps',
@@ -279,8 +279,8 @@ export const walkthroughs: GettingStartedWalkthroughContent = [
 				{
 					id: 'videoTutorial',
 					title: localize('gettingStarted.videoTutorial.title', "Watch video tutorials"),
-					description: localize('gettingStarted.videoTutorial.description.interpolated', "Watch the first in a series of short & practical video tutorials for VS Code's key features.\n{0}", Button(localize('watch', "Watch Tutorial"), 'https://aka.ms/vscode-getting-started-video')),
-					media: { type: 'svg', altText: 'VS Code Settings', path: 'learn.svg' },
+					description: localize('gettingStarted.videoTutorial.description.interpolated', "Watch the first in a series of short & practical video tutorials for key features.\n{0}", Button(localize('watch', "Watch Tutorial"), 'https://aka.ms/vscode-getting-started-video')),
+					media: { type: 'svg', altText: 'Settings', path: 'learn.svg' },
 				}
 			]
 		}
@@ -288,13 +288,13 @@ export const walkthroughs: GettingStartedWalkthroughContent = [
 
 	{
 		id: 'SetupWeb',
-		title: localize('gettingStarted.setupWeb.title', "Get Started with VS Code for the Web"),
+		title: localize('gettingStarted.setupWeb.title', "Get Started for the Web"),
 		description: localize('gettingStarted.setupWeb.description', "Customize your editor, learn the basics, and start coding"),
 		isFeatured: true,
 		icon: setupIcon,
 		when: 'isWeb',
 		next: 'Beginner',
-		walkthroughPageTitle: localize('gettingStarted.setupWeb.walkthroughPageTitle', 'Setup VS Code Web'),
+		walkthroughPageTitle: localize('gettingStarted.setupWeb.walkthroughPageTitle', 'Setup Web'),
 		content: {
 			type: 'steps',
 			steps: [
@@ -320,7 +320,7 @@ export const walkthroughs: GettingStartedWalkthroughContent = [
 				{
 					id: 'extensionsWebWeb',
 					title: localize('gettingStarted.extensions.title', "Code with extensions"),
-					description: localize('gettingStarted.extensionsWeb.description.interpolated', "Extensions are VS Code's power-ups. A growing number are becoming available in the web.\n{0}", Button(localize('browsePopularWeb', "Browse Popular Web Extensions"), 'command:workbench.extensions.action.showPopularExtensions')),
+					description: localize('gettingStarted.extensionsWeb.description.interpolated', "Extensions are power-ups. A growing number are becoming available in the web.\n{0}", Button(localize('browsePopularWeb', "Browse Popular Web Extensions"), 'command:workbench.extensions.action.showPopularExtensions')),
 					when: 'workspacePlatform == \'webworker\'',
 					media: {
 						type: 'svg', altText: 'VS Code extension marketplace with featured language extensions', path: 'extensions-web.svg'
@@ -380,7 +380,7 @@ export const walkthroughs: GettingStartedWalkthroughContent = [
 		icon: setupIcon,
 		when: CONTEXT_ACCESSIBILITY_MODE_ENABLED.key,
 		next: 'Setup',
-		walkthroughPageTitle: localize('gettingStarted.setupAccessibility.walkthroughPageTitle', 'Setup VS Code Accessibility'),
+		walkthroughPageTitle: localize('gettingStarted.setupAccessibility.walkthroughPageTitle', 'Setup Accessibility'),
 		content: {
 			type: 'steps',
 			steps: [
@@ -495,13 +495,13 @@ export const walkthroughs: GettingStartedWalkthroughContent = [
 					when: 'workspacePlatform != \'webworker\' && syncStatus != uninitialized',
 					completionEvents: ['onEvent:sync-enabled'],
 					media: {
-						type: 'svg', altText: 'VS Code Settings', path: 'settings.svg'
+						type: 'svg', altText: 'Settings', path: 'settings.svg'
 					},
 				},
 				{
 					id: 'extensions',
 					title: localize('gettingStarted.extensions.title', "Code with extensions"),
-					description: localize('gettingStarted.extensions.description.interpolated', "Extensions are VS Code's power-ups. They range from handy productivity hacks, expanding out-of-the-box features, to adding completely new capabilities.\n{0}", Button(localize('browsePopular', "Browse Popular Extensions"), 'command:workbench.extensions.action.showPopularExtensions')),
+					description: localize('gettingStarted.extensions.description.interpolated', "Extensions are power-ups. They range from handy productivity hacks, expanding out-of-the-box features, to adding completely new capabilities.\n{0}", Button(localize('browsePopular', "Browse Popular Extensions"), 'command:workbench.extensions.action.showPopularExtensions')),
 					when: 'workspacePlatform != \'webworker\'',
 					media: {
 						type: 'svg', altText: 'VS Code extension marketplace with featured language extensions', path: 'extensions.svg'

@@ -100,7 +100,14 @@
       "terminal.integrated.fontFamily": "'JetBrains Mono'",
       "terminal.integrated.cursorStyle": "line",
       "terminal.integrated.cursorBlinking": true,
-      "terminal.integrated.fontLigatures.enabled": true
+      "terminal.integrated.fontLigatures.enabled": true,
+      "editor.padding.top": 16,
+      "editor.padding.bottom": 16,
+      "editor.cursorSmoothCaretAnimation": "on",
+      "editor.smoothScrolling": true,
+      "workbench.list.smoothScrolling": true,
+      "terminal.integrated.smoothScrolling": true,
+      "editor.cursorBlinking": "smooth"
     }
   },
   "repository": {

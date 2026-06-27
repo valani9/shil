@@ -4173,3 +4173,77 @@ body.shil-sidebar-resizing * {
 	width: 2px;
 	border-radius: 1px;
 }
+
+/* ============================================================================
+ *  WIDE VIEWPORT EDITOR CALM — reader-centric centering on ultra-wide monitors.
+ *  Adds gentle horizontal padding so code doesn't stretch wall-to-wall on
+ *  2560px+ screens, creating a calmer, more focused reading area.
+ * ========================================================================== */
+
+@media (min-width: 2200px) {
+	.monaco-workbench .part.editor > .content .editor-group-container > .editor-container {
+		padding-left: 3vw;
+		padding-right: 3vw;
+	}
+}
+
+@media (min-width: 3000px) {
+	.monaco-workbench .part.editor > .content .editor-group-container > .editor-container {
+		padding-left: 6vw;
+		padding-right: 6vw;
+	}
+}
+
+/* ============================================================================
+ *  EDITOR SMOOTH SCROLL — smooth scroll behavior for all editor scroll containers.
+ * ========================================================================== */
+
+.monaco-workbench .monaco-scrollable-element > .scrollbar {
+	transition: opacity 200ms ease;
+}
+
+.monaco-workbench .monaco-scrollable-element > .scrollbar.invisible {
+	opacity: 0;
+}
+
+.monaco-workbench .monaco-scrollable-element:hover > .scrollbar.invisible {
+	opacity: 1;
+}
+
+/* ============================================================================
+ *  EDITOR CURSOR LINE — subtle current-line emphasis for focus.
+ * ========================================================================== */
+
+.monaco-workbench .monaco-editor .current-line-margin {
+	border-left: 2px solid rgba(194, 242, 77, 0.12) !important;
+}
+
+/* ============================================================================
+ *  EDITOR GUTTER POLISH — refined line number and glyph margin aesthetics.
+ * ========================================================================== */
+
+.monaco-workbench .monaco-editor .margin-view-overlays .line-numbers {
+	transition: color 120ms ease;
+}
+
+.monaco-workbench .monaco-editor .margin-view-overlays .line-numbers.active-line-number {
+	color: rgba(194, 242, 77, 0.7) !important;
+}
+
+/* ============================================================================
+ *  EDITOR INDENT GUIDES — lime-tinted active indent guide for structure awareness.
+ * ========================================================================== */
+
+.monaco-workbench .monaco-editor .lines-content .core-guide-indent.core-guide-indent-active {
+	box-shadow: 1px 0 0 0 rgba(194, 242, 77, 0.15) inset !important;
+}
+
+/* ============================================================================
+ *  PANEL SMOOTH SCROLL — smooth scroll in panels and sidebars.
+ * ========================================================================== */
+
+.monaco-workbench .part.sidebar .monaco-list-rows,
+.monaco-workbench .part.panel .monaco-list-rows,
+.monaco-workbench .part.auxiliarybar .monaco-list-rows {
+	scroll-behavior: smooth;
+}
