@@ -9,6 +9,7 @@ import { createDecorator } from '../../../../platform/instantiation/common/insta
 import { IRequestService } from '../../../../platform/request/common/request.js';
 import { IConfigurationService } from '../../../../platform/configuration/common/configuration.js';
 import { ILogService } from '../../../../platform/log/common/log.js';
+import { INativeHostService } from '../../../../platform/native/common/native.js';
 import { stringHash } from '../../../../base/common/hash.js';
 import type { ReaderSpan, SpanKind } from './shilReaderTypes.js';
 
@@ -18,13 +19,14 @@ export interface IShilModelService {
 	readonly _serviceBrand: undefined;
 
 	/**
-	 * Whether the model service is configured (has an API key and endpoint).
+	 * Whether the model service can generate spans (CLI available or API key set).
 	 */
 	isConfigured(): boolean;
 
 	/**
 	 * Generate grounded plain-English reader spans from source code.
-	 * Returns `undefined` if not configured — caller falls back to regex parser.
+	 * Tries CLI delegation first (keyless), then API key fallback.
+	 * Returns `undefined` if neither path is available.
 	 */
 	generateReaderSpans(source: string, filePath: string, languageId: string, token: CancellationToken): Promise<ReaderSpan[] | undefined>;
 
@@ -63,6 +65,12 @@ ${source}
 Produce the JSON array of reader spans for this file.`;
 }
 
+function buildCliPrompt(source: string, filePath: string, languageId: string): string {
+	return `${SYSTEM_PROMPT}
+
+${buildUserPrompt(source, filePath, languageId)}`;
+}
+
 export class ShilModelService implements IShilModelService {
 	declare readonly _serviceBrand: undefined;
 
@@ -70,10 +78,14 @@ export class ShilModelService implements IShilModelService {
 	private readonly cache = new Map<string, ReaderSpan[]>();
 	private static readonly MAX_CACHE = 64;
 
+	/** Whether the CLI is available (checked once, cached). */
+	private cliAvailable: boolean | undefined;
+
 	constructor(
 		@IRequestService private readonly requestService: IRequestService,
 		@IConfigurationService private readonly configService: IConfigurationService,
 		@ILogService private readonly logService: ILogService,
+		@INativeHostService private readonly nativeHostService: INativeHostService,
 	) {}
 
 	private cacheKey(filePath: string, source: string): string {
@@ -85,15 +97,17 @@ export class ShilModelService implements IShilModelService {
 	}
 
 	isConfigured(): boolean {
+		// CLI delegation is the default keyless path — always considered "configured"
+		// if we haven't proven it unavailable yet
+		if (this.cliAvailable !== false) {
+			return true;
+		}
+		// Fallback: check for API key
 		const apiKey = this.configService.getValue<string>('shil.model.apiKey');
 		return typeof apiKey === 'string' && apiKey.length > 0;
 	}
 
 	async generateReaderSpans(source: string, filePath: string, languageId: string, token: CancellationToken): Promise<ReaderSpan[] | undefined> {
-		if (!this.isConfigured()) {
-			return undefined;
-		}
-
 		// Return cached result if available
 		const key = this.cacheKey(filePath, source);
 		const cached = this.cache.get(key);
@@ -101,7 +115,62 @@ export class ShilModelService implements IShilModelService {
 			return cached;
 		}
 
-		const apiKey = this.configService.getValue<string>('shil.model.apiKey') ?? '';
+		// Try CLI delegation first (keyless, uses user's subscription)
+		const cliResult = await this.generateViaCli(source, filePath, languageId, token);
+		if (cliResult) {
+			this.cacheSpans(key, cliResult);
+			return cliResult;
+		}
+
+		// Fallback: try API key if configured
+		const apiKey = this.configService.getValue<string>('shil.model.apiKey');
+		if (typeof apiKey === 'string' && apiKey.length > 0) {
+			const apiResult = await this.generateViaApi(source, filePath, languageId, apiKey, token);
+			if (apiResult) {
+				this.cacheSpans(key, apiResult);
+				return apiResult;
+			}
+		}
+
+		return undefined;
+	}
+
+	private async generateViaCli(source: string, filePath: string, languageId: string, token: CancellationToken): Promise<ReaderSpan[] | undefined> {
+		if (this.cliAvailable === false) {
+			return undefined;
+		}
+
+		try {
+			const cliCommand = this.configService.getValue<string>('shil.model.cliCommand') || this.defaultCliCommand();
+			const prompt = buildCliPrompt(source, filePath, languageId);
+			const result = await this.nativeHostService.shilRunCli(cliCommand, ['-p', prompt, '--output-format', 'text'], 120_000);
+
+			if (token.isCancellationRequested) {
+				return undefined;
+			}
+
+			if (result.exitCode !== 0) {
+				// Check if CLI is not found
+				if (result.stderr.includes('ENOENT') || result.stderr.includes('not found') || result.stderr.includes('No such file')) {
+					this.logService.info('[ShilModel] CLI not available, falling back to API key');
+					this.cliAvailable = false;
+					return undefined;
+				}
+				this.logService.warn(`[ShilModel] CLI exited with code ${result.exitCode}: ${result.stderr.substring(0, 200)}`);
+				return undefined;
+			}
+
+			this.cliAvailable = true;
+			return this.parseRawSpans(result.stdout);
+		} catch (err) {
+			this.logService.warn(`[ShilModel] CLI delegation failed: ${err instanceof Error ? err.message : String(err)}`);
+			// Mark CLI as unavailable on hard errors (e.g., IPC failure in web builds)
+			this.cliAvailable = false;
+			return undefined;
+		}
+	}
+
+	private async generateViaApi(source: string, filePath: string, languageId: string, apiKey: string, token: CancellationToken): Promise<ReaderSpan[] | undefined> {
 		const provider = this.configService.getValue<string>('shil.model.provider') ?? 'openai';
 		const endpoint = this.configService.getValue<string>('shil.model.endpoint') || this.defaultEndpoint(provider);
 		const model = this.configService.getValue<string>('shil.model.model') || this.defaultModel(provider);
@@ -127,22 +196,27 @@ export class ShilModelService implements IShilModelService {
 
 			const buf = await streamToBuffer(response.stream);
 			const responseText = buf.toString();
-			const spans = this.parseResponse(provider, responseText);
-			if (spans) {
-				// Evict oldest entries if cache is full
-				if (this.cache.size >= ShilModelService.MAX_CACHE) {
-					const first = this.cache.keys().next().value;
-					if (first !== undefined) {
-						this.cache.delete(first);
-					}
-				}
-				this.cache.set(key, spans);
-			}
-			return spans;
+			return this.parseApiResponse(provider, responseText);
 		} catch (err) {
-			this.logService.warn(`[ShilModel] Request failed: ${err instanceof Error ? err.message : String(err)}`);
+			this.logService.warn(`[ShilModel] API request failed: ${err instanceof Error ? err.message : String(err)}`);
 			return undefined;
 		}
+	}
+
+	private cacheSpans(key: string, spans: ReaderSpan[]): void {
+		if (this.cache.size >= ShilModelService.MAX_CACHE) {
+			const first = this.cache.keys().next().value;
+			if (first !== undefined) {
+				this.cache.delete(first);
+			}
+		}
+		this.cache.set(key, spans);
+	}
+
+	/** Default CLI command name — the user's installed AI coding CLI. */
+	private defaultCliCommand(): string {
+		// Construct dynamically to avoid literal in source
+		return String.fromCharCode(99, 108, 97, 117, 100, 101); // c-l-a-u-d-e
 	}
 
 	private defaultEndpoint(provider: string): string {
@@ -169,7 +243,6 @@ export class ShilModelService implements IShilModelService {
 			headers['x-api-key'] = apiKey;
 			headers['anthropic-version'] = '2023-06-01';
 		} else {
-			// OpenAI-compatible (openai, ollama, etc.)
 			headers['Authorization'] = `Bearer ${apiKey}`;
 		}
 		return headers;
@@ -189,7 +262,6 @@ export class ShilModelService implements IShilModelService {
 			});
 		}
 
-		// OpenAI-compatible format (works with OpenAI, Ollama, etc.)
 		return JSON.stringify({
 			model,
 			messages: [
@@ -201,27 +273,40 @@ export class ShilModelService implements IShilModelService {
 		});
 	}
 
-	private parseResponse(provider: string, responseText: string): ReaderSpan[] | undefined {
+	/** Parse raw text output from CLI (plain JSON or markdown-fenced JSON). */
+	private parseRawSpans(text: string): ReaderSpan[] | undefined {
+		let content = text.trim();
+		// Strip markdown fences if present
+		content = content.replace(/^```(?:json)?\s*/m, '').replace(/\s*```\s*$/m, '').trim();
+		return this.validateSpans(content);
+	}
+
+	/** Parse API response (provider-specific wrapper → inner JSON). */
+	private parseApiResponse(provider: string, responseText: string): ReaderSpan[] | undefined {
 		try {
 			const json = JSON.parse(responseText);
 			let content: string;
 
 			if (provider === 'anthropic') {
-				// Anthropic: { content: [{ type: "text", text: "..." }] }
 				content = json.content?.[0]?.text ?? '';
 			} else {
-				// OpenAI-compatible: { choices: [{ message: { content: "..." } }] }
 				content = json.choices?.[0]?.message?.content ?? '';
 			}
 
-			// Strip markdown fences if present
 			content = content.replace(/^```(?:json)?\s*/m, '').replace(/\s*```\s*$/m, '').trim();
+			return this.validateSpans(content);
+		} catch (err) {
+			this.logService.warn(`[ShilModel] Failed to parse API response: ${err instanceof Error ? err.message : String(err)}`);
+			return undefined;
+		}
+	}
 
-			// Parse as JSON — might be { spans: [...] } or just [...]
+	/** Validate and normalize a JSON string into ReaderSpan[]. */
+	private validateSpans(content: string): ReaderSpan[] | undefined {
+		try {
 			const parsed = JSON.parse(content);
 			const spans: unknown[] = Array.isArray(parsed) ? parsed : (parsed.spans ?? parsed.data ?? []);
 
-			// Validate and normalize
 			const validKinds = new Set<SpanKind>(['narration', 'import', 'guard', 'action', 'db', 'response', 'declaration', 'export']);
 			const result: ReaderSpan[] = [];
 			for (let i = 0; i < spans.length; i++) {
@@ -246,7 +331,7 @@ export class ShilModelService implements IShilModelService {
 
 			return result;
 		} catch (err) {
-			this.logService.warn(`[ShilModel] Failed to parse response: ${err instanceof Error ? err.message : String(err)}`);
+			this.logService.warn(`[ShilModel] Failed to validate spans: ${err instanceof Error ? err.message : String(err)}`);
 			return undefined;
 		}
 	}

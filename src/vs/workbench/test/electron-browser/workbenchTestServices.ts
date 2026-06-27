@@ -192,6 +192,9 @@ export class TestNativeHostService implements INativeHostService {
 	async clearToast(id: string): Promise<void> { }
 	async clearToasts(): Promise<void> { }
 
+	// Shil CLI
+	async shilRunCli(_command: string, _args: string[], _timeoutMs?: number): Promise<{ stdout: string; stderr: string; exitCode: number }> { return { stdout: '', stderr: '', exitCode: 1 }; }
+
 	// Power APIs
 	async getSystemIdleState(idleThreshold: number): Promise<SystemIdleState> { return 'unknown'; }
 	async getSystemIdleTime(): Promise<number> { return 0; }

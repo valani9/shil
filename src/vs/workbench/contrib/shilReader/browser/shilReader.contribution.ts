@@ -87,6 +87,11 @@ Registry.as<IConfigurationRegistry>(ConfigExtensions.Configuration).registerConf
 	title: localize('shil', "Shil"),
 	type: 'object',
 	properties: {
+		'shil.model.cliCommand': {
+			type: 'string',
+			default: '',
+			description: localize('shil.model.cliCommand.desc', "CLI command for AI span generation (e.g. your installed AI coding CLI). Leave empty for auto-detection."),
+		},
 		'shil.model.provider': {
 			type: 'string',
 			default: 'openai',
@@ -96,12 +101,12 @@ Registry.as<IConfigurationRegistry>(ConfigExtensions.Configuration).registerConf
 				localize('shil.model.provider.anthropic', "Anthropic Messages API"),
 				localize('shil.model.provider.ollama', "Local Ollama server"),
 			],
-			description: localize('shil.model.provider.desc', "AI provider for the Reader's plain-English generation."),
+			description: localize('shil.model.provider.desc', "AI provider for the Reader's plain-English generation (used as fallback when CLI delegation is unavailable)."),
 		},
 		'shil.model.apiKey': {
 			type: 'string',
 			default: '',
-			description: localize('shil.model.apiKey.desc', "API key for the selected provider. Leave empty to use the regex-based parser."),
+			description: localize('shil.model.apiKey.desc', "API key for the selected provider. The Reader uses your installed CLI by default (no key needed). Set this only as a manual fallback."),
 		},
 		'shil.model.endpoint': {
 			type: 'string',

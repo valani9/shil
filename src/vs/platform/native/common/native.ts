@@ -284,6 +284,9 @@ export interface ICommonNativeHostService {
 	 */
 	createZipFile(zipPath: URI, files: { path: string; contents: string }[]): Promise<void>;
 
+	// Shil CLI
+	shilRunCli(command: string, args: string[], timeoutMs?: number): Promise<{ stdout: string; stderr: string; exitCode: number }>;
+
 	// Power
 	getSystemIdleState(idleThreshold: number): Promise<SystemIdleState>;
 	getSystemIdleTime(): Promise<number>;

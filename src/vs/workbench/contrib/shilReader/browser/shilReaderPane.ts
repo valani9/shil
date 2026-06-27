@@ -26,8 +26,6 @@ import { IRange } from '../../../../editor/common/core/range.js';
 import { URI } from '../../../../base/common/uri.js';
 import { createTrustedTypesPolicy } from '../../../../base/browser/trustedTypes.js';
 import { IShilModelService } from './shilModelService.js';
-import { INotificationService, Severity } from '../../../../platform/notification/common/notification.js';
-import { ICommandService } from '../../../../platform/commands/common/commands.js';
 
 const readerTrustedTypes = createTrustedTypesPolicy('shilReader', {
 	createHTML: (value: string) => value,
@@ -67,8 +65,7 @@ export class ShilReaderPane extends EditorPane {
 	private shortcutLegend: HTMLElement | undefined;
 	/** Search match count element. */
 	private searchCountElement: HTMLElement | undefined;
-	/** Whether the API key notification has been shown this session (avoid nagging). */
-	private static apiKeyNotifShown = false;
+
 
 	constructor(
 		group: IEditorGroup,
@@ -79,8 +76,6 @@ export class ShilReaderPane extends EditorPane {
 		@ILanguageService private readonly languageService: ILanguageService,
 		@IEditorService private readonly editorService: IEditorService,
 		@IShilModelService private readonly modelService: IShilModelService,
-		@INotificationService private readonly notificationService: INotificationService,
-		@ICommandService private readonly commandService: ICommandService,
 	) {
 		super(ShilReaderPane.ID, group, telemetryService, themeService, storageService);
 	}
@@ -136,59 +131,35 @@ export class ShilReaderPane extends EditorPane {
 			// Parse with regex immediately (always available)
 			const doc = parseToReaderDoc(source, filePath, languageId);
 
-			if (this.modelService.isConfigured()) {
-				// Check cache first — instant if available
-				const cached = this.modelService.getCached(filePath, source);
-				if (cached && cached.length > 0) {
-					doc.spans = cached;
+			// Check cache first — instant if available
+			const cached = this.modelService.getCached(filePath, source);
+			if (cached && cached.length > 0) {
+				doc.spans = cached;
+				this.currentDoc = doc;
+				this.renderDoc(doc);
+			} else if (this.modelService.isConfigured()) {
+				// Show regex-parsed doc immediately with loading indicator
+				this.currentDoc = doc;
+				this.renderDoc(doc);
+				this.showLoadingOverlay();
+
+				// Generate spans via CLI (default, keyless) or API key fallback
+				const llmSpans = await this.modelService.generateReaderSpans(source, filePath, languageId, token);
+				if (token.isCancellationRequested) {
+					return;
+				}
+				if (llmSpans && llmSpans.length > 0) {
+					doc.spans = llmSpans;
 					this.currentDoc = doc;
 					this.renderDoc(doc);
 				} else {
-					// Show regex-parsed doc immediately with loading indicator
-					this.currentDoc = doc;
-					this.renderDoc(doc);
-					this.showLoadingOverlay();
-
-					// Fetch LLM spans in background
-					const llmSpans = await this.modelService.generateReaderSpans(source, filePath, languageId, token);
-					if (token.isCancellationRequested) {
-						return;
-					}
-					if (llmSpans && llmSpans.length > 0) {
-						doc.spans = llmSpans;
-						this.currentDoc = doc;
-						this.renderDoc(doc);
-					} else {
-						// LLM failed — just remove the loading overlay, keep regex doc
-						this.hideLoadingOverlay();
-					}
+					// Generation failed — remove loading overlay, keep regex doc
+					this.hideLoadingOverlay();
 				}
 			} else {
-				// No model configured — use regex parser only
+				// Neither CLI nor API key available — regex parser only
 				this.currentDoc = doc;
 				this.renderDoc(doc);
-				this.showConfigHintBanner();
-
-				// Show notification once per session
-				if (!ShilReaderPane.apiKeyNotifShown) {
-					ShilReaderPane.apiKeyNotifShown = true;
-					this.notificationService.notify({
-						severity: Severity.Info,
-						message: 'Reader is using basic parsing. Configure an API key for richer plain-English descriptions.',
-						actions: {
-							primary: [{
-								id: 'shil.openModelSettings',
-								label: 'Configure API Key',
-								tooltip: 'Open Shil model settings',
-								class: undefined,
-								enabled: true,
-								run: () => {
-									this.commandService.executeCommand('workbench.action.openSettings', 'shil.model');
-								}
-							}]
-						}
-					});
-				}
 			}
 
 			// Scan connections in background (non-blocking)
@@ -885,40 +856,6 @@ export class ShilReaderPane extends EditorPane {
 			} else {
 				status.textContent = '';
 			}
-		}
-	}
-
-	private showConfigHintBanner(): void {
-		if (!this.contentElement) {
-			return;
-		}
-		// Don't add duplicate banners
-		if (this.contentElement.querySelector('.shil-reader-config-hint')) {
-			return;
-		}
-		const banner = document.createElement('div');
-		banner.className = 'shil-reader-config-hint';
-		const text = document.createElement('span');
-		text.textContent = 'Using basic parsing \u2014 ';
-		banner.appendChild(text);
-		const link = document.createElement('a');
-		link.className = 'shil-reader-config-link';
-		link.textContent = 'configure an API key';
-		link.title = 'Open Shil model settings for richer English descriptions';
-		link.addEventListener('click', (e) => {
-			e.preventDefault();
-			this.commandService.executeCommand('workbench.action.openSettings', 'shil.model');
-		});
-		banner.appendChild(link);
-		const suffix = document.createElement('span');
-		suffix.textContent = ' for richer descriptions.';
-		banner.appendChild(suffix);
-		// Insert after the header
-		const header = this.contentElement.querySelector('.shil-reader-header');
-		if (header && header.nextSibling) {
-			this.contentElement.insertBefore(banner, header.nextSibling);
-		} else {
-			this.contentElement.appendChild(banner);
 		}
 	}
 

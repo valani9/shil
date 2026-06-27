@@ -4,7 +4,7 @@
  *--------------------------------------------------------------------------------------------*/
 
 import * as fs from 'fs';
-import { exec } from 'child_process';
+import { exec, execFile } from 'child_process';
 import { app, BrowserWindow, clipboard, contentTracing, Display, Menu, MessageBoxOptions, MessageBoxReturnValue, Notification, OpenDevToolsOptions, OpenDialogOptions, OpenDialogReturnValue, powerMonitor, powerSaveBlocker, SaveDialogOptions, SaveDialogReturnValue, screen, shell, systemPreferences, webContents } from 'electron';
 import { arch, cpus, freemem, loadavg, platform, release, totalmem, type } from 'os';
 import { promisify } from 'util';
@@ -1436,6 +1436,26 @@ export class NativeHostMainService extends Disposable implements INativeHostMain
 	private windowById(windowId: number | undefined, fallbackCodeWindowId?: number): ICodeWindow | IAuxiliaryWindow | undefined {
 		return this.codeWindowById(windowId) ?? this.auxiliaryWindowById(windowId) ?? this.codeWindowById(fallbackCodeWindowId);
 	}
+
+	//#region Shil CLI
+
+	async shilRunCli(_windowId: number | undefined, command: string, args: string[], timeoutMs?: number): Promise<{ stdout: string; stderr: string; exitCode: number }> {
+		const timeout = timeoutMs ?? 120_000;
+		const env = { ...process.env };
+		delete env['ELECTRON_RUN_AS_NODE'];
+		return new Promise<{ stdout: string; stderr: string; exitCode: number }>((resolve) => {
+			execFile(command, args, { timeout, maxBuffer: 10 * 1024 * 1024, env }, (error, stdout, stderr) => {
+				const exitCode = error ? (typeof (error as { code?: unknown }).code === 'number' ? (error as { code: number }).code : 1) : 0;
+				resolve({
+					stdout: typeof stdout === 'string' ? stdout : '',
+					stderr: typeof stderr === 'string' ? stderr : '',
+					exitCode,
+				});
+			});
+		});
+	}
+
+	//#endregion
 
 	private codeWindowById(windowId: number | undefined): ICodeWindow | undefined {
 		if (typeof windowId !== 'number') {
