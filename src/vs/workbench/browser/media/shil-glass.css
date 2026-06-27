@@ -3979,3 +3979,197 @@ body.shil-sidebar-resizing * {
 .monaco-workbench .monaco-editor .suggest-widget > .suggest-status-bar a:hover {
 	color: #C2F24D;
 }
+
+/* ============================================================================
+ *  MENUBAR — File/Edit/View/etc. buttons in the custom title bar.
+ *  These are unstyled by default and look stock VS Code. Bring them into
+ *  the Shil instrument-voice design language.
+ * ========================================================================== */
+
+/* Menubar button text: Martian Mono instrument voice. */
+.monaco-workbench .menubar > .menubar-menu-button {
+	font-family: 'Martian Mono', monospace;
+	font-size: 10px;
+	letter-spacing: 0.03em;
+	opacity: 0.55;
+	transition: opacity 150ms ease;
+}
+.monaco-workbench .menubar > .menubar-menu-button:hover,
+.monaco-workbench .menubar > .menubar-menu-button.open {
+	opacity: 1;
+}
+/* Menu title pill: subtle rounded shape, lime tint on hover/open. */
+.monaco-workbench .menubar:not(.compact) > .menubar-menu-button .menubar-menu-title {
+	border-radius: 6px !important;
+	padding: 1px 8px !important;
+	transition: background-color 120ms ease;
+}
+.monaco-workbench .menubar:not(.compact) > .menubar-menu-button:hover .menubar-menu-title,
+.monaco-workbench .menubar:not(.compact) > .menubar-menu-button.open .menubar-menu-title,
+.monaco-workbench .menubar:not(.compact) > .menubar-menu-button:focus .menubar-menu-title {
+	background-color: rgba(194, 242, 77, 0.08) !important;
+	outline: none !important;
+}
+/* Overflow "..." button: same ghost treatment. */
+.monaco-workbench .menubar .toolbar-toggle-more {
+	opacity: 0.45;
+	transition: opacity 150ms ease;
+}
+.monaco-workbench .menubar .toolbar-toggle-more:hover {
+	opacity: 0.90;
+}
+/* Inactive window: deeper fade. */
+.monaco-workbench .menubar.inactive:not(.compact) > .menubar-menu-button {
+	opacity: 0.30;
+}
+
+/* ============================================================================
+ *  TAB OVERFLOW — the ">>" button when tabs overflow the container.
+ *  Bring it into the ghost pattern + instrument voice.
+ * ========================================================================== */
+
+/* Tab overflow action: ghost, instrument voice. */
+.monaco-workbench .editor-group-container > .title .tabs-and-actions-container > .monaco-scrollable-element > .scrollbar {
+	opacity: 0 !important;
+}
+.monaco-workbench .editor-group-container > .title .editor-actions {
+	opacity: 0.4;
+	transition: opacity 150ms ease;
+}
+.monaco-workbench .editor-group-container > .title:hover .editor-actions {
+	opacity: 0.85;
+}
+
+/* ============================================================================
+ *  EDITOR DROP-INTO PROMPT — "Drop to open" overlay when dragging files.
+ * ========================================================================== */
+
+.monaco-workbench .editor-group-container .editor-drop-target-overlay .drop-into-prompt {
+	font-family: 'Hanken Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+	border-radius: 8px;
+	backdrop-filter: blur(12px) saturate(1.3);
+}
+
+/* ============================================================================
+ *  WINDOW CONTROLS OVERLAY — the min/max/close buttons on non-macOS.
+ * ========================================================================== */
+
+.monaco-workbench .part.titlebar .window-controls-container .window-icon {
+	opacity: 0.5;
+	transition: opacity 120ms ease;
+}
+.monaco-workbench .part.titlebar .window-controls-container .window-icon:hover {
+	opacity: 1;
+}
+
+/* ============================================================================
+ *  PINNED TAB BORDER — subtle lime left edge on pinned tabs.
+ * ========================================================================== */
+
+.monaco-workbench .tab.pinned {
+	border-right: 1px solid rgba(194, 242, 77, 0.15) !important;
+}
+
+/* ============================================================================
+ *  EDITOR GROUP WATERMARK — when all files are closed, show calmer hints.
+ * ========================================================================== */
+
+.monaco-workbench .editor-group-container .editor-group-watermark .shortcuts .watermark-box {
+	font-family: 'Hanken Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+	font-size: 12px;
+	border-color: rgba(150, 158, 174, 0.08) !important;
+	border-radius: 6px;
+}
+.monaco-workbench .editor-group-container .editor-group-watermark .shortcuts .watermark-box > b {
+	font-family: 'Martian Mono', monospace;
+	font-size: 10px;
+	letter-spacing: 0.03em;
+}
+
+/* ============================================================================
+ *  PANEL MAXIMIZE / RESTORE — smooth size transition when panel is toggled
+ *  between normal and maximized states.
+ * ========================================================================== */
+
+.monaco-workbench .part.panel {
+	transition: height 200ms cubic-bezier(0.22, 1, 0.36, 1), width 200ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ============================================================================
+ *  GLOBAL ACTION BAR CONSISTENCY — all horizontal action bars get the
+ *  ghost-until-hover pattern with smooth transitions.
+ * ========================================================================== */
+
+.monaco-workbench .monaco-action-bar .action-item .action-label {
+	transition: opacity 120ms ease;
+}
+
+/* ============================================================================
+ *  EDITOR LINKED EDITING RANGES — lime tint for mirror editing.
+ * ========================================================================== */
+
+.monaco-workbench .monaco-editor .linked-editing-decoration {
+	border-radius: 2px;
+}
+
+/* ============================================================================
+ *  QUICK INPUT LIST SEPARATOR — category headers in command palette.
+ * ========================================================================== */
+
+.monaco-workbench .quick-input-list .quick-input-list-separator {
+	font-family: 'Martian Mono', monospace !important;
+	font-size: 9px !important;
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+.monaco-workbench .quick-input-list .quick-input-list-separator .separator-label {
+	opacity: 0.55;
+}
+
+/* ============================================================================
+ *  EDITOR PLACEHOLDER — "Type or paste text" in untitled editors.
+ * ========================================================================== */
+
+.monaco-workbench .monaco-editor .editor-placeholder {
+	font-family: 'Hanken Grotesk', -apple-system, BlinkMacSystemFont, sans-serif !important;
+	opacity: 0.35;
+}
+
+/* ============================================================================
+ *  TITLE BAR WINDOW TITLE — centered, calmer.
+ * ========================================================================== */
+
+.monaco-workbench .part.titlebar .window-title {
+	font-family: 'Martian Mono', monospace;
+	font-size: 10.5px;
+	letter-spacing: 0.02em;
+	opacity: 0.65;
+}
+
+/* ============================================================================
+ *  NOTIFICATION ACTION BUTTONS — rounded, calm.
+ * ========================================================================== */
+
+.monaco-workbench .notifications-list-container .notification-list-item .notification-list-item-buttons-container .monaco-button {
+	border-radius: 6px !important;
+	font-family: 'Hanken Grotesk', -apple-system, BlinkMacSystemFont, sans-serif;
+	font-size: 11.5px;
+}
+
+/* ============================================================================
+ *  PANE COMPOSITE BAR — view switcher pills in sidebar/panel.
+ * ========================================================================== */
+
+.monaco-workbench .pane-composite-part > .title > .composite-bar-container > .composite-bar > .monaco-action-bar .action-item.checked .action-label {
+	color: #C2F24D !important;
+}
+
+/* ============================================================================
+ *  EDITOR GROUP TAB DRAG — visual feedback during tab drag/drop.
+ * ========================================================================== */
+
+.monaco-workbench .editor-group-container > .title .tabs-container > .tab.dragged-over::before {
+	background-color: rgba(194, 242, 77, 0.35) !important;
+	width: 2px;
+	border-radius: 1px;
+}

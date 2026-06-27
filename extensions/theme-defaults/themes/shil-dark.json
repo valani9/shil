@@ -160,11 +160,17 @@
 
 		"menu.background": "#080B12",
 		"menu.foreground": "#C0C8D8",
-		"menu.selectionBackground": "#C2F24D26",
-		"menu.selectionForeground": "#0C1400",
+		"menu.selectionBackground": "#C2F24D1A",
+		"menu.selectionForeground": "#F2F6FF",
 		"menu.border": "#8C93A81F",
 		"menu.separatorBackground": "#8C93A81F",
-		"menubar.selectionBackground": "#8C93A81F",
+		"menubar.selectionBackground": "#C2F24D14",
+		"menubar.selectionForeground": "#F2F6FF",
+
+		"tab.lastPinnedBorder": "#C2F24D26",
+		"editorGroup.dropIntoPromptBackground": "#080B12",
+		"editorGroup.dropIntoPromptForeground": "#C0C8D8",
+		"editorGroup.dropIntoPromptBorder": "#C2F24D44",
 
 		"notifications.background": "#080B12",
 		"notifications.foreground": "#EAF0FF",
